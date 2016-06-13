@@ -18,12 +18,12 @@ represented by directories and JSON files, respectively. Thus, a problem would s
 which can be viewed as a separate git repository, every edit session being a clone of this repository.
 
 2. DMS-Git: In this approach, a normal Database Management System such as PostgreSQL
- would be used to store entities data. All required communications with the database is done through DMS. Additionally,
- similar to the first approach, data is also stored as JSON files, and a git repository is created for each problem.
- Starting an edit session, results in duplicating current problem's data in the DMS,
- as well as making a clone of the problem's repository. However, JSON files are only updated when a change in the history,
- should be recorded(e.g. a commit for an edit session or a request of merge to master problem repository).
- In these cases, DMS data is first dumped over current JSON files. Then, the operation is handled using git.
+would be used to store entities data. All required communications with the database is done through DMS. Additionally,
+similar to the first approach, data is also stored as JSON files, and a git repository is created for each problem.
+Starting an edit session, results in duplicating current problem's data in the DMS,
+as well as making a clone of the problem's repository. However, JSON files are only updated when a change in the history,
+should be recorded(e.g. a commit for an edit session or a request of merge to master problem repository).
+In these cases, DMS data is first dumped over current JSON files. Then, the operation is handled using git.
 
 3. DMS-only: This is the most straight-forward approach. Using a normal DMS and handling VCS-related operations
 manually(e.g. Cloning every data when starting a new edit session, merging data as long as the same field was not
