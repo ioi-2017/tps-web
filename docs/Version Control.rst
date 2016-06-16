@@ -42,6 +42,8 @@ DMS-Git                      * Using git for handling VCS-              * Data i
                                available
 DMS-only                     * Simple                                   * No sophisticated git
                              * Easy to handle                             operations.
+                             * Professional DMS features
+                               available
 ================             ==============================             ==============================
 
 
