@@ -23,7 +23,7 @@ class Revision(models.Model):
 
         raise NotImplementedError("This must be implemented in the subclasses of this class")
 
-    def find_matching_pairs(self, second_revision: Revision):
+    def find_matching_pairs(self, second_revision):
         """
         returns a list of pairs (a, b) which means
          in this revision an object is a and its corresponding object in another_revision is b.
