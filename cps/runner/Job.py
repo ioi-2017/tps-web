@@ -2,49 +2,61 @@ from cps.local_settings import DEFAULT_TIME_LIMIT, DEFAULT_MEMORY_LIMIT
 from runner.Runnable import Runnable
 
 
+# TODO: add a feature to be able to run a single string command safely (e.g. "./a.out <a.in >a.out")
 class Job(Runnable):
-    def __init__(self, commands=None, files=None, executable_filenames=None, output_filename=None,
-                 time_limit=DEFAULT_TIME_LIMIT, memory_limit=DEFAULT_MEMORY_LIMIT):
+    def __init__(self, command=None, input_files=None, executable_files=None,
+                 stdin_filename=None, stdout_filename=None, stderr_filename=None,
+                 files_to_extract=None,
+                 time_limit=DEFAULT_TIME_LIMIT, memory_limit=DEFAULT_MEMORY_LIMIT,
+                 description=None):
         """
         A job to be executed
-        :param commands: List[List[string]], list of command lines to be executed
-            every command line list of string (e.g. ["./a.out", "<a.in", ">a.out"])
-        :param files: List[file_repository.File], a list files to be put in Sandbox (input files and executables)
-        :param executable_filenames: List[string], files that can be executed in Sandbox
-        :param output_filename: output file name to be extracted from sandbox
+        :param command: List[string], command will be executed with the remaining items being its arguments
+            (e.g. ["diff", "a.cpp", "b.cpp"])
+        :param input_files: List[(file_repository.File, filename)], a list of files to be put in Sandbox
+            File will be put with "filename" in sandbox
+            Note: every item is a tuple.
+        :param executable_files: List[(file_repository.File, filename)], same as input_files but with executable permission
+        :param stdin_filename: (string, None), redirect stdin of command from stdin_filename
+        :param stdout_filename: (string, None), redirect stdout of command to stdout_filename
+        :param stderr_filename: (string, None), redirect stderr of command to stdout_filename
+        :param files_to_extract: List[string], filename to extract from sandbox
+
         :param time_limit: float, time_limit in seconds
         :param memory_limit: memory limit in bytes
+        :param description: description of the job (for debug)
 
-        output_file: output file (Django File) generated in sandbox
-        stdout: stdout of executed command by runner
-        stderr: stderr of executed command by runner
-        execution_time: time of executed command by runner
-        execution_memory: memory of executed command by runner
-        exit_code: exit code of command executed by runner
+        extracted_files: Dict{filename, FileModel}, extracted files based on files_to_extract
+        execution_time: time of executed command
+        execution_memory: memory of executed command
+        exit_status: exit status of command executed (EXIT_XXX in runner.__init__.py)
+        success: (bool) whether the job succeeded.
+        res_info: dict, additional results.
         """
         super(Job, self).__init__()
-
-        self.commands = commands
-        self.files = files
-        self.executable_filenames = executable_filenames
-        self.output_filename = output_filename
+        self.command = command
+        self.input_files = input_files
+        self.executable_files = executable_files
+        self.stdin_filename = stdin_filename
+        self.stdout_filename = stdout_filename
+        self.stderr_filename = stderr_filename
+        self.files_to_extract = files_to_extract
         self.time_limit = time_limit
         self.memory_limit = memory_limit
+        self.description = description
 
         # This Fields will be generated after Job is executed (run)
-        self.output_file = None
-        self.stdout = None
-        self.stderr = None
+        self.extracted_files = None
         self.execution_time = None
         self.execution_memory = None
-        self.exit_code = None
+        self.exit_status = None
+        self.success = None
+        self.res_info = None
 
     def execute(self):
         """
         execute the job.
-        if output_filename is not None:
-            output File is generated and put in job.output_file
-        commands can not be None before execution
+        command can not be None before execution
         """
         raise NotImplementedError("This must be implemented in subclass")
 
