@@ -1,11 +1,10 @@
 # Amir Keivan Mohtashami
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
-from django.utils.translation import ugettext_lazy as _
-
 from problems.models.testdata import Subtask
 from version_control.models import VersionModel
 

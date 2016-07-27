@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase, Subtask

@@ -22,9 +22,6 @@ class Version(object):
 
         raise NotImplementedError("This must be implemented")
 
-    def clone(self):
-        raise NotImplementedError("This must be implemented in the subclasses of this class")
-
     def matches(self, another_version):
         """
         returns a boolean determining whether this matches another_version.
