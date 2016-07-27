@@ -3,7 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from file_repository.models import File
+from file_repository.models import FileModel
 from problems.models.problem import ProblemRevision
 from version_control.models import VersionModel
 
@@ -12,7 +12,7 @@ class TestCase(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     name = models.CharField(max_length=20, verbose_name=_("name"))
 
-    _input_uploaded_file = models.ForeignKey(File, verbose_name=_("input uploaded file"), null=True, related_name='+')
+    _input_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("input uploaded file"), null=True, related_name='+')
     # TODO: Add a validator for _input_generation_command to validate that command is in the right form
     _input_generation_command = models.TextField(
         verbose_name=_("input generation command"),
@@ -23,13 +23,13 @@ class TestCase(VersionModel):
     _input_static = models.BooleanField(
         editable=False,
     )
-    _input_file = models.ForeignKey(File, editable=False, related_name='+')
+    _input_file = models.ForeignKey(FileModel, editable=False, related_name='+')
 
-    _output_uploaded_file = models.ForeignKey(File, verbose_name=_("input file"), null=True, related_name='+')
+    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("input file"), null=True, related_name='+')
     _output_static = models.BooleanField(
         editable=False,
     )
-    _output_file = models.ForeignKey(File, editable=False, related_name='+')
+    _output_file = models.ForeignKey(FileModel, editable=False, related_name='+')
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generation_command is None:
