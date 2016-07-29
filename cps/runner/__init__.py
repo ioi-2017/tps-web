@@ -23,3 +23,13 @@ def get_compilation_command(language, source_filenames, executable_filename):
     """
     if language not in RUNNER_SUPPORTED_LANGUAGES:
         logger.error("Language" + language + "not supported in runner")
+
+
+def get_execution_command(language, executable_filename):
+    """
+    :param language: RUNNER_SUPPORTED_LANGUAGES
+    :param executable_filename: string
+    :return: a command to be executed by runner
+    """
+    if language not in RUNNER_SUPPORTED_LANGUAGES:
+        logger.error("Language" + language + "not supported in runner")
