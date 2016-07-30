@@ -90,12 +90,12 @@ class TestCase(VersionModel):
 
         if self._input_static is False:
             if self._input_generator is None:
-                raise Exception("static input dose not have generator")
+                raise AssertionError("static input dose not have generator")
             else:
                 input_generation_job = InputGenerationJob(test_case=self)
                 input_generation_job.run()
         else:
-            raise Exception("can't generate input for static input")
+            raise AssertionError("can't generate input for static input")
 
     def generate_input_file(self):
         """
@@ -154,12 +154,12 @@ class TestCase(VersionModel):
 
         if self._output_static is False:
             if self._solution is None:
-                raise Exception("test case does not have solution")
+                raise AssertionError("test case does not have solution")
             else:
                 output_generation_job = OutputGenerationJob(test_case=self)
                 output_generation_job.run()
         else:
-            raise Exception("can't generate output for static output")
+            raise AssertionError("can't generate output for static output")
 
     def generate_output_file(self):
         """
