@@ -97,6 +97,30 @@ class VersionModel(CloneableModel, Version):
     class Meta:
         abstract = True
 
+    def _get_json_representation(self, included_fields=None, excluded_fields=None):
+        """
+        Returns a json representation of the current version,
+        including all fields in included_fields (or all fields if not present),
+        excluding all fields in excluded_fields (or no fields if not present).
+        :param included_fields: List[str] or None
+        :param excluded_fields: List[str] or None
+        :return str
+        """
+        from django.core import serializers
+        import json
+        full_dump = json.loads(serializers.serialize('json', [self]))[0]
+        limited_dump = {}
+        for field_name in full_dump['fields']:
+            if included_fields is not None and field_name not in included_fields:
+                continue
+            if excluded_fields is not None and field_name in excluded_fields:
+                continue
+            limited_dump[field_name] = full_dump['fields'][field_name]
+        return json.dumps(limited_dump)
+
+    def get_json_representation(self):
+        return self._get_json_representation()
+
 
 class Revision(CloneableModel):
     """
@@ -129,19 +153,37 @@ class Revision(CloneableModel):
             bucketed_objects = {}
             for obj in objects:
                 class_type = obj.__class__
-                if class_type not in bucketed_objects:
-                    bucketed_objects[class_type] = {}
-                if obj.matching_bucket not in bucketed_objects[class_type]:
-                    bucketed_objects[class_type][obj.matching_bucket] = []
-                bucketed_objects[class_type][obj.matching_bucket].append(obj)
+                obj_bucket = obj.matching_bucket()
+                bucket = (class_type, obj_bucket)
+                if bucket not in bucketed_objects:
+                    bucketed_objects[bucket] = []
+                bucketed_objects[bucket].append(obj)
             return bucketed_objects
 
         my_objects = group_by_buckets(self.get_related_objects())
         other_objects = group_by_buckets(second_revision.get_related_objects())
 
-        # TODO: iterate through buckets and find matches
+        pairs = []
 
-        raise NotImplementedError("This must be implemented")
+        all_buckets = list(set([x for x in my_objects] + [x for x in other_objects]))
+        for bucket in all_buckets:
+            if bucket not in my_objects:
+                my_objects[bucket] = []
+            if bucket not in other_objects:
+                other_objects[bucket] = []
+            for obj in my_objects[bucket]:
+                found_match = None
+                for other_obj in other_objects[bucket]:
+                    if obj.matches(other_obj):
+                        found_match = other_obj
+                        break
+                if found_match:
+                    other_objects[bucket].remove(found_match)
+                pairs.append((obj, found_match))
+            for obj in other_objects[bucket]:
+                pairs.append((None, obj))
+
+        return pairs
 
     def save(self, *args, **kwargs):
         if self.parent_revision:

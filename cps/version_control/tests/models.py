@@ -1,6 +1,25 @@
-from django.db import models
+# Amir Keivan Mohtashami
 
-from version_control.models import VersionModel
+from django.db import models
+from version_control.models import Revision, VersionModel
+
+
+class DummyRevision(Revision):
+
+    parent_revision = models.ForeignKey("DummyRevision", null=True)
+    depth = models.IntegerField()
+    uid = models.CharField(max_length=100)
+
+    def get_related_objects(self):
+        return self.dummies.all()
+
+
+class DummyModel1(VersionModel):
+    revision = models.ForeignKey(DummyRevision, related_name='dummies')
+    name = models.CharField(max_length=100)
+
+    def matches(self, another_version):
+        return self.name == another_version.name
 
 class Question(VersionModel):
     question_text = models.CharField(max_length=200)
