@@ -37,7 +37,7 @@ class TestCase(VersionModel):
     _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+')
 
     def clean(self):
-        if self._input_uploaded_file is None and self._input_generation_command is None:
+        if self._input_uploaded_file is None and self._input_generation_parameters is None:
             raise ValidationError("Either a file or a way to generate it must be set")
 
     def save(self, *args, **kwargs):
@@ -45,9 +45,9 @@ class TestCase(VersionModel):
         We first determine whether input and output is a static file and then continue saving process normally.
         """
         if self._input_uploaded_file is not None:
-            self._input_generation_command = None
+            self._input_generation_parameters = None
             self._input_static = True
-        elif self._input_generation_command is not None:
+        elif self._input_generation_parameters is not None:
             self._input_static = False
         else:
             # Since a model must be cleaned before saving and this is checked in the validation method,

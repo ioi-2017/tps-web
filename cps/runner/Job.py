@@ -1,4 +1,4 @@
-from cps.local_settings import DEFAULT_TIME_LIMIT, DEFAULT_MEMORY_LIMIT
+from django.conf import settings
 from runner.Runnable import Runnable
 
 
@@ -7,7 +7,8 @@ class Job(Runnable):
     def __init__(self, command=None, input_files=None, executable_files=None,
                  stdin_filename=None, stdout_filename=None, stderr_filename=None,
                  files_to_extract=None,
-                 time_limit=DEFAULT_TIME_LIMIT, memory_limit=DEFAULT_MEMORY_LIMIT,
+                 time_limit=settings.DEFAULT_TIME_LIMIT,
+                 memory_limit=settings.DEFAULT_MEMORY_LIMIT,
                  description=None):
         """
         A job to be executed
