@@ -1,5 +1,4 @@
 # Amirmohsen Ahanchi
-from django.core.files.base import File
 
 class Runnable(object):
     def execute(self):
