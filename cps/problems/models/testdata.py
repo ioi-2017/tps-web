@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from file_repository.models import FileModel
-from problems.models import SourceFile
+from problems.models import SourceFile, JobFile
 from problems.models.problem import ProblemRevision
 from runner import get_execution_command
 from runner.models import JobModel
@@ -65,35 +65,19 @@ class TestCase(VersionModel):
         """
         In case the input is not static, generates the input using the generation command
         """
-
-        class InputGenerationJob(JobModel):
-            def __init__(self, test_case):
-                self.test_case = test_case
-                generation_command = get_execution_command(self.test_case._input_generator.source_language,
-                                                           self.test_case._input_generator.compiled_file().name)
-
-                generation_command.extend([self.test_case._input_generation_parameters])
-                generation_executable_files = [
-                    (self.test_case._input_generator.compiled_file(),
-                     self.test_case._input_generator.compiled_file().name)]
-                generation_files_to_extract = ["output.txt"]
-                generation_stdout_filename = "output.txt"
-                super(InputGenerationJob, self).__init__(command=generation_command,
-                                                         executable_files=generation_executable_files,
-                                                         stdout_filename=generation_stdout_filename,
-                                                         files_to_extract=generation_files_to_extract)
-
-            def execute(self):
-                super(InputGenerationJob, self).execute()
-                self.test_case._input_file = self.extracted_files["output.txt"]
-                self.test_case.save()
-
         if self._input_static is False:
             if self._input_generator is None:
                 raise AssertionError("static input dose not have generator")
             else:
-                input_generation_job = InputGenerationJob(test_case=self)
-                input_generation_job.run()
+                generation_command = get_execution_command(self._input_generator.source_language, "generator")
+                generation_command.extend([self._input_generation_parameters])
+                job = JobModel(command=generation_command, stdout_filename="output.txt")
+                job.add_file(file_model=self._input_generator.compiled_file(), filename="generator",
+                             type=JobFile.EXECUTABLE)
+                job_file = job.mark_file_for_extraction(filename="output.txt")
+                job.run()
+                self._input_file = job_file.file_model
+                self.save()
         else:
             raise AssertionError("can't generate input for static input")
 
@@ -124,40 +108,20 @@ class TestCase(VersionModel):
         In case the output is not static, generates the output using the generation command
         """
 
-        class OutputGenerationJob(JobModel):
-            def __init__(self, test_case):
-                self.test_case = test_case
-                input_file_for_generating_output = self.test_case.input_file
-                generation_command = get_execution_command(self.test_case._solution.source_language,
-                                                           self.test_case._solution.compiled_file().name)
-                generation_input_files = [(input_file_for_generating_output, input_file_for_generating_output.name)]
-                generation_executable_files = [
-                    (self.test_case._solution.compiled_file(), self.test_case._solution.compiled_file().name)]
-                generation_files_to_extract = ["output.txt"]
-                generation_stdout_filename = "output.txt"
-                generation_stdin_filename = input_file_for_generating_output.name
-                generation_time_limit = self.test_case.problem.problemdata.time_limit
-                generation_memory_limit = self.test_case.problem.problemdata.memory_limit
-                super(OutputGenerationJob, self).__init__(command=generation_command,
-                                                          input_files=generation_input_files,
-                                                          executable_files=generation_executable_files,
-                                                          stdin_filename=generation_stdin_filename,
-                                                          stdout_filename=generation_stdout_filename,
-                                                          files_to_extract=generation_files_to_extract,
-                                                          time_limit=generation_time_limit,
-                                                          memory_limit=generation_memory_limit)
-
-            def execute(self):
-                super(OutputGenerationJob, self).execute()
-                self.test_case._output_file = self.extracted_files["output.txt"]
-                self.test_case.save()
-
         if self._output_static is False:
             if self._solution is None:
                 raise AssertionError("test case does not have solution")
             else:
-                output_generation_job = OutputGenerationJob(test_case=self)
-                output_generation_job.run()
+                generation_command = get_execution_command(self._solution.source_language, "solution")
+                job = JobModel(command=generation_command, stdout_filename="output.txt", stdin_filename=self.input_file,
+                               time_limit=self.problem.problem_data.time_limit,
+                               memory_limit=self.problem.problem_data.memory_limit)
+                job.add_file(file_model=self.input_file, filename="input.txt", type=JobFile.READONLY)
+                job.add_file(file_model=self._solution.compiled_file(), filename="solution", type=JobFile.EXECUTABLE)
+                job_file = job.mark_file_for_extraction(filename="output.txt")
+                job.run()
+                self._output_file = job_file.file_model
+                self.save()
         else:
             raise AssertionError("can't generate output for static output")
 

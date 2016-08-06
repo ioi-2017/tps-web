@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from problems.models.problem import ProblemRevision
 from judge import SUPPORTED_SOURCE_LANGUAGES
 from runner import get_compilation_command
-from runner.Job import Job
+from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
 
 
@@ -33,28 +33,16 @@ class SourceFile(VersionModel):
         """
         use runner to compile a file and update compiled_file
         """
-
-        class CompileJob(Job):
-            def __init__(self, source_file):
-                self.source_file = source_file
-                name = self.source_file.source_file.name
-                self.compiled_file_name = name + ".out"
-                compile_command = get_compilation_command(self.source_file.source_language, name,
-                                                          self.compiled_file_name)
-                compile_input_files = [(self.source_file.source_file, name)]
-                compile_files_to_extract = [self.compiled_file_name]
-                super(CompileJob, self).__init__(command=compile_command,
-                                                 input_files=compile_input_files,
-                                                 files_to_extract=compile_files_to_extract)
-
-            def execute(self):
-                super(CompileJob, self).execute()
-                self.source_file._compiled_file = self.extracted_files[
-                    self.compiled_file_name]
-                self.source_file.save()
-
-        compile_job = CompileJob(source_file=self)
-        compile_job.run()
+        name = self.source_file.name
+        compiled_file_name = name + ".out"
+        compile_command = get_compilation_command(self.source_file.source_language, name,
+                                                  compiled_file_name)
+        job = JobModel(command=compile_command)
+        job.add_file(file_model=self.source_file, filename="input.txt", type=JobFile.READONLY)
+        job_file = job.mark_file_for_extraction(filename=compiled_file_name)
+        job.run()
+        self._compiled_file = job_file.file_model
+        self.save()
 
     def compiled_file(self):
         """
