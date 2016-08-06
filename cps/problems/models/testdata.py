@@ -7,7 +7,7 @@ from file_repository.models import FileModel
 from problems.models import SourceFile
 from problems.models.problem import ProblemRevision
 from runner import get_execution_command
-from runner.Job import Job
+from runner.models import JobModel
 from version_control.models import VersionModel
 
 
@@ -66,7 +66,7 @@ class TestCase(VersionModel):
         In case the input is not static, generates the input using the generation command
         """
 
-        class InputGenerationJob(Job):
+        class InputGenerationJob(JobModel):
             def __init__(self, test_case):
                 self.test_case = test_case
                 generation_command = get_execution_command(self.test_case._input_generator.source_language,
@@ -124,7 +124,7 @@ class TestCase(VersionModel):
         In case the output is not static, generates the output using the generation command
         """
 
-        class OutputGenerationJob(Job):
+        class OutputGenerationJob(JobModel):
             def __init__(self, test_case):
                 self.test_case = test_case
                 input_file_for_generating_output = self.test_case.input_file

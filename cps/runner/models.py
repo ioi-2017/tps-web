@@ -43,7 +43,7 @@ class JobFile(models.Model):
                             ))
 
 
-class JobModel(Runnable, models.Model):
+class JobModel(models.Model, Runnable):
     command = models.CharField(max_length=100)
     files = models.ManyToManyField(FileModel, through="JobFile")
 
