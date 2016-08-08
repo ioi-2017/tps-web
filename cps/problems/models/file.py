@@ -35,7 +35,7 @@ class SourceFile(VersionModel):
         """
         name = self.source_file.name
         compiled_file_name = name + ".out"
-        compile_command = get_compilation_command(self.source_file.source_language, name,
+        compile_command = get_compilation_command(self.source_language, name,
                                                   compiled_file_name)
         job = JobModel(command=compile_command)
         job.add_file(file_model=self.source_file, filename="input.txt", type=JobFile.READONLY)
