@@ -27,13 +27,13 @@ class TestCase(VersionModel):
     _input_static = models.BooleanField(
         editable=False,
     )
-    _input_file = models.ForeignKey(FileModel, editable=False, related_name='+')
+    _input_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
 
     _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output file"), null=True, related_name='+')
     _output_static = models.BooleanField(
         editable=False,
     )
-    _output_file = models.ForeignKey(FileModel, editable=False, related_name='+')
+    _output_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
     _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+')
 
     def clean(self):
@@ -141,7 +141,7 @@ class TestCase(VersionModel):
         """
         if self._output_static is False:
             if self._output_file is not None:
-                return self.output_file
+                return self._output_file
             else:
                 self.generate_output_file()
         else:
@@ -157,7 +157,7 @@ class TestCase(VersionModel):
         if self._input_static is True:
             return True
         else:
-            return self._output_file is not None
+            return self._input_file is not None
 
 
 class Subtask(VersionModel):

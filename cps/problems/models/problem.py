@@ -17,7 +17,7 @@ class ProblemRevision(Revision):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"), null=True)
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), null=True)
 
-    parent_revision = models.ForeignKey("ProblemRevision", verbose_name=_("parent revision"))
+    parent_revision = models.ForeignKey("ProblemRevision", verbose_name=_("parent revision"), null=True)
     depth = models.IntegerField(verbose_name=_("revision depth"))
 
 
