@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from file_repository.models import FileModel
 from problems.models import SourceFile, JobFile
 from problems.models.problem import ProblemRevision
+from problems.utils import run_with_input
 from runner import get_execution_command
 from runner.models import JobModel
 from version_control.models import VersionModel
@@ -112,15 +113,12 @@ class TestCase(VersionModel):
             if self._solution is None:
                 raise AssertionError("test case does not have solution")
             else:
-                generation_command = get_execution_command(self._solution.source_language, "solution")
-                job = JobModel(command=generation_command, stdout_filename="output.txt", stdin_filename=self.input_file,
-                               time_limit=self.problem.problem_data.time_limit,
-                               memory_limit=self.problem.problem_data.memory_limit)
-                job.add_file(file_model=self.input_file, filename="input.txt", type=JobFile.READONLY)
-                job.add_file(file_model=self._solution.compiled_file(), filename="solution", type=JobFile.EXECUTABLE)
-                job_file = job.mark_file_for_extraction(filename="output.txt")
-                job.run()
-                self._output_file = job_file.file_model
+                self._output_file = run_with_input(
+                    self._solution,
+                    self.input_file,
+                    self.problem.problem_data.time_limit,
+                    self.problem.problem_data.memory_limit
+                )[0]
                 self.save()
         else:
             raise AssertionError("can't generate output for static output")
