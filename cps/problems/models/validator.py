@@ -7,6 +7,7 @@ from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
+from runner.decorators import run_on_worker
 from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
 
@@ -34,7 +35,7 @@ class Validator(VersionModel):
         """
         if subtasks is None:
             subtasks = self.subtasks
-        for subtask in subtasks:
+        for subtask in subtasks.all():
             for testcase in subtask.testcases.all():
                 self.validate_testcase(testcase)
 
@@ -44,9 +45,9 @@ class Validator(VersionModel):
         """
         try:
             old_validator_result = ValidatorResult.objects.get(testcase=testcase, validator=self)
-        except ValidatorResult.DoesNotExist:
-            old_validator_result = None
-        old_validator_result.delete()
+            old_validator_result.delete()
+        except:
+            pass
         validator_result = ValidatorResult(testcase=testcase, validator=self)
         validator_result.save()
         validator_result.run()
@@ -57,6 +58,7 @@ class ValidatorResult(VersionModel):
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     validator = models.ForeignKey(Validator, verbose_name=_("validator"))
 
+    @run_on_worker
     def run(self):
         validation_command = get_execution_command(self.validator.code.source_language, "validator")
 
