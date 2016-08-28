@@ -1,3 +1,4 @@
+import os
 import tempfile
 
 from django.core.files import File
@@ -26,3 +27,12 @@ class SourceFileTests(TestCase):
         source_file = mommy.make(SourceFile, source_file=file_model)
         source_file.compile()
         self.assertEqual(source_file.compiled_file().name, "keyvan")
+
+    def test_compile(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, 'codes', 'empty.cpp')
+        file = open(file_path, 'r')
+        file_model = FileModel(file=File(file), name="code")
+        file_model.save()
+        source_file = mommy.make(SourceFile, source_language="c++", source_file=file_model)
+        source_file.compile()

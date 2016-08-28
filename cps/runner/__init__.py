@@ -1,9 +1,8 @@
 from logging import getLogger
 
-RUNNER_SUPPORTED_LANGUAGES = []
+RUNNER_SUPPORTED_LANGUAGES = ["c++"]
 
 logger = getLogger(__name__)
-
 
 
 def get_compilation_command(language, source_filenames, executable_filename):
@@ -16,8 +15,8 @@ def get_compilation_command(language, source_filenames, executable_filename):
     if language not in RUNNER_SUPPORTED_LANGUAGES:
         logger.error("Language" + language + "not supported in runner")
 
-    if language is "c++":
-        command_list = ["g++", source_filenames, "-O2", "-o", executable_filename]
+    if language == "c++":
+        command_list = ["/usr/bin/g++", source_filenames, "-O2", "-o", executable_filename]
         return command_list
 
 
@@ -29,3 +28,15 @@ def get_execution_command(language, executable_filename):
     """
     if language not in RUNNER_SUPPORTED_LANGUAGES:
         logger.error("Language" + language + "not supported in runner")
+
+    if language == "c++":
+        command_list = [".", executable_filename]
+        return command_list
+
+
+def get_source_file_name(language):
+    if language not in RUNNER_SUPPORTED_LANGUAGES:
+        logger.error("Language" + language + "not supported in runner")
+
+    if language == "c++":
+        return "code.cpp"

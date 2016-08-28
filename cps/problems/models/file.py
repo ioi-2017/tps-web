@@ -6,7 +6,7 @@ from file_repository.models import FileModel
 from django.utils.translation import ugettext_lazy as _
 from problems.models.problem import ProblemRevision
 from judge import SUPPORTED_SOURCE_LANGUAGES
-from runner import get_compilation_command
+from runner import get_compilation_command, get_source_file_name
 from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
 
@@ -33,12 +33,12 @@ class SourceFile(VersionModel):
         """
         use runner to compile a file and update compiled_file
         """
-        name = self.source_file.name
-        compiled_file_name = name + ".out"
-        compile_command = get_compilation_command(self.source_language, name,
+        code_name = get_source_file_name(self.source_language)
+        compiled_file_name = "code.out"
+        compile_command = get_compilation_command(self.source_language, code_name,
                                                   compiled_file_name)
-        job = JobModel(command=compile_command)
-        job.add_file(file_model=self.source_file, filename="input.txt", type=JobFile.READONLY)
+        job = JobModel(command=compile_command, compile_job=True)
+        job.add_file(file_model=self.source_file, filename=code_name, type=JobFile.READONLY)
         job_file = job.mark_file_for_extraction(filename=compiled_file_name)
         job.run()
         self._compiled_file = job_file.file_model
