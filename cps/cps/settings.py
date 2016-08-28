@@ -1,3 +1,5 @@
+# Amirmohsen Ahanchi
+
 """
 Django settings for cps project.
 
@@ -11,6 +13,8 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 import os
+
+import logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -126,8 +130,8 @@ try:
 except:
     pass
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'files')
-MEDIA_URL = "/files/"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'storage')
+MEDIA_URL = "/storage/"
 
 # project settings
 
@@ -143,10 +147,16 @@ DEFAULT_COMPILATION_TIME_LIMIT = 10
 # default compilation memory limit
 DEFAULT_COMPILATION_MEMORY_LIMIT = DEFAULT_MEMORY_LIMIT
 
-
 SANDBOX_TEMP_DIR = "/tmp"
+# SANDBOX_TEMP_DIR = os.path.join(BASE_DIR, "tmp")
 
 # sandbox
 SANDBOX_KEEP = True
 SANDBOX_USE_CGROUPS = True
 SANDBOX_MAX_FILE_SIZE = 1048576
+
+# isolate
+ISOLATE_PATH = os.path.join(BASE_DIR, "../isolate/isolate")
+
+log_level = logging.INFO
+logging.basicConfig(level=log_level)

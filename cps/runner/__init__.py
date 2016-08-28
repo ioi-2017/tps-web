@@ -1,5 +1,7 @@
 from logging import getLogger
 
+from runner.sandbox.sandbox import IsolateSandbox
+
 RUNNER_SUPPORTED_LANGUAGES = ["c++"]
 
 logger = getLogger(__name__)
@@ -40,3 +42,22 @@ def get_source_file_name(language):
 
     if language == "c++":
         return "code.cpp"
+
+
+def create_sandbox() -> IsolateSandbox:
+    try:
+        sandbox = IsolateSandbox()
+        return sandbox
+    except (IOError, OSError):
+        msg = "Couldn't create Sandbox"
+        logger.exception(msg)
+        raise AssertionError(msg)
+
+
+def delete_sandbox(sandbox: IsolateSandbox):
+    try:
+        sandbox.delete()
+    except (IOError, OSError):
+        msg = "Couldn't delete Sandbox"
+        logger.exception(msg)
+        raise AssertionError(msg)

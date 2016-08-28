@@ -20,6 +20,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Amirmohsen Ahanchi
+
+from datetime import datetime
 import io
 import logging
 import os
@@ -32,11 +35,10 @@ from functools import wraps, partial
 
 import gevent
 from gevent import subprocess
-#import gevent_subprocess as subprocess
+# import gevent_subprocess as subprocess
 from .cms.GeventUtils import copyfileobj, rmtree
 from .cmscommon.commands import pretty_print_cmdline
 from django.conf import settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +51,7 @@ def with_log(func):
     """Decorator for presuming that the logs are present.
 
     """
+
     @wraps(func)
     def newfunc(self, *args, **kwargs):
         """If they are not present, get the logs.
@@ -70,6 +73,7 @@ def wait_without_std(procs):
     return (list): a list of return codes.
 
     """
+
     def get_to_consume():
         """Amongst stdout and stderr of list of processes, find the
         ones that are alive and not closed (i.e., that may still want
@@ -118,6 +122,7 @@ class Truncator(io.RawIOBase):
     readinto method which isn't provided by text (unicode) streams.
 
     """
+
     def __init__(self, fobj, size):
         """Wrap fobj and give access to its first size bytes.
 
@@ -424,18 +429,27 @@ class IsolateSandbox(SandboxBase):
         # system to, which is why the outer directory exists with no read
         # permissions.
         self.inner_temp_dir = "/tmp"
+        self.run_dir = "/run"
         if temp_dir is None:
             temp_dir = settings.SANDBOX_TEMP_DIR
+
+        # use datetime for better debugging sandbox
+
+        # XXX: UTC time because of different user
+        # self.outer_temp_dir = tempfile.mkdtemp(prefix=datetime.now().strftime("%Y%m%d-%H%M%S"), dir=temp_dir)
         self.outer_temp_dir = tempfile.mkdtemp(dir=temp_dir)
         # Don't use os.path.join here, because the absoluteness of /tmp will
         # bite you.
-        self.path = self.outer_temp_dir + self.inner_temp_dir
+        self.path = self.outer_temp_dir + self.run_dir
+        self.temp_dir = self.outer_temp_dir + self.inner_temp_dir
         os.mkdir(self.path)
-        self.allow_writing_all()
+        os.mkdir(self.temp_dir)
+        self.allow_writing_all(self.temp_dir)
+        self.allow_writing_none(self.path)
 
         self.exec_name = 'isolate'
         self.box_exec = self.detect_box_executable()
-        self.info_basename = "run.log"   # Used for -M
+        self.info_basename = "run.log"  # Used for -M
         self.cmd_file = "commands.log"
         self.log = None
         self.exec_num = -1
@@ -443,25 +457,26 @@ class IsolateSandbox(SandboxBase):
                      self.path, self.box_exec)
 
         # Default parameters for isolate
-        self.box_id = box_id           # -b
+        self.box_id = box_id  # -b
         self.cgroup = settings.SANDBOX_USE_CGROUPS  # --cg
-        self.chdir = self.inner_temp_dir  # -c
-        self.dirs = []                 # -d
-        self.dirs += [(self.inner_temp_dir, self.path, "rw")]
-        self.preserve_env = False      # -e
-        self.inherit_env = []          # -E
-        self.set_env = {}              # -E
-        self.fsize = settings.SANDBOX_MAX_FILE_SIZE # -f
-        self.stdin_file = None         # -i
-        self.stack_space = None        # -k
-        self.address_space = None      # -m
-        self.stdout_file = None        # -o
-        self.max_processes = 1         # -p
-        self.stderr_file = None        # -r
-        self.timeout = None            # -t
-        self.verbosity = 0             # -v
+        self.chdir = self.run_dir  # -c
+        self.dirs = []  # -d
+        self.dirs += [(self.run_dir, self.path, "rw"),
+                      (self.inner_temp_dir, self.temp_dir, "rw")]
+        self.preserve_env = False  # -e
+        self.inherit_env = []  # -E
+        self.set_env = {}  # -E
+        self.fsize = settings.SANDBOX_MAX_FILE_SIZE  # -f
+        self.stdin_file = None  # -i
+        self.stack_space = None  # -k
+        self.address_space = None  # -m
+        self.stdout_file = None  # -o
+        self.max_processes = 1  # -p
+        self.stderr_file = None  # -r
+        self.timeout = None  # -t
+        self.verbosity = 0  # -v
         self.wallclock_timeout = None  # -w
-        self.extra_timeout = None      # -x
+        self.extra_timeout = None  # -x
 
         # Set common environment variables.
         # Specifically needed by Python, that searches the home for
@@ -470,7 +485,7 @@ class IsolateSandbox(SandboxBase):
 
         # Tell isolate to get the sandbox ready.
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
-            + ["--box-id=%d" % self.box_id] + ["--init"]
+                    + ["--box-id=%d" % self.box_id] + ["--init"]
         ret = subprocess.call(box_cmd)
         if ret != 0:
             raise SandboxInterfaceException(
@@ -486,24 +501,28 @@ class IsolateSandbox(SandboxBase):
         for directory in dirs:
             self.dirs.append((directory, None, "rw"))
 
-    def allow_writing_all(self):
+    def allow_writing_all(self, path=None):
         """Set permissions in such a way that any operation is allowed.
 
         """
-        os.chmod(self.path, 0o777)
-        for filename in os.listdir(self.path):
-            os.chmod(os.path.join(self.path, filename), 0o777)
+        if path is None:
+            path = self.path
+        os.chmod(path, 0o777)
+        for filename in os.listdir(path):
+            os.chmod(os.path.join(path, filename), 0o777)
 
-    def allow_writing_none(self):
+    def allow_writing_none(self, path=None):
         """Set permissions in such a way that the user cannot write anything.
 
         """
-        os.chmod(self.path, 0o755)
-        for filename in os.listdir(self.path):
-            os.chmod(os.path.join(self.path, filename), 0o755)
+        if path is None:
+            path = self.path
+        os.chmod(path, 0o755)
+        for filename in os.listdir(path):
+            os.chmod(os.path.join(path, filename), 0o755)
 
-    def allow_writing_only(self, paths):
-        """Set permissions in so that the user can write only some paths.
+    def allow_writing(self, paths, only_these=True):
+        """Set permissions in so that the user can write and read only some paths.
 
         paths ([string]): the only paths that the user is allowed to
             write.
@@ -516,9 +535,10 @@ class IsolateSandbox(SandboxBase):
                 open(path, "w").close()
 
         # Close everything, then open only the specified.
-        self.allow_writing_none()
+        if only_these:
+            self.allow_writing_none()
         for path in (os.path.join(self.path, path) for path in paths):
-            os.chmod(path, 0o722)
+            os.chmod(path, 0o766)
 
     def get_root_path(self):
         """Return the toplevel path of the sandbox.
@@ -537,12 +557,7 @@ class IsolateSandbox(SandboxBase):
         return (string): the path to a valid (hopefully) isolate.
 
         """
-        paths = [os.path.join('.', 'isolate', self.exec_name),
-                 os.path.join('.', self.exec_name)]
-        if '__file__' in globals():
-            paths += [os.path.abspath(os.path.join(
-                      os.path.dirname(__file__),
-                      '..', '..', 'isolate', self.exec_name))]
+        paths = [settings.ISOLATE_PATH]
         paths += [self.exec_name]
         for path in paths:
             # Consider only non-directory, executable files with SUID flag on.
@@ -626,11 +641,22 @@ class IsolateSandbox(SandboxBase):
         try:
             with self.get_file(info_file) as log_file:
                 for line in log_file:
+                    # XXX
+                    line = line.decode("utf-8")
                     key, value = line.strip().split(":", 1)
                     if key in self.log:
                         self.log[key].append(value)
                     else:
                         self.log[key] = [value]
+        except IOError as error:
+            raise IOError("Error while reading execution log file %s. %r" %
+                          (info_file, error))
+
+    def get_log_string(self):
+        info_file = "%s.%d" % (self.info_basename, self.exec_num)
+        try:
+            with self.get_file(info_file) as log_file:
+                return log_file.read().decode("utf-8")
         except IOError as error:
             raise IOError("Error while reading execution log file %s. %r" %
                           (info_file, error))
@@ -699,6 +725,16 @@ class IsolateSandbox(SandboxBase):
     KILLING_SYSCALL_RE = re.compile("^Forbidden syscall (.*)$")
 
     @with_log
+    def get_message(self):
+        """Return the message returned by isolate.
+
+        return (string): returned message, or None.
+        """
+        if 'message' in self.log:
+            return self.log['message'][0]
+        return None
+
+    @with_log
     def get_killing_syscall(self):
         """Return the syscall that triggered the killing of the
         sandboxed process, reading the log if necessary.
@@ -754,7 +790,7 @@ class IsolateSandbox(SandboxBase):
         if 'XX' in status_list:
             return self.EXIT_SANDBOX_ERROR
         # New version seems not to report OK
-        #elif 'OK' in status_list:
+        # elif 'OK' in status_list:
         #    return self.EXIT_OK
         elif 'FO' in status_list:
             return self.EXIT_SYSCALL
@@ -782,22 +818,22 @@ class IsolateSandbox(SandboxBase):
         status = self.get_exit_status()
         if status == self.EXIT_OK:
             return "Execution successfully finished (with exit code %d)" % \
-                self.get_exit_code()
+                   self.get_exit_code()
         elif status == self.EXIT_SANDBOX_ERROR:
             return "Execution failed because of sandbox error"
         elif status == self.EXIT_SYSCALL:
             return "Execution killed because of forbidden syscall %s" % \
-                self.get_killing_syscall()
+                   self.get_killing_syscall()
         elif status == self.EXIT_FILE_ACCESS:
             return "Execution killed because of forbidden file access: %s" \
-                % self.get_forbidden_file_error()
+                   % self.get_forbidden_file_error()
         elif status == self.EXIT_TIMEOUT:
             return "Execution timed out"
         elif status == self.EXIT_TIMEOUT_WALL:
             return "Execution timed out (wall clock limit exceeded)"
         elif status == self.EXIT_SIGNAL:
             return "Execution killed with signal %d" % \
-                self.get_killing_signal()
+                   self.get_killing_signal()
         elif status == self.EXIT_NONZERO_RETURN:
             return "Execution failed because the return code was nonzero"
 
@@ -810,7 +846,7 @@ class IsolateSandbox(SandboxBase):
         return (string): the absolute path of the file inside the sandbox.
 
         """
-        return os.path.join(self.inner_temp_dir, path)
+        return os.path.join(self.run_dir, path)
 
     # XXX - Temporarily disabled (i.e., set as private), in order to
     # ease interface while implementing other sandboxes, since it's
@@ -933,7 +969,7 @@ class IsolateSandbox(SandboxBase):
 
         # Tell isolate to cleanup the sandbox.
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
-            + ["--box-id=%d" % self.box_id]
+                  + ["--box-id=%d" % self.box_id]
         subprocess.call(box_cmd + ["--cleanup"])
 
         # Delete the working directory.
