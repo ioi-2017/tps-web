@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+    <table class="table table-striped table-responsive">
+    <thead>
+        <tr>
+            <th class="col-md-1">#</th>
+            <th class="col-md-8">{% trans 'Name' %}</th>
+            <th class="col-md-1">{% trans 'Revision' %}</th>
+            <th class="col-md-2">{% trans 'Status' %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for problem in problems %}
+        <tr>
+            <td>{{ forloop.revcounter }}</td>
+            <td>{{ problem.master_revision.problem_data.title }}({{problem.master_revision.problem_data.code_name}})</td>
+            <td>{{ problem.master_revision.depth }}</td>
+            <td><i class="fa fa-check"></i> </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}

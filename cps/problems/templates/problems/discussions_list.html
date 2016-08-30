@@ -1,0 +1,30 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% block content %}
+    <table class="table table-striped table-responsive">
+    <thead>
+        <tr>
+            <th class="col-md-1">#</th>
+            <th class="col-md-9">{% trans 'Title' %}</th>
+            <th class="col-md-2">{% trans 'Priority' %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for discussion in discussions %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td> {{ discussion.title }}<br />
+                <p class="text-muted">
+                    <small>
+                        {% blocktrans with author=discussion.last_comment.author post_date=discussion.last_comment.post_date %}
+                        Last comment by {{ author }} at {{ start_date }}.
+                        {% endblocktrans %}
+                    </small>
+                </p>
+            </td>
+            <td><p class="badge"> {{ discussion.get_priority_display }}</p></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}
