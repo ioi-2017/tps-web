@@ -1,0 +1,20 @@
+[
+  {
+    "fields": {
+      "name": "post_comment_on_problem",
+      "description": "post comment on problem"
+    },
+    "model": "accounts.permission",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "name": "editor",
+      "permissions": [
+        1
+      ]
+    },
+    "model": "accounts.role",
+    "pk": 1
+  }
+]

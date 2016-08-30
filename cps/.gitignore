@@ -63,5 +63,3 @@ target/
 .venv/
 
 db.sqlite3
-
-cps/local_settings.py

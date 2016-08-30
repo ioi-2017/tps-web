@@ -1,0 +1,8 @@
+<a href="{% url 'account_logout' %}">Log Out</a>
+
+<h1>Your Profile</h1>
+<ul>
+    <li>Name: {{ user.get_full_name }}</li>
+    <li>E-mail: {{ user.email }}</li>
+</ul>
+

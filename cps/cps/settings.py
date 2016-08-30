@@ -1,4 +1,6 @@
+# Amir Keivan Mohtashami
 # Amirmohsen Ahanchi
+# Mohammad Javad Naderi
 
 """
 Django settings for cps project.
@@ -30,22 +32,36 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+SITE_ID = 1
+
 # Application definition
 
 INSTALLED_APPS = [
+    # Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'accounts',
+    'django.contrib.sites',
+
+    # Vendor Apps
+
+    # CPS Apps
+    'accounts',
     'problems',
     'judge',
     'trader',
     'version_control',
     'file_repository',
     'runner',
+
+    # Allauth Apps (must be after accounts)
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -88,6 +104,22 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+
+# Accounts and Auth
+# https://django-allauth.readthedocs.io/en/latest/configuration.html
+
+AUTH_USER_MODEL = 'accounts.User'
+
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
