@@ -1,0 +1,43 @@
+body, html {
+    background-color: #ececec;
+}
+
+@media (min-width: 768px) {
+    .pull-right-no-xs {
+      float: right !important;
+    }
+}
+
+.navbar-placeholder {
+    min-height: 50px;
+}
+
+
+.navbar-inverse .sidebar     > li > a {
+  color: #9d9d9d;
+
+}
+
+.navbar-inverse .sidebar > li > a:hover,
+.navbar-inverse .sidebar > li > a:focus {
+
+  background-color: #5e5e5e;
+}
+
+
+.sidebar > li > a {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: 20px;
+}
+
+.navbar-fixed-side
+{
+    min-height:100%;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-fixed-side .navbar-nav {
+    height: 100%;
+}
