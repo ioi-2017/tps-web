@@ -1,4 +1,4 @@
-from problems.models.comment import *
+from problems.models.discussion import *
 from problems.models.file import *
 from problems.models.problem import *
 from problems.models.solution import *
