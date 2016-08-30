@@ -11,6 +11,9 @@ from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
 
 
+__all__ = ["Attachment", "SourceFile"]
+
+
 class Attachment(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     file = models.ForeignKey(FileModel, verbose_name=_("file"))
@@ -27,7 +30,7 @@ class SourceFile(VersionModel):
     )
 
     _compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
-                                       related_name="+", null=True)
+                                       related_name="+", null=True, blank=True  )
 
     def compile(self):
         """

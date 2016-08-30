@@ -7,6 +7,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from version_control.models import Revision, VersionModel
 
+__all__= ["Problem", "ProblemRevision", "ProblemData"]
+
 
 class Problem(models.Model):
 
@@ -16,7 +18,7 @@ class Problem(models.Model):
 
 class ProblemRevision(Revision):
 
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"), null=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"), null=True, blank=True)
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), null=True, blank=True)
 
     parent_revision = models.ForeignKey("ProblemRevision", verbose_name=_("parent revision"), null=True, blank=True)

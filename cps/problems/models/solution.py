@@ -9,6 +9,9 @@ from problems.models.testdata import TestCase, Subtask
 from version_control.models import VersionModel
 
 
+__all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore"]
+
+
 class Solution(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     code = models.ForeignKey(SourceFile, verbose_name=_("code"))

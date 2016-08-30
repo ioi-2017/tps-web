@@ -12,6 +12,8 @@ PRIORITIES = (
     ("3", 'high')
 )
 
+__all__ = ["Discussion", "Comment"]
+
 
 class Discussion(models.Model):
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), related_name='discussions')

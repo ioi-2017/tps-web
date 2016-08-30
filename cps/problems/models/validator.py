@@ -11,6 +11,7 @@ from runner.decorators import run_on_worker
 from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
 
+__all__ = ["Validator", "ValidatorResult"]
 
 class Validator(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))

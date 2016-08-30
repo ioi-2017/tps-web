@@ -4,12 +4,14 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from file_repository.models import FileModel
-from problems.models import SourceFile, JobFile
+from problems.models import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input
 from runner import get_execution_command
-from runner.models import JobModel
+from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
+
+__all__ = ["TestCase", "Subtask"]
 
 
 class TestCase(VersionModel):
