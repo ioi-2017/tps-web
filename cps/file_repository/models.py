@@ -12,4 +12,4 @@ class FileModel(models.Model):
     description = models.TextField(verbose_name=_("description"), blank=True)
 
     def __str__(self):
-        return str(self.file)
+        return self.name

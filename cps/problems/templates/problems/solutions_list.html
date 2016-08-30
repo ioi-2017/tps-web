@@ -1,0 +1,50 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+
+    <h2> {% trans 'Solutions' %} </h2>
+    <div class="row">
+        <a href="{% problem_url "problems:add_solution" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a solution' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+        {% if solutions %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <td class="col-md-1">#</td>
+                        <td class="col-md-10">{% trans 'Source Code' %}</td>
+                        <td class="col-md-2"></td>
+                    </tr>
+                </thead>
+                <tbody>
+            {% for solution in solutions %}
+                    <tr>
+                        <td> {{ forloop.counter }} </td>
+                        <td> {{ solution.code }} </td>
+                        <td>
+                            <a class="text-primary" href='{% problem_url "problems:edit_solution" solution.id %}'>
+                                <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
+                            <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this solution?' %}' href='{% problem_url "problems:delete_solution" solution.id %}'>
+                                <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                        </td>
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No solution exists' %}
+            </h4>
+        {% endif %}
+    </div>
+    {% csrf_token %}
+{% endblock %}
+{% block foot_js %}
+    {{ block.super }}
+{% endblock %}

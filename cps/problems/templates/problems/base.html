@@ -1,27 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="col-xs-5 col-md-3">
-        <div class="navbar navbar-inverse navbar-fixed-side">
-
-                <ul class="nav sidebar">
-                    <li>
-                        <a href="#">test</a>
-                    </li>
-                    <li>
-                        <a href="#">test</a>
-                    </li>
-                    <li>
-                        <a href="#">test</a>
-                    </li>
-
-                </ul>
-
-        </div>
-    </div>
-    <div class="col-xs-7 col-md-9">
-        <div class="container-fluid">
-            {% block problem_content %}
-            {% endblock %}
-        </div>
+    <div class="container-fluid">
+        {% block problem_content %}
+        {% endblock %}
     </div>
 {% endblock %}

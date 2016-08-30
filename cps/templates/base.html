@@ -164,8 +164,11 @@
         {% endblock %}
     </div>
     {% block foot_js %}
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <script src="{% static 'jquery/js/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'js/js.cookie.js' %}"></script>
+        <script src="{% static 'js/http_requests.js' %}"></script>
+
     {% endblock %}
 </body>
 
