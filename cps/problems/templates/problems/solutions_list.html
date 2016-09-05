@@ -4,8 +4,9 @@
 {% load problems_tags %}
 
 {% block problem_content %}
-
-    <h2> {% trans 'Solutions' %} </h2>
+    <div class="row">
+        <h2> {% trans 'Solutions' %} </h2>
+    </div>
     <div class="row">
         <a href="{% problem_url "problems:add_solution" %}" class="btn btn-success">
             <i class="fa fa-plus"></i> {% trans 'Add a solution' %}

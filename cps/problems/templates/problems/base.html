@@ -1,4 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{%  block content_header %}
+    <nav class="navbar navbar-inverse">
+        <div class="navbar-header">
+            <a href="#" class="navbar-brand"> {{ revision.name }} </a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li><a href="{% problem_url "problems:overview" %}" >{% trans 'Overview' %}</a></li>
+            <li><a href="{% problem_url "problems:files" %}" >{% trans 'Files' %}</a></li>
+            <li><a href="{% problem_url "problems:solutions" %}" >{% trans 'Solutions' %}</a></li>
+            <li><a href="{% problem_url "problems:discussions" %}" >{% trans 'Discussions' %}</a></li>
+        </ul>
+
+    </nav>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         {% block problem_content %}

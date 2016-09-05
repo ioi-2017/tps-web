@@ -1,0 +1,88 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Sources' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_sourcefile" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Upload a source' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+    {% if source_files %}
+        <table class="table table-responsive table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th> # </th>
+                    <th> {% trans 'Name' %} </th>
+                    <th> {% trans 'File' %} </th>
+                    <th> {% trans 'Language' %} </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for source_file in source_files %}
+                <tr>
+                    <td> {{ forloop.counter }} </td>
+                    <td> {{ source_file.name }} </td>
+                    <td> {{ source_file.source_file }} </td>
+                    <td> {{ source_file.source_language }} </td>
+                    <td>
+                        <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this source?' %}' href='{% problem_url "problems:delete_sourcefile" source_file.id %}'>
+                            <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h4 class="text-muted">
+            {% trans 'No source file uploaded' %}
+        </h4>
+    {% endif %}
+    </div>
+    <div class="row">
+        <h2> {% trans 'Attachments' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_attachment" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Upload an attachment' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+    {% if attachments %}
+        <table class="table table-responsive table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th> # </th>
+                    <th> {% trans 'Name' %} </th>
+                    <th> {% trans 'File' %} </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for attachment in attachments %}
+                <tr>
+                    <td> {{ forloop.counter }} </td>
+                    <td> {{ attachment.name }} </td>
+                    <td> {{ attachment.file }} </td>
+                    <td>
+                        <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this attachment?' %}' href='{% problem_url "problems:delete_attachment" attachment.id %}'>
+                            <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h4 class="text-muted">
+            {% trans 'No attachment uploaded' %}
+        </h4>
+    {% endif %}
+    </div>
+{% endblock %}

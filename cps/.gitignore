@@ -63,3 +63,5 @@ target/
 .venv/
 
 db.sqlite3
+
+storage/

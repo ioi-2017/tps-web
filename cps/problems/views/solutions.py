@@ -1,6 +1,8 @@
 from django.views.generic import View
 from .decorators import authenticate_problem_access
-from problems.views.utils import render_for_problem
+from problems.models import Solution
+from .generics import ProblemObjectDeleteView
+from .utils import render_for_problem
 
 __all__ = ["SolutionAddView", "SolutionDeleteView", "SolutionEditView", "SolutionsListView"]
 
@@ -24,5 +26,9 @@ class SolutionEditView(View):
     pass
 
 
-class SolutionDeleteView(View):
-    pass
+SolutionDeleteView = ProblemObjectDeleteView.as_view(
+    object_type=Solution,
+    permissions_required="delete_sourcefile",
+    redirect_to="problems:files"
+)
+

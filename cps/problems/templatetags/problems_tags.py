@@ -9,9 +9,9 @@ class ProblemURLNode(template.Node):
         self.problem_id = problem_id
         self.revision_id = revision_id
         self.url_node = url_node
+        self.url_node.args = [self.problem_id, self.revision_id] + self.url_node.args
 
     def render(self, context):
-        self.url_node.args = [self.problem_id, self.revision_id] + self.url_node.args
         return self.url_node.render(context)
 
 

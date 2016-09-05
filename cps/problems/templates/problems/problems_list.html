@@ -14,7 +14,11 @@
         {% for problem in problems %}
         <tr>
             <td>{{ forloop.revcounter }}</td>
-            <td>{{ problem.master_revision.problem_data.title }}({{problem.master_revision.problem_data.code_name}})</td>
+            <td>
+                <a href="{% url "problems:overview" problem.id problem.master_revision.id %}">
+                    {{ problem.master_revision.problem_data.title }}({{problem.master_revision.problem_data.code_name}})
+                </a>
+            </td>
             <td>{{ problem.master_revision.depth }}</td>
             <td><i class="fa fa-check"></i> </td>
         </tr>

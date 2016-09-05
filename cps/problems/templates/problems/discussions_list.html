@@ -16,8 +16,8 @@
             <td> {{ discussion.title }}<br />
                 <p class="text-muted">
                     <small>
-                        {% blocktrans with author=discussion.last_comment.author post_date=discussion.last_comment.post_date %}
-                        Last comment by {{ author }} at {{ start_date }}.
+                        {% blocktrans with author=discussion.author start_date=discussion.start_date %}
+                        Created by {{ author }} at {{ start_date }}
                         {% endblocktrans %}
                     </small>
                 </p>

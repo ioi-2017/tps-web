@@ -5,7 +5,7 @@ from django.db import models
 from file_repository.models import FileModel
 from django.utils.translation import ugettext_lazy as _
 from problems.models.problem import ProblemRevision
-from judge import SUPPORTED_SOURCE_LANGUAGES
+from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
 from runner import get_compilation_command, get_source_file_name
 from runner.models import JobModel, JobFile
 from version_control.models import VersionModel
@@ -16,15 +16,17 @@ __all__ = ["Attachment", "SourceFile"]
 
 class Attachment(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
+    name = models.CharField(max_length=256, verbose_name=_("name"))
     file = models.ForeignKey(FileModel, verbose_name=_("file"))
 
 
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
+    name = models.CharField(max_length=256, verbose_name=_("name"))
     source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
     source_language = models.CharField(
-        choices=SUPPORTED_SOURCE_LANGUAGES,
+        choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
         null=True,
         max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
     )

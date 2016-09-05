@@ -1,0 +1,24 @@
+{% if data %}
+    <table class="table table-responsive table-bordered table-striped">
+        <thead>
+            <tr>
+                <th> # </th>
+            {% for title in titles %}
+                <th> {{ title }} </th>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for obj, obj_data in data.items %}
+            <tr>
+                <td> {{ forloop.counter }} </td>
+
+                {% for item in obj_data %}
+                    <td> {{ item }} </td>
+                {% endfor %}
+                <td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
