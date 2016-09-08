@@ -43,6 +43,7 @@ class SourceFile(VersionModel):
         compile_command = get_compilation_command(self.source_language, code_name,
                                                   compiled_file_name)
         job = JobModel(command=compile_command, compile_job=True)
+        job.save()
         job.add_file(file_model=self.source_file, filename=code_name, type=JobFile.READONLY)
         job_file = job.mark_file_for_extraction(filename=compiled_file_name)
         job.run()
@@ -56,3 +57,6 @@ class SourceFile(VersionModel):
         if self._compiled_file is None:
             self.compile()
         return self._compiled_file
+
+    def is_compiled(self):
+        return self._compiled_file is not None

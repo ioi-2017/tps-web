@@ -8,7 +8,6 @@ __all__ = ["SolutionAddView", "SolutionDeleteView", "SolutionEditView", "Solutio
 
 
 class SolutionsListView(View):
-
     @authenticate_problem_access("read_solutions")
     def get(self, request, problem, revision):
         solutions = revision.solution_set.all()
@@ -31,4 +30,3 @@ SolutionDeleteView = ProblemObjectDeleteView.as_view(
     permissions_required="delete_sourcefile",
     redirect_to="problems:files"
 )
-

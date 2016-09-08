@@ -1,4 +1,6 @@
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.views.generic import View
 
 from problems.forms.files import SourceFileAddForm, AttachmentAddForm
@@ -23,7 +25,6 @@ class FilesListView(View):
 
 
 class SourceFileAddView(ProblemObjectAddView):
-
     template_name = "problems/add_sourcefile.html"
     model_form = SourceFileAddForm
     permissions_required = ["add_files"]
@@ -36,7 +37,6 @@ class SourceFileAddView(ProblemObjectAddView):
 
 
 class AttachmentAddView(ProblemObjectAddView):
-
     template_name = "problems/add_attachment.html"
     model_form = AttachmentAddForm
     permissions_required = ["add_files"]
@@ -46,6 +46,20 @@ class AttachmentAddView(ProblemObjectAddView):
             "problem_id": problem.id,
             "revision_id": revision.id,
         })
+
+
+class SourceFileCompileView(View):
+    @authenticate_problem_access("compile")
+    def get(self, request, problem, revision, object_id):
+        obj = get_object_or_404(SourceFile, **{
+            "problem_id": revision.id,
+            "id": object_id
+        })
+        obj.compile()
+        return HttpResponseRedirect(reverse("problems:files", kwargs={
+            "problem_id": problem.id,
+            "revision_id": revision.id
+        }))
 
 
 SourceFileDeleteView = ProblemObjectDeleteView.as_view(

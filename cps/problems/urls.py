@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from problems.views.files import SourceFileCompileView
 from .views import *
 
 problem_urls = ([
@@ -14,6 +15,7 @@ problem_urls = ([
         url(r'^solutions/add/$', SolutionAddView.as_view(), name="add_solution"),
         url(r'^solutions/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solutions/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
+        url(r'^sourcefile/(?P<object_id>\d+)/compile/$', SourceFileCompileView.as_view(), name="compile_sourcefile"),
     ], None, None)
 
 urlpatterns = [

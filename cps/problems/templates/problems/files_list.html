@@ -21,6 +21,8 @@
                     <th> {% trans 'Name' %} </th>
                     <th> {% trans 'File' %} </th>
                     <th> {% trans 'Language' %} </th>
+                    <th> {% trans 'Compile Status' %}</th>
+                    <th></th>
                     <th></th>
                 </tr>
             </thead>
@@ -31,6 +33,17 @@
                     <td> {{ source_file.name }} </td>
                     <td> {{ source_file.source_file }} </td>
                     <td> {{ source_file.source_language }} </td>
+                    <td>
+                        {% if source_file.is_compiled %}
+                            <i class="glyphicon glyphicon-ok"></i>
+                        {% else %}
+                            <i class="glyphicon glyphicon-remove"></i>
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        <a href="{% problem_url "problems:compile_sourcefile" %}" class="btn btn-primary"> {% trans 'Compile' %}</a>
+                    </td>
                     <td>
                         <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this source?' %}' href='{% problem_url "problems:delete_sourcefile" source_file.id %}'>
                             <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
