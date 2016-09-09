@@ -257,10 +257,11 @@ class JobModel(models.Model):
                         # and will most likely change in the future
 
                         # TODO: is this the best efficient way to do it in django (two saves)?
-                        file_model = FileModel(file=File(fobj), description=description)
+                        file_model = FileModel(name=filename, file=File(fobj), description=description)
                         file_model.save()
                         job_file.file_model = file_model
                         job_file.save()
+
         except (IOError, OSError):
             msg = "Problem in extracting requested files from sandbox"
             logger.exception(msg)

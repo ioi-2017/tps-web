@@ -1,7 +1,6 @@
 Django==1.9.7
 django-allauth==0.25.2
-gevent==1.1.2
-greenlet==0.4.10
 mock
 model_mommy
 celery
+django-bootstrap3

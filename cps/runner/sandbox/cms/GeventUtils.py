@@ -54,7 +54,6 @@ import sys
 from shutil import copymode, copystat, _samefile, Error, \
     SpecialFileError, _basename, _destinsrc
 
-import gevent
 
 
 # XXX Use buffer_size=io.DEFAULT_BUFFER_SIZE?
@@ -68,8 +67,6 @@ def copyfileobj(fsrc, fdst, buffer_size=16 * 1024):
     while len(buf) > 0:
         while len(buf) > 0:
             written = fdst.write(buf)
-            # Cooperative yield.
-            gevent.sleep(0)
             if written is None:
                 break
             buf = buf[written:]
@@ -166,7 +163,6 @@ def copytree(src, dst, symlinks=False, ignore=None):
                 os.symlink(linkto, dstname)
             elif os.path.isdir(srcname):
                 copytree(srcname, dstname, symlinks, ignore)
-                gevent.sleep(0)
             else:
                 # Will raise a SpecialFileError for unsupported file types
                 copy2(srcname, dstname)
@@ -219,7 +215,6 @@ def rmtree(path, ignore_errors=False, onerror=None):
             mode = 0
         if stat.S_ISDIR(mode):
             rmtree(fullname, ignore_errors, onerror)
-            gevent.sleep(0)
         else:
             try:
                 os.remove(fullname)

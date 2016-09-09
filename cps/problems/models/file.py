@@ -47,6 +47,7 @@ class SourceFile(VersionModel):
         job.add_file(file_model=self.source_file, filename=code_name, type=JobFile.READONLY)
         job_file = job.mark_file_for_extraction(filename=compiled_file_name)
         job.run()
+        job_file.refresh_from_db()
         self._compiled_file = job_file.file_model
         self.save()
 

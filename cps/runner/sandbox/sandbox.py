@@ -22,20 +22,16 @@
 
 # Amirmohsen Ahanchi
 
-from datetime import datetime
 import io
 import logging
 import os
 import re
-import resource
 import select
 import stat
 import tempfile
 from functools import wraps, partial
 
-import gevent
-from gevent import subprocess
-# import gevent_subprocess as subprocess
+import subprocess
 from .cms.GeventUtils import copyfileobj, rmtree
 from .cmscommon.commands import pretty_print_cmdline
 from django.conf import settings
