@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from problems.views.files import SourceFileCompileView
+from problems.views.problems import ProblemAddView
 from .views import *
 
 problem_urls = ([
@@ -22,5 +23,5 @@ urlpatterns = [
     url(r'^$', ProblemsListView.as_view(), name="problems"),
     url(r'^problem/(?P<problem_id>\d+)/', problem_urls),
     url(r'^problem/(?P<problem_id>\d+)/revision/(?P<revision_id>\d+)/', problem_urls),
-
+    url(r'^problem/add/$', ProblemAddView.as_view(), name="add_problem"),
 ]

@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <h2> {% trans 'Problems' %} </h2>
+        </div>
+        <div class="row">
+            <a href="/problem/add/" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans 'Add a problem' %}
+            </a>
+        </div>
+    <br />
+    <div class="row">
     <table class="table table-striped table-responsive">
     <thead>
         <tr>
@@ -25,4 +36,6 @@
         {% endfor %}
     </tbody>
     </table>
+    </div>
+    </div>
 {% endblock %}

@@ -7,26 +7,26 @@ from django.utils.translation import ugettext_lazy as _
 
 from version_control.models import Revision, VersionModel
 
-__all__= ["Problem", "ProblemRevision", "ProblemData"]
+__all__ = ["Problem", "ProblemRevision", "ProblemData"]
 
 
 class Problem(models.Model):
-
-    master_revision = models.ForeignKey("ProblemRevision", verbose_name=_("master revision"), related_name='+')
+    master_revision = models.ForeignKey("ProblemRevision", verbose_name=_("master revision"), related_name='+',
+                                        null=True, blank=True)
     users = models.ManyToManyField("accounts.User", through='accounts.UserProblem', related_name='problems')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"))
+    creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
 
 
 class ProblemRevision(Revision):
-
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"), null=True, blank=True)
-    problem = models.ForeignKey(Problem, verbose_name=_("problem"), null=True, blank=True)
+    problem = models.ForeignKey(Problem, verbose_name=_("problem"))
 
     parent_revision = models.ForeignKey("ProblemRevision", verbose_name=_("parent revision"), null=True, blank=True)
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
 
 
 class ProblemData(VersionModel):
-
     problem = models.OneToOneField(ProblemRevision, related_name='problem_data')
     code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
@@ -39,6 +39,5 @@ class ProblemData(VersionModel):
 
     checker = models.ForeignKey("SourceFile", verbose_name=_("checker"), null=True, blank=True)
 
-    time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"))
-    memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"))
-
+    time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
+    memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
