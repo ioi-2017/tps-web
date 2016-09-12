@@ -61,3 +61,6 @@ class SourceFile(VersionModel):
 
     def is_compiled(self):
         return self._compiled_file is not None
+
+    def __str__(self):
+        return self.name
