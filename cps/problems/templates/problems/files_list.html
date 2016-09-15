@@ -42,7 +42,7 @@
 
                     </td>
                     <td>
-                        <a href="{% problem_url "problems:compile_sourcefile" %}" class="btn btn-primary"> {% trans 'Compile' %}</a>
+                        <a href="{% problem_url "problems:compile_sourcefile" source_file.id %}" class="btn btn-primary"> {% trans 'Compile' %}</a>
                     </td>
                     <td>
                         <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this source?' %}' href='{% problem_url "problems:delete_sourcefile" source_file.id %}'>

@@ -15,16 +15,16 @@ __all__ = ["Validator", "ValidatorResult"]
 
 class Validator(VersionModel):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    code = models.OneToOneField(SourceFile, verbose_name=_("source code"))
+    code = models.ForeignKey(SourceFile, verbose_name=_("source code"))
     _subtasks = models.ManyToManyField(Subtask, verbose_name=_("subtasks"))
-    _validate_all_subtasks = models.BooleanField(
+    global_validator = models.BooleanField(
         verbose_name=_("all subtasks"),
         help_text=_("if marked, it validates all subtasks")
     )
 
     @property
     def subtasks(self):
-        if self._validate_all_subtasks:
+        if self.global_validator:
             return self.problem.subtasks.all()
         else:
             return self._subtasks

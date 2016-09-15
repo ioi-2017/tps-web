@@ -1,8 +1,13 @@
 from django.conf.urls import url
 
+from problems.views.checker import CheckerChooseView
 from problems.views.files import SourceFileCompileView
 from problems.views.problems import ProblemAddView
+from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
 from .views import *
+
+
+
 
 problem_urls = ([
         url(r'^$', Overview.as_view(), name="overview"),
@@ -17,7 +22,12 @@ problem_urls = ([
         url(r'^solutions/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solutions/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
         url(r'^sourcefile/(?P<object_id>\d+)/compile/$', SourceFileCompileView.as_view(), name="compile_sourcefile"),
-    ], None, None)
+        url(r'^validators/$', ValidatorsListView.as_view(), name="validators"),
+        url(r'^validators/(?P<validator_id>\d+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),
+        url(r'^validators/(?P<validator_id>\d+)/delete/$', ValidatorDeleteView, name="delete_validator"),
+        url(r'^validators/add/$', ValidatorAddView.as_view(), name="add_validator"),
+        url(r'^checker/$', CheckerChooseView.as_view(), name="checker"),
+        ], None, None)
 
 urlpatterns = [
     url(r'^$', ProblemsListView.as_view(), name="problems"),

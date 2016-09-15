@@ -1,0 +1,43 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-6">
+            <h1>{% trans 'Choose a checker' %}</h1>
+            <form class="form-horizontal" method="post" action="{% problem_url "problems:checker" %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% bootstrap_field form.sourcefile %}
+                <div class="form-group">
+                    <button type="submit" class="form-control btn btn-success">
+                        {% trans 'Submit' %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        {% if checker %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <td class="col-md-10">{% trans 'Source Code' %}</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> {{ checker }} </td>
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No checker exists' %}
+            </h4>
+        {% endif %}
+    </div>
+{% endblock %}

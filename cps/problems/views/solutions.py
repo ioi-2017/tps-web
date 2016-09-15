@@ -39,6 +39,6 @@ class SolutionEditView(View):
 
 SolutionDeleteView = ProblemObjectDeleteView.as_view(
     object_type=Solution,
-    permissions_required="delete_sourcefile",
-    redirect_to="problems:files"
+    permissions_required="delete_solutions",
+    redirect_to="problems:solutions"
 )

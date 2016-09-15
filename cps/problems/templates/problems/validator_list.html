@@ -1,0 +1,51 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Validators' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_validator" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a validator' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+        {% if validators %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <td class="col-md-1">#</td>
+                        <td class="col-md-10">{% trans 'Source Code' %}</td>
+                        <td class="col-md-2"></td>
+                    </tr>
+                </thead>
+                <tbody>
+            {% for validator in validators %}
+                    <tr>
+                        <td> {{ forloop.counter }} </td>
+                        <td> {{ validator.code }} </td>
+                        <td>
+                            <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>
+                                <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
+                            <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this validator?' %}' href='{% problem_url "problems:delete_validator" validator.id %}'>
+                                <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                        </td>
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No validator exists' %}
+            </h4>
+        {% endif %}
+    </div>
+    {% csrf_token %}
+{% endblock %}
+{% block foot_js %}
+    {{ block.super }}
+{% endblock %}
