@@ -1,11 +1,22 @@
-from django.views.generic import View
+from django.core.urlresolvers import reverse
 
-from .decorators import authenticate_problem_access
-from .utils import render_for_problem
+from problems.forms.overview import OverviewForm
+from problems.views.generics import ProblemObjectEditView
+
 
 __all__ = ["Overview"]
 
-class Overview(View):
-    @authenticate_problem_access("observe")
-    def get(self, request, problem, revision):
-        return render_for_problem(request, problem, revision, "problems/overview.html")
+
+class Overview(ProblemObjectEditView):
+    template_name = "problems/overview.html"
+    model_form = OverviewForm
+    permissions_required = "observe"
+
+    def get_success_url(self, problem, revision, obj):
+        return reverse("problems:overview", kwargs={
+            "problem_id": problem.id,
+            "revision_id": revision.id,
+        })
+
+    def get_instance(self, problem, revision, *args, **kwargs):
+        return revision.problem_data

@@ -37,7 +37,7 @@ class ProblemData(VersionModel):
     score_type = models.CharField(verbose_name=_("score type"), max_length=150, null=True)
     score_type_parameters = models.TextField(verbose_name=_("score type parameters"), null=True)
 
-    checker = models.ForeignKey("SourceFile", verbose_name=_("checker"), null=True, blank=True)
+    checker = models.ForeignKey("SourceFile", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

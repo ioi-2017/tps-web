@@ -11,7 +11,6 @@ __all__ = ["ProblemObjectDeleteView"]
 
 
 class ProblemObjectDeleteView(View):
-
     object_type = None
     permissions_required = []
     redirect_to = None
@@ -69,4 +68,40 @@ class ProblemObjectAddView(View):
         return self._show_form(request, problem, revision, form)
 
     def get_success_url(self, problem, revision, obj):
+        raise NotImplementedError("Thist must be implemented in subclasses")
+
+
+class ProblemObjectEditView(View):
+    template_name = None
+    model_form = None
+    permissions_required = []
+
+    def _check_values(self):
+        assert self.template_name is not None
+        assert self.model_form is not None
+
+    def _show_form(self, request, problem, revision, form):
+        return render_for_problem(request, problem, revision, self.template_name, context={
+            "form": form,
+        })
+
+    @authenticate_problem_access(permissions_required)
+    def post(self, request, problem, revision, *args, **kwargs):
+        form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision,
+                               instance=self.get_instance(problem, revision, *args, **kwargs))
+        if form.is_valid():
+            obj = form.save()
+            return HttpResponseRedirect(self.get_success_url(problem, revision, obj))
+        return self._show_form(request, problem, revision, form)
+
+    @authenticate_problem_access(permissions_required)
+    def get(self, request, problem, revision, *args, **kwargs):
+        form = self.model_form(problem=problem, revision=revision,
+                               instance=self.get_instance(problem, revision, *args, **kwargs))
+        return self._show_form(request, problem, revision, form)
+
+    def get_success_url(self, problem, revision, obj):
+        raise NotImplementedError("Thist must be implemented in subclasses")
+
+    def get_instance(self, problem, revision, *args, **kwargs):
         raise NotImplementedError("Thist must be implemented in subclasses")
