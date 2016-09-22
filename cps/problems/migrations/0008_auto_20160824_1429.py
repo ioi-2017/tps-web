@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import version_control.classes
 
 
 class Migration(migrations.Migration):
@@ -42,7 +41,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('score', models.FloatField(verbose_name='score')),
             ],
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='SolutionTestExpectedScore',
@@ -50,7 +49,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('score', models.FloatField(verbose_name='score')),
             ],
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
             name='solutionsubtaskscore',

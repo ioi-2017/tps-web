@@ -3,18 +3,19 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 from file_repository.models import FileModel
-from problems.models import SourceFile
+from problems.models import SourceFile, RevisionObject
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input
 from runner import get_execution_command
 from runner.models import JobModel, JobFile
-from version_control.models import VersionModel
+
 
 __all__ = ["TestCase", "Subtask"]
 
 
-class TestCase(VersionModel):
+class TestCase(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     name = models.CharField(max_length=20, verbose_name=_("name"))
 
@@ -160,7 +161,7 @@ class TestCase(VersionModel):
             return self._input_file is not None
 
 
-class Subtask(VersionModel):
+class Subtask(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
     name = models.CharField(max_length=100, verbose_name=_("name"))
     score = models.IntegerField(verbose_name=_("score"))

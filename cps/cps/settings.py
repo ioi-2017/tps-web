@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'problems',
     'judge',
     'trader',
-    'version_control',
     'file_repository',
     'runner',
 

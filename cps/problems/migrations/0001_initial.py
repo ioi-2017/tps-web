@@ -6,8 +6,6 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import version_control.classes
-
 
 class Migration(migrations.Migration):
 
@@ -28,7 +26,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='Comment',
@@ -59,7 +57,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='ProblemRevision',
@@ -82,7 +80,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='SolutionSubtaskScore',
@@ -91,7 +89,7 @@ class Migration(migrations.Migration):
                 ('score', models.IntegerField(verbose_name='score')),
                 ('solution', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='problems.Solution', verbose_name='solution')),
             ],
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='SolutionTestScore',
@@ -100,7 +98,7 @@ class Migration(migrations.Migration):
                 ('score', models.IntegerField(verbose_name='score')),
                 ('solution', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='problems.Solution', verbose_name='solution')),
             ],
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='SourceFile',
@@ -113,7 +111,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='Subtask',
@@ -126,7 +124,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='TestCase',
@@ -145,7 +143,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.CreateModel(
             name='Validator',
@@ -159,7 +157,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
         migrations.AddField(
             model_name='subtask',

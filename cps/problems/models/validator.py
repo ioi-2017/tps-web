@@ -3,17 +3,18 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from problems.models import RevisionObject
 from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
 from runner.decorators import run_on_worker
 from runner.models import JobModel, JobFile
-from version_control.models import VersionModel
+
 
 __all__ = ["Validator", "ValidatorResult"]
 
-class Validator(VersionModel):
+class Validator(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     code = models.ForeignKey(SourceFile, verbose_name=_("source code"))
     _subtasks = models.ManyToManyField(Subtask, verbose_name=_("subtasks"))
@@ -53,7 +54,7 @@ class Validator(VersionModel):
         validator_result.save()
         validator_result.run()
 
-class ValidatorResult(VersionModel):
+class ValidatorResult(RevisionObject):
     exit_code = models.CharField(max_length=200, verbose_name=_("exit code"))
     exit_status = models.CharField(max_length=200, verbose_name=_("exit status"))
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))

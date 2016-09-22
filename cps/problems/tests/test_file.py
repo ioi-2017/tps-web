@@ -19,12 +19,12 @@ class SourceFileTests(TestCase):
         file1 = tempfile.NamedTemporaryFile()
         file_model1 = FileModel(file=File(file1), name="keyvan")
         file_model1.save()
-        job_file = JobFile(file_model=file_model1)
+        job_file = mommy.make(JobFile, file_model=file_model1)
         mock_job_model.return_value.mark_file_for_extraction.return_value = job_file
         file = tempfile.NamedTemporaryFile()
         file_model = FileModel(file=File(file), name="mohammad")
         file_model.save()
-        source_file = mommy.make(SourceFile, source_file=file_model)
+        source_file = mommy.make(SourceFile, source_language="c++", source_file=file_model)
         source_file.compile()
         self.assertEqual(source_file.compiled_file().name, "keyvan")
 

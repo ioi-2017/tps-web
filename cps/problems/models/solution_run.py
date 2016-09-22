@@ -4,18 +4,17 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
-from problems.models import Solution
-from problems.models.file import SourceFile
+from problems.models import Solution, RevisionObject
 from problems.models.testdata import TestCase
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input, run_checker
 from runner.decorators import run_on_worker
-from version_control.models import VersionModel
+
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
 
-class SolutionRun(VersionModel):
+class SolutionRun(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem revision"))
     solutions = models.ManyToManyField(Solution, verbose_name=_("solution"))
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"))

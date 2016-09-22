@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import version_control.classes
 
 
 class Migration(migrations.Migration):
@@ -26,6 +25,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, version_control.classes.Version),
+            bases=(models.Model, ),
         ),
     ]
