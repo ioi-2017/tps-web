@@ -9,6 +9,7 @@ from problems.models import SourceFile, RevisionObject
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input
 from runner import get_execution_command
+from runner.decorators import allow_async_method
 from runner.models import JobModel, JobFile
 
 
@@ -24,16 +25,15 @@ class TestCase(RevisionObject):
     _input_generation_parameters = models.TextField(
         verbose_name=_("input generation command"),
         max_length=1,
-        null=True,
         blank=True
     )
-    _input_generator = models.ForeignKey(SourceFile, verbose_name=_("generator"), null=True, related_name='+')
+    _input_generator = models.ForeignKey(SourceFile, verbose_name=_("generator"), null=True, related_name='+', blank=True)
     _input_static = models.BooleanField(
         editable=False,
     )
     _input_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
 
-    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output file"), null=True, related_name='+')
+    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output file"), null=True, related_name='+', blank=True)
     _output_static = models.BooleanField(
         editable=False,
     )
@@ -41,17 +41,20 @@ class TestCase(RevisionObject):
     _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+')
 
     def clean(self):
-        if self._input_uploaded_file is None and self._input_generation_parameters is None:
-            raise ValidationError("Either a file or a way to generate it must be set")
+        if self._input_uploaded_file is None and self._input_generator is None:
+            raise ValidationError("Either a static input or a generator must be set")
+        if self._input_uploaded_file is not None and self._input_generator is not None:
+            raise ValidationError("Only one of generator and static input file must be present.")
 
     def save(self, *args, **kwargs):
         """
         We first determine whether input and output is a static file and then continue saving process normally.
         """
         if self._input_uploaded_file is not None:
-            self._input_generation_parameters = None
+            if self._input_generator is not None:
+                raise ValidationError("Validate the model before saving it")
             self._input_static = True
-        elif self._input_generation_parameters is not None:
+        elif self._input_generator is not None:
             self._input_static = False
         else:
             # Since a model must be cleaned before saving and this is checked in the validation method,
@@ -65,7 +68,8 @@ class TestCase(RevisionObject):
 
         super(TestCase, self).save(*args, **kwargs)
 
-    def _generate_input_file(self):
+    @allow_async_method
+    def generate_input_file(self):
         """
         In case the input is not static, generates the input using the generation command
         """
@@ -85,13 +89,6 @@ class TestCase(RevisionObject):
         else:
             raise AssertionError("can't generate input for static input")
 
-    def generate_input_file(self):
-        """
-        This method is used to request generation of input file.
-        As the generation process is done asynchronously it is only responsible to add the generation task
-         (self._generate_input_file) to workers queue
-        """
-        self._generate_input_file()
 
     @property
     def input_file(self):
@@ -103,11 +100,13 @@ class TestCase(RevisionObject):
             if self._input_file is not None:
                 return self._input_file
             else:
-                self.generate_input_file()
+                self.generate_input_file.async()
+                return None
         else:
             return self._input_uploaded_file
 
-    def _generate_output_file(self):
+    @allow_async_method
+    def generate_output_file(self):
         """
         In case the output is not static, generates the output using the generation command
         """
@@ -126,13 +125,6 @@ class TestCase(RevisionObject):
         else:
             raise AssertionError("can't generate output for static output")
 
-    def generate_output_file(self):
-        """
-        This method is used to request generation of output file.
-        As the generation process is done asynchronously it is only responsible to add the generation task
-         (self._generate_output_file) to workers queue
-        """
-        self._generate_output_file()
 
     @property
     def output_file(self):
@@ -144,7 +136,8 @@ class TestCase(RevisionObject):
             if self._output_file is not None:
                 return self._output_file
             else:
-                self.generate_output_file()
+                self.generate_output_file.async(self)
+                return None
         else:
             return self._output_uploaded_file
 

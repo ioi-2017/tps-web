@@ -5,5 +5,6 @@ def render_for_problem(request, problem, revision, template_name, context=None, 
     if context is None:
         context = {}
     context["problem"] = problem
-    context["revision"] = problem
+    context["revision"] = revision
+    context["revision_slug"] = request.resolver_match.kwargs["revision_slug"]
     return render(request, template_name, context)

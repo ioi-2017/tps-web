@@ -1,0 +1,51 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+{% load object_list_generator %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Testcases' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_testcase" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a testcase' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+        {% if testcases %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <th> Name </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for testcase in testcases %}
+                    <tr>
+                        <td>{{ testcase.name }}</td>
+                        <td>
+                            <a href="{% problem_url "problems:download_testcase_input" testcase.id %}" class="btn btn-primary">
+                                <i class="fa fa-download"></i>
+                                {% trans 'Input' %}
+                            </a>
+                            <a href="{% problem_url "problems:download_testcase_output" testcase.id %}" class="btn btn-primary">
+                                <i class="fa fa-download"></i>
+                                {% trans 'Output' %}
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No testcases exists' %}
+            </h4>
+        {% endif %}
+    </div>
+    {% csrf_token %}
+{% endblock %}

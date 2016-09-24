@@ -4,11 +4,15 @@
 {%  block content_header %}
     <nav class="navbar navbar-inverse">
         <div class="navbar-header">
-            <a href="#" class="navbar-brand"> {{ revision.name }} </a>
+            <a href="{% problem_url "problems:overview" %}" class="navbar-brand"> {{ revision.problem_data.title }} </a>
         </div>
-        <ul class="nav navbar-nav">
+        <a href="{% url "problems:overview" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Working Copy' %}</a>
+        <a href="{% url "problems:overview" problem.id "master" %}" class="navbar-link navbar-text">{% trans 'Master Revision' %}</a>
+        {# <a href="{% url "problems:update_working_copy" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Update working copy' %}</a>  #}
+        <ul class="nav navbar-nav pull-right">
             <li><a href="{% problem_url "problems:overview" %}" >{% trans 'Overview' %}</a></li>
             <li><a href="{% problem_url "problems:files" %}" >{% trans 'Files' %}</a></li>
+            <li><a href="{% problem_url "problems:testcases" %}" >{% trans 'Testcases' %}</a></li>
             <li><a href="{% problem_url "problems:solutions" %}" >{% trans 'Solutions' %}</a></li>
             <li><a href="{% problem_url "problems:checker" %}" >{% trans 'Checker' %}</a></li>
             <li><a href="{% problem_url "problems:validators" %}" >{% trans 'Validators' %}</a></li>

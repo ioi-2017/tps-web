@@ -8,7 +8,7 @@ from problems.models import Solution, RevisionObject
 from problems.models.testdata import TestCase
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input, run_checker
-from runner.decorators import run_on_worker
+from runner.decorators import allow_async_method
 
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
@@ -25,7 +25,7 @@ class SolutionRun(RevisionObject):
             for testcase in self.testcases.all():
                 result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
                 result.save()
-                result.evaluate()
+                result.evaluate.async()
 
     @classmethod
     def create(cls, solutions, testcases):
@@ -57,7 +57,7 @@ class SolutionRunResult(models.Model):
     memory_usage = models.IntegerField(verbose_name=_("memory usage"), null=True)
     exit_code = models.CharField(verbose_name=_("exit code"), max_length=100)
 
-    @run_on_worker
+    @allow_async_method
     def evaluate(self):
         problem_data = self.solution_run.problem.problem_data
         self.output_file, self.execution_time, self.memory_usage, self.exit_code = \

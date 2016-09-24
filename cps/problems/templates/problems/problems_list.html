@@ -16,7 +16,8 @@
     <thead>
         <tr>
             <th class="col-md-1">#</th>
-            <th class="col-md-8">{% trans 'Name' %}</th>
+            <th class="col-md-6">{% trans 'Name' %}</th>
+            <th class="col-md-2">{% trans 'Creator' %}</th>
             <th class="col-md-1">{% trans 'Revision' %}</th>
             <th class="col-md-2">{% trans 'Status' %}</th>
         </tr>
@@ -26,10 +27,11 @@
         <tr>
             <td>{{ forloop.revcounter }}</td>
             <td>
-                <a href="{% url "problems:overview" problem.id problem.master_revision.id %}">
+                <a href="{% url "problems:overview" problem.id "master" %}">
                     {{ problem.master_revision.problem_data.title }}({{problem.master_revision.problem_data.code_name}})
                 </a>
             </td>
+            <td> {{ problem.creator }} </td>
             <td>{{ problem.master_revision.depth }}</td>
             <td><i class="fa fa-check"></i> </td>
         </tr>

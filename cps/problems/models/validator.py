@@ -8,7 +8,7 @@ from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
-from runner.decorators import run_on_worker
+from runner.decorators import allow_async_method
 from runner.models import JobModel, JobFile
 
 
@@ -60,7 +60,7 @@ class ValidatorResult(RevisionObject):
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     validator = models.ForeignKey(Validator, verbose_name=_("validator"))
 
-    @run_on_worker
+    @allow_async_method
     def run(self):
         validation_command = get_execution_command(self.validator.code.source_language, "validator")
 

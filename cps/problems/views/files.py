@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import View
 
 from problems.forms.files import SourceFileAddForm, AttachmentAddForm
-from .decorators import authenticate_problem_access
+from .decorators import problem_view
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView
 from problems.models import SourceFile, Attachment
 from .utils import render_for_problem
@@ -14,7 +14,7 @@ __all__ = ["FilesListView", "SourceFileDeleteView",
 
 
 class FilesListView(View):
-    @authenticate_problem_access("read_files")
+    @problem_view(required_permissions=["read_files"])
     def get(self, request, problem, revision):
         source_files = revision.sourcefile_set.all()
         attachments = revision.attachment_set.all()
@@ -27,29 +27,29 @@ class FilesListView(View):
 class SourceFileAddView(ProblemObjectAddView):
     template_name = "problems/add_sourcefile.html"
     model_form = SourceFileAddForm
-    permissions_required = ["add_files"]
+    required_permissions = ["add_files"]
 
-    def get_success_url(self, problem, revision, obj):
+    def get_success_url(self, request, problem, revision, obj):
         return reverse("problems:files", kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id,
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         })
 
 
 class AttachmentAddView(ProblemObjectAddView):
     template_name = "problems/add_attachment.html"
     model_form = AttachmentAddForm
-    permissions_required = ["add_files"]
+    required_permissions = ["add_files"]
 
-    def get_success_url(self, problem, revision, obj):
+    def get_success_url(self, request, problem, revision, obj):
         return reverse("problems:files", kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id,
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         })
 
 
 class SourceFileCompileView(View):
-    @authenticate_problem_access("compile")
+    @problem_view(required_permissions=["compile"])
     def get(self, request, problem, revision, object_id):
         sourcefiles = SourceFile.objects.all()
         for sourcefile in sourcefiles:
@@ -62,7 +62,7 @@ class SourceFileCompileView(View):
         obj.compile()
         return HttpResponseRedirect(reverse("problems:files", kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         }))
 
 

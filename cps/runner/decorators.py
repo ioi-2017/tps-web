@@ -1,8 +1,14 @@
-from celery import shared_task
+from celery.contrib.methods import task_method
+from django_cereal.pickle import task as cereal_task
 
 
-def run_on_worker(func):
-    def wrapper(*args, **kwargs):
-        wrap_func = shared_task(func)
-        wrap_func.delay(*args, **kwargs)
-    return wrapper
+def allow_async_function(func):
+    task = cereal_task(func)
+    func.async = task.delay
+    return func
+
+
+def allow_async_method(func):
+    task = cereal_task(func, filter=task_method)
+    func.async = func
+    return func

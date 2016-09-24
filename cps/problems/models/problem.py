@@ -2,8 +2,9 @@
 # Mohammad Javad Naderi
 import hashlib
 
+
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_clone.clone import Cloner
 
@@ -32,16 +33,23 @@ class Problem(models.Model):
         try:
             return self.forks.get(owner=user)
         except ProblemFork.DoesNotExist:
-            master_fork = self.get_main_fork()
-            master_fork.id = None
-            master_fork.owner = user
-            master_fork.save()
+            with transaction.atomic():
+                master_fork = self.get_upstream_fork()
+                master_fork.id = None
+                master_fork.owner = user
+                master_fork.save()
+                master_fork.head = master_fork.head.clone()
+                master_fork.save()
+                return master_fork
+
+    def __str__(self):
+        return str(self.pk)
 
 
 class ProblemFork(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("fork owner"), null=True, blank=True, db_index=True)
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="forks")
-    head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), null=True, blank=True)
+    head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+')
 
     class Meta:
         unique_together = (("owner", "problem"), )
@@ -49,18 +57,30 @@ class ProblemFork(models.Model):
     def get_editable_head(self):
         if self.head.committed():
             # TODO: Implement lock
-            #self.head = clone(self.head)
+            self.head = self.head.clone()
             self.save()
         return self.head
+
+    def __str__(self):
+        return str(self.problem) + ": " + str(self.owner)
+
+    def merge(self, another_revision):
+        if isinstance(another_revision, ProblemFork):
+            another_revision = another_revision.head
+        self.head = self.head.merge(another_revision)
+        self.save()
 
 
 class ProblemRevision(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"))
-    fork = models.ForeignKey(ProblemFork, verbose_name=_("fork"), db_index=True, related_name="revisions")
+    problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="revisions")
     revision_id = models.CharField(verbose_name=_("revision id"), max_length=40, null=True, blank=True, editable=False,
                                    db_index=True, unique=True)
-    parent_revision = models.ForeignKey("ProblemRevision", verbose_name=_("parent revision"), null=True, blank=True, related_name='+')
+    parent_revisions = models.ManyToManyField("ProblemRevision", verbose_name=_("parent revisions"), related_name='+')
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
+
+    def __str__(self):
+        return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)
 
     def commit(self):
         self.revision_id = hashlib.sha1((str(self.id) + settings.SECRET_KEY).encode("utf-8")).hexdigest()
@@ -70,49 +90,59 @@ class ProblemRevision(models.Model):
         return self.revision_id is not None
 
     @property
-    def problem(self):
-        return self.fork.problem
+    def problem_data(self):
+        return self.problemdata_set.all()[0]
 
     def save(self, *args, **kwargs):
-        if self.parent_revision:
-            self.depth = self.parent_revision.depth + 1
-        else:
-            self.depth = 1
+        self.depth = 1
         super(ProblemRevision, self).save(*args, **kwargs)
+        for parent in self.parent_revisions.all():
+            self.depth = max(self.depth, parent.depth + 1)
+        super(ProblemRevision, self).save()
 
     @staticmethod
     def _get_cloner():
         return Cloner(blocking_models=["file_repository.FileModel"],
                       ignored_models=["file_repository.FileModel"],
-                      ignored_fields=[("problems.ProblemRevision", "parent_revision"),
-                                      ("problems.ProblemRevision", "fork"),
+                      ignored_fields=[("problems.ProblemRevision", "parent_revisions"),
+                                      ("problems.ProblemRevision", "problem"),
                                       ("problems.ProblemRevision", "author")],)
 
     def clone(self):
         self.revision_id = None
         cloned = self._get_cloner().clone(self)[0]
         cloned.revision_id = None
-        cloned.parent_revision = self
+        cloned.parent_revisions = [self]
         cloned.save()
         return cloned
 
     def find_merge_base(self, another_revision):
+        import heapq
+        priority_queue = []
         revision_a = self
         revision_b = another_revision
-        while revision_a is not None and revision_b is not None and revision_a.pk != revision_b.pk:
-            if revision_a.pk > revision_b.pk:
-                revision_a = revision_a.parent_revision
-            else:
-                revision_b = revision_b.parent_revision
-        if revision_a.pk == revision_b.pk:
-            return revision_a
+        heapq.heappush(priority_queue, (-revision_a.pk, revision_a))
+        heapq.heappush(priority_queue, (-revision_b.pk, revision_b))
+        marks = {}
+        marks[revision_a.pk] = 1
+        marks[revision_b.pk] = 2
+        while len(priority_queue) > 0:
+            revision = heapq.heappop(priority_queue)[1]
+            if marks[revision.pk] == 3:
+                return revision
+            for parent_revision in revision.parent_revisions.all():
+                if parent_revision.pk not in marks:
+                    marks[parent_revision.pk] = 0
+                    heapq.heappush(priority_queue, (-parent_revision.pk, parent_revision))
+                marks[parent_revision.pk] |= marks[revision.pk]
+        return None
 
     def find_matching_pairs(self, another_revision):
         attributes = {
             "testcase_set", "solution_set", "validator_set", "sourcefile_set",
             "attachment_set", "solutionrun_set", "subtasks"
         }
-        res = [(self.problem_data.all()[0], another_revision.problem_data.all()[0])]
+        res = [(self.problem_data, another_revision.problem_data)]
         for attr in attributes:
             res = res + getattr(self, attr).find_matches(getattr(another_revision, attr))
         return res
@@ -133,9 +163,6 @@ class ProblemRevision(models.Model):
         matched_triples = []
         for a, b in base_current_dict.items():
             matched_triples.append((a, b, base_other_dict.get(a, None)))
-        for a, b in base_other_dict.items():
-            if base_current_dict.get(a, None) is None:
-                matched_triples.append((a, None, b))
         for a, b in current_other:
             if current_base_dict.get(a, None) is None and other_base_dict.get(b, None) is None:
                 matched_triples.append((None, a, b))
@@ -162,36 +189,40 @@ class ProblemRevision(models.Model):
             else:
                 if ours is not None:
                     ours_ignored.append(ours)
+        with transaction.atomic():
+            new_revision = self.clone()
+            merge = Merge.objects.create(merged_revision=new_revision,
+                                         our_revision=self,
+                                         their_revision=another_revision,
+                                         base_revision=merge_base)
+            current_new = self.find_matching_pairs(new_revision)
+            current_new_dict = {a: b for a, b in current_new if a is not None}
+            for obj in ours_ignored:
+                new_obj = current_new_dict[obj]
+                try:
+                    new_obj.delete()
+                except Exception as e:
+                    logger.error(e)
+                    # if the remove fails (possibly due to
+                    # previous removal caused by cascades)
+                    # we ignore it
+                    pass
 
-        new_revision = self.clone()
-        merge = Merge.objects.create(merged_revision=new_revision,
-                                     our_revision=self,
-                                     their_revision=another_revision,
-                                     base_revision=merge_base)
-        current_new = self.find_matching_pairs(new_revision)
-        current_new_dict = {a: b for a, b in current_new if a is not None}
-        for obj in ours_ignored:
-            new_obj = current_new_dict[obj]
-            try:
-                new_obj.delete()
-            except Exception as e:
-                logger.error(e)
-                # if the remove fails (possibly due to
-                # previous removal caused by cascades)
-                # we ignore it
-                pass
-
-        theirs_ignored[another_revision] = new_revision
-        self._get_cloner().apply_limits(ignored_instances=theirs_ignored).clone(another_revision)
-
-        for ours, theirs in conflicts:
-            current = current_new_dict[ours]
-            Conflict.objects.create(merge=merge, ours=ours, theirs=theirs, current=current)
-
+            theirs_ignored[another_revision] = new_revision
+            self._get_cloner().apply_limits(ignored_instances=theirs_ignored).clone(another_revision)
+            for ours, theirs in conflicts:
+                if ours is None:
+                    current = None
+                else:
+                    current = current_new_dict[ours]
+                Conflict.objects.create(merge=merge, ours=ours, theirs=theirs, current=current)
+            new_revision.parent_revisions = [self, another_revision]
+            new_revision.save()
+            return new_revision
 
 
 class ProblemData(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, related_name='problem_data')
+    problem = models.ForeignKey(ProblemRevision)
     code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
 

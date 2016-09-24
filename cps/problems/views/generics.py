@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import View, DeleteView
 
 from .utils import render_for_problem
-from .decorators import authenticate_problem_access
+from .decorators import problem_view
 
 __all__ = ["ProblemObjectDeleteView"]
 
@@ -15,10 +15,12 @@ class ProblemObjectDeleteView(View):
     permissions_required = []
     redirect_to = None
     lookup_field_name = "id"
+    url_slug = "object_id"
     revision_field_name = "problem_id"
 
-    @authenticate_problem_access(permissions_required)
-    def delete(self, request, problem, revision, object_id):
+    @problem_view(permissions_required)
+    def delete(self, request, problem, revision, **kwargs):
+        object_id = kwargs.pop(self.url_slug)
         if not self.object_type:
             raise ImproperlyConfigured("you must specify an object type for delete view")
         if not self.redirect_to:
@@ -41,7 +43,7 @@ class ProblemObjectDeleteView(View):
 class ProblemObjectAddView(View):
     template_name = None
     model_form = None
-    permissions_required = []
+    required_permissions = []
 
     def _check_values(self):
         assert self.template_name is not None
@@ -52,22 +54,22 @@ class ProblemObjectAddView(View):
             "form": form
         })
 
-    @authenticate_problem_access(permissions_required)
+    @problem_view(required_permissions=required_permissions)
     def post(self, request, problem, revision, *args, **kwargs):
         self._check_values()
         form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision)
         if form.is_valid():
             obj = form.save()
-            return HttpResponseRedirect(self.get_success_url(problem, revision, obj))
+            return HttpResponseRedirect(self.get_success_url(request, problem, revision, obj))
         return self._show_form(request, problem, revision, form)
 
-    @authenticate_problem_access(permissions_required)
+    @problem_view(required_permissions=required_permissions)
     def get(self, request, problem, revision, *args, **kwargs):
         self._check_values()
         form = self.model_form(problem=problem, revision=revision)
         return self._show_form(request, problem, revision, form)
 
-    def get_success_url(self, problem, revision, obj):
+    def get_success_url(self, request, problem, revision, obj):
         raise NotImplementedError("Thist must be implemented in subclasses")
 
 
@@ -85,23 +87,23 @@ class ProblemObjectEditView(View):
             "form": form,
         })
 
-    @authenticate_problem_access(permissions_required)
+    @problem_view(permissions_required)
     def post(self, request, problem, revision, *args, **kwargs):
         form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision,
-                               instance=self.get_instance(problem, revision, *args, **kwargs))
+                               instance=self.get_instance(request, problem, revision, *args, **kwargs))
         if form.is_valid():
             obj = form.save()
-            return HttpResponseRedirect(self.get_success_url(problem, revision, obj))
+            return HttpResponseRedirect(self.get_success_url(request, problem, revision, obj))
         return self._show_form(request, problem, revision, form)
 
-    @authenticate_problem_access(permissions_required)
+    @problem_view(permissions_required)
     def get(self, request, problem, revision, *args, **kwargs):
         form = self.model_form(problem=problem, revision=revision,
-                               instance=self.get_instance(problem, revision, *args, **kwargs))
+                               instance=self.get_instance(request, problem, revision, *args, **kwargs))
         return self._show_form(request, problem, revision, form)
 
-    def get_success_url(self, problem, revision, obj):
-        raise NotImplementedError("Thist must be implemented in subclasses")
+    def get_success_url(self, request, problem, revision, obj):
+        raise NotImplementedError("This must be implemented in subclasses")
 
-    def get_instance(self, problem, revision, *args, **kwargs):
-        raise NotImplementedError("Thist must be implemented in subclasses")
+    def get_instance(self, request, problem, revision, *args, **kwargs):
+        raise NotImplementedError("This must be implemented in subclasses")

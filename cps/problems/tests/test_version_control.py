@@ -13,19 +13,26 @@ class VersionControlTests(TestCase):
         file = tempfile.NamedTemporaryFile()
         self.file_model = FileModel(file=File(file), name="keyvan")
         self.file_model.save()
-        self.problem_fork1 = mommy.make(ProblemFork, problem=self.problem)
-        self.problem_fork2 = mommy.make(ProblemFork, problem=self.problem)
-        self.base_revision = ProblemRevision.objects.create(author=self.problem.creator, fork=self.problem_fork1)
+        self.base_revision = ProblemRevision.objects.create(
+            problem=self.problem,
+            author=self.problem.creator
+        )
+
         self.problem_revision1 = ProblemRevision.objects.create(
-            author=self.problem.creator,
-            fork=self.problem_fork1,
-            parent_revision=self.base_revision
+            problem=self.problem,
+            author=self.problem.creator
         )
+        self.problem_revision1.parent_revisions.add(self.base_revision)
+
         self.problem_revision2 = ProblemRevision.objects.create(
-            author=self.problem.creator,
-            fork=self.problem_fork2,
-            parent_revision=self.base_revision
+            problem=self.problem,
+            author=self.problem.creator
         )
+        self.problem_revision2.parent_revisions.add(self.base_revision)
+
+        self.problem_fork1 = mommy.make(ProblemFork, problem=self.problem, head=self.problem_revision1)
+        self.problem_fork2 = mommy.make(ProblemFork, problem=self.problem, head=self.problem_revision2)
+
         self.base_revision.commit()
         self.problem_revision1.commit()
         self.problem_revision2.commit()
@@ -40,7 +47,7 @@ class VersionControlTests(TestCase):
         self.create_attachment(self.problem_revision1, name="t1")
         self.create_attachment(self.problem_revision2, name="t1")
         self.problem_revision1.merge(self.problem_revision2)
-        new_revision = self.problem_fork1.revisions.get(revision_id__isnull=True)
+        new_revision = self.problem.revisions.get(revision_id__isnull=True, parent_revisions=self.problem_revision1)
         self.assertEqual(len(new_revision.merges.all()[0].conflicts.all()), 1)
         self.assertEqual(len(new_revision.attachment_set.all()), 1)
 
@@ -50,9 +57,55 @@ class VersionControlTests(TestCase):
         self.create_attachment(self.problem_revision1, name="t1")
         self.create_attachment(self.problem_revision2, name="t2")
         self.problem_revision1.merge(self.problem_revision2)
-        new_revision = self.problem_fork1.revisions.get(revision_id__isnull=True)
+        new_revision = self.problem.revisions.get(revision_id__isnull=True, parent_revisions=self.problem_revision1)
         self.assertEqual(len(new_revision.merges.all()[0].conflicts.all()), 0)
         self.assertEqual(len(new_revision.attachment_set.all()), 2)
+
+    @mock.patch("problems.models.file.Attachment.diverged_from", return_value=True)
+    @mock.patch("problems.models.problem.ProblemData.diverged_from", return_value=False)
+    def test_delete(self, *args, **kwargs):
+        self.create_attachment(self.base_revision, name="t1")
+        self.problem_revision1.merge(self.problem_revision2)
+        new_revision = self.problem.revisions.get(revision_id__isnull=True, parent_revisions=self.problem_revision1)
+        self.assertEqual(len(new_revision.merges.all()[0].conflicts.all()), 0)
+        self.assertEqual(len(new_revision.attachment_set.all()), 0)
+
+    @mock.patch("problems.models.file.Attachment.diverged_from", return_value=True)
+    @mock.patch("problems.models.problem.ProblemData.diverged_from", return_value=False)
+    def test_conflict_with_deleted_ours(self, *args, **kwargs):
+        self.create_attachment(self.base_revision, name="t1")
+        self.create_attachment(self.problem_revision2, name="t1")
+        self.problem_revision1.merge(self.problem_revision2)
+        new_revision = self.problem.revisions.get(revision_id__isnull=True, parent_revisions=self.problem_revision1)
+        self.assertEqual(len(new_revision.merges.all()[0].conflicts.all()), 1)
+        self.assertEqual(len(new_revision.attachment_set.all()), 0)
+
+    @mock.patch("problems.models.file.Attachment.diverged_from", return_value=True)
+    @mock.patch("problems.models.problem.ProblemData.diverged_from", return_value=False)
+    def test_conflict_with_deleted_theirs(self, *args, **kwargs):
+        self.create_attachment(self.base_revision, name="t1")
+        self.create_attachment(self.problem_revision1, name="t1")
+        self.problem_revision1.merge(self.problem_revision2)
+        new_revision = self.problem.revisions.get(revision_id__isnull=True, parent_revisions=self.problem_revision1)
+        self.assertEqual(len(new_revision.merges.all()[0].conflicts.all()), 1)
+        self.assertEqual(len(new_revision.attachment_set.all()), 1)
+
+    @mock.patch("problems.models.file.Attachment.diverged_from", return_value=False)
+    @mock.patch("problems.models.problem.ProblemData.diverged_from", return_value=False)
+    def test_fork_merge_with_revision(self, *args, **kwargs):
+        fork1_current_head_pk = self.problem_fork1.head.pk
+        self.problem_fork1.merge(self.problem_revision2)
+        self.assertListEqual(list(self.problem_fork1.head.parent_revisions.all()),
+                             [self.problem_revision1, self.problem_revision2])
+
+    @mock.patch("problems.models.file.Attachment.diverged_from", return_value=False)
+    @mock.patch("problems.models.problem.ProblemData.diverged_from", return_value=False)
+    def test_fork_merge_with_fork(self, *args, **kwargs):
+        fork1_current_head_pk = self.problem_fork1.head.pk
+        fork2_current_head_pk = self.problem_fork2.head.pk
+        self.problem_fork1.merge(self.problem_fork2)
+        self.assertNotEqual(fork1_current_head_pk, self.problem_fork1.head.pk)
+        self.assertEqual(fork2_current_head_pk, self.problem_fork2.head.pk)
 
     def create_attachment(self, revision, name):
         return Attachment.objects.create(problem=revision, name=name, file=self.file_model)

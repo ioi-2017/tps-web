@@ -1,7 +1,9 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.core import serializers
 
+import json
 
 __all__ = ["RevisionObject", "Merge", "Conflict"]
 
@@ -70,12 +72,27 @@ class RevisionObject(models.Model):
 
     objects = RevisionObjectManager.from_queryset(RevisionObjectQuerySet)()
 
-    def get_json_representation(self):
+    def _get_json_representation(self, included_fields=None, excluded_fields=None):
         """
-        Returns a json representation of the current version.
+        Returns a json representation of the current version,
+        including all fields in included_fields (or all fields if not present),
+        excluding all fields in excluded_fields (or no fields if not present).
+        :param included_fields: List[str] or None
+        :param excluded_fields: List[str] or None
         :return str
         """
-        raise NotImplementedError("This must be implemented in the subclasses of this class")
+        full_dump = json.loads(serializers.serialize('json', [self]))[0]
+        limited_dump = {}
+        for field_name in full_dump['fields']:
+            if included_fields is not None and field_name not in included_fields:
+                continue
+            if excluded_fields is not None and field_name in excluded_fields:
+                continue
+            limited_dump[field_name] = full_dump['fields'][field_name]
+        return json.dumps(limited_dump)
+
+    def get_json_representation(self):
+        return self._get_json_representation()
 
     def diff(self, other_object):
         """
@@ -106,7 +123,9 @@ class RevisionObject(models.Model):
         return True
 
     def diverged_from(self, other_object):
-        return True
+        our_json = json.loads(self.get_json_representation())
+        their_json = json.loads(other_object.get_json_representation())
+        return our_json == their_json
 
     @staticmethod
     def differ(version_a, version_b):
@@ -133,13 +152,19 @@ class Merge(models.Model):
 class Conflict(models.Model):
     merge = models.ForeignKey(Merge, related_name='conflicts')
 
-    content_type = models.ForeignKey(ContentType)
-
+    current_content_type = models.ForeignKey(ContentType, null=True, related_name='+')
     current_id = models.PositiveIntegerField(null=True)
-    current = GenericForeignKey("content_type", "current_id")
+    current = GenericForeignKey("current_content_type", "current_id")
 
+    ours_content_type = models.ForeignKey(ContentType, null=True, related_name='+')
     ours_id = models.PositiveIntegerField(null=True)
-    ours = GenericForeignKey("content_type", "theirs_id")
+    ours = GenericForeignKey("theirs_content_type", "ours_id")
 
+    theirs_content_type = models.ForeignKey(ContentType, null=True, related_name='+')
     theirs_id = models.PositiveIntegerField(null=True)
-    theirs = GenericForeignKey("content_type", "theirs_id")
+    theirs = GenericForeignKey("ours_content_type", "theirs_id")
+
+    resolved = models.BooleanField(default=False, null=False)
+
+    def __str__(self):
+        return "Conflict ({}) -> {}:{}".format(self.content_type, self.ours_id, self.theirs_id)
