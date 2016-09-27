@@ -27,7 +27,7 @@ class SolutionAddView(ProblemObjectAddView):
     def get_success_url(self, request, problem, revision, obj):
         return reverse("problems:add_solution", kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id,
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         })
 
 

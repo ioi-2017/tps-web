@@ -11,7 +11,7 @@ class CheckerChooseView(ProblemObjectEditView):
     def get_success_url(self, request, problem, revision, obj):
         return reverse("problems:checker", kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id,
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         })
 
     def get_instance(self, request, problem, revision, *args, **kwargs):

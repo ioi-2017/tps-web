@@ -32,7 +32,7 @@ class ProblemObjectDeleteView(View):
         obj.delete()
         return HttpResponseRedirect(reverse(self.redirect_to, kwargs={
             "problem_id": problem.id,
-            "revision_id": revision.id
+            "revision_slug": request.resolver_match.kwargs["revision_slug"]
         }))
 
     # Add support for browsers which only accept GET and POST for now.
