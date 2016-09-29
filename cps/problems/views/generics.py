@@ -57,7 +57,7 @@ class ProblemObjectAddView(View):
     @problem_view(required_permissions=required_permissions)
     def post(self, request, problem, revision, *args, **kwargs):
         self._check_values()
-        form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision)
+        form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision, owner=request.user)
         if form.is_valid():
             obj = form.save()
             return HttpResponseRedirect(self.get_success_url(request, problem, revision, obj))
@@ -66,7 +66,7 @@ class ProblemObjectAddView(View):
     @problem_view(required_permissions=required_permissions)
     def get(self, request, problem, revision, *args, **kwargs):
         self._check_values()
-        form = self.model_form(problem=problem, revision=revision)
+        form = self.model_form(problem=problem, revision=revision, owner=request.user)
         return self._show_form(request, problem, revision, form)
 
     def get_success_url(self, request, problem, revision, obj):
@@ -89,7 +89,7 @@ class ProblemObjectEditView(View):
 
     @problem_view(permissions_required)
     def post(self, request, problem, revision, *args, **kwargs):
-        form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision,
+        form = self.model_form(request.POST, request.FILES, problem=problem, revision=revision, owner=request.user,
                                instance=self.get_instance(request, problem, revision, *args, **kwargs))
         if form.is_valid():
             obj = form.save()
@@ -98,7 +98,7 @@ class ProblemObjectEditView(View):
 
     @problem_view(permissions_required)
     def get(self, request, problem, revision, *args, **kwargs):
-        form = self.model_form(problem=problem, revision=revision,
+        form = self.model_form(problem=problem, revision=revision, owner=request.user,
                                instance=self.get_instance(request, problem, revision, *args, **kwargs))
         return self._show_form(request, problem, revision, form)
 

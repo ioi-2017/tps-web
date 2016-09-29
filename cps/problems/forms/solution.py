@@ -1,17 +1,16 @@
 from django import forms
 
+from problems.forms.generic import ProblemObjectModelForm
 from problems.models import SourceFile, Solution
 
 
-class SolutionAddForm(forms.ModelForm):
+class SolutionAddForm(ProblemObjectModelForm):
 
     class Meta:
         model = Solution
         fields = []
 
     def __init__(self, *args, **kwargs):
-        self.problem = kwargs.pop("problem")
-        self.revision = kwargs.pop("revision")
         super(SolutionAddForm, self).__init__(*args, **kwargs)
         self.fields['sourcefile'] = forms.ModelChoiceField(
             queryset=SourceFile.objects.filter(problem=self.revision)
@@ -19,7 +18,6 @@ class SolutionAddForm(forms.ModelForm):
 
     def save(self, commit=True):
         super(SolutionAddForm, self).save(commit=False)
-        self.instance.problem = self.revision
         self.instance.code = self.cleaned_data['sourcefile']
         if commit:
             self.instance.save()

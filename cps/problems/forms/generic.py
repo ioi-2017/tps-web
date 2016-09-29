@@ -5,6 +5,7 @@ class ProblemObjectModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.problem = kwargs.pop("problem")
         self.revision = kwargs.pop("revision")
+        self.owner = kwargs.pop("owner")
         super(ProblemObjectModelForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):

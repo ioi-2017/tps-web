@@ -1,16 +1,15 @@
 from django import forms
 
+from problems.forms.generic import ProblemObjectModelForm
 from problems.models import SourceFile, ProblemData
 
 
-class ChooseCheckerForm(forms.ModelForm):
+class ChooseCheckerForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
         fields = ['checker']
 
     def __init__(self, *args, **kwargs):
-        self.problem = kwargs.pop("problem")
-        self.revision = kwargs.pop("revision")
         super(ChooseCheckerForm, self).__init__(*args, **kwargs)
         self.fields['checker'] = forms.ModelChoiceField(
             queryset=SourceFile.objects.filter(problem=self.revision)

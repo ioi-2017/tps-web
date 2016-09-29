@@ -1,30 +1,42 @@
 {% extends "problems/base.html" %}
 {% load i18n %}
+{% load problems_tags %}
 {% block problem_content %}
-    <table class="table table-striped table-responsive">
-    <thead>
-        <tr>
-            <th class="col-md-1">#</th>
-            <th class="col-md-9">{% trans 'Title' %}</th>
-            <th class="col-md-2">{% trans 'Priority' %}</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for discussion in discussions %}
-        <tr>
-            <td>{{ forloop.counter }}</td>
-            <td> {{ discussion.title }}<br />
-                <p class="text-muted">
-                    <small>
-                        {% blocktrans with author=discussion.author start_date=discussion.start_date %}
-                        Created by {{ author }} at {{ start_date }}
-                        {% endblocktrans %}
-                    </small>
-                </p>
-            </td>
-            <td><p class="badge"> {{ discussion.get_priority_display }}</p></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
+    <div class="row">
+        <h2> {% trans 'Discussions' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_discussion" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a discussion' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-striped table-responsive">
+        <thead>
+            <tr>
+                <th class="col-md-1">#</th>
+                <th class="col-md-9">{% trans 'Title' %}</th>
+                <th class="col-md-2">{% trans 'Priority' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for discussion in discussions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><a href="{% problem_url "problems:comments" discussion.id %}">{{ discussion.title }}</a><br />
+                    <p class="text-muted">
+                        <small>
+                            {% blocktrans with author=discussion.author start_date=discussion.start_date %}
+                            Created by {{ author }} at {{ start_date }}
+                            {% endblocktrans %}
+                        </small>
+                    </p>
+                </td>
+                <td><p class="badge"> {{ discussion.get_priority_display }}</p></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
 {% endblock %}

@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from problems.views.checker import CheckerChooseView
+from problems.views.discussions import DiscussionAddView, CommentListView
 from problems.views.files import SourceFileCompileView
 from problems.views.problems import ProblemAddView
 from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
@@ -12,6 +13,8 @@ from .views import *
 problem_urls = ([
         url(r'^$', Overview.as_view(), name="overview"),
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),
+        url(r'^discussion/add/$', DiscussionAddView.as_view(), name="add_discussion"),
+        url(r'^discussion/(?P<discussion_id>\d+)/comments$', CommentListView.as_view(), name="comments"),
         url(r'^files/$', FilesListView.as_view(), name="files"),
         
         url(r'^sourcefile/add/$', SourceFileAddView.as_view(), name="add_sourcefile"),

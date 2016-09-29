@@ -1,16 +1,15 @@
 from django import forms
 
+from problems.forms.generic import ProblemObjectModelForm
 from problems.models import ProblemData
 
 
-class OverviewForm(forms.ModelForm):
+class OverviewForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
         exclude = ['checker', 'problem', 'title']
 
     def __init__(self, *args, **kwargs):
-        self.problem = kwargs.pop("problem")
-        self.revision = kwargs.pop("revision")
         super(OverviewForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder = [
             'code_name',
