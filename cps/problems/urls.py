@@ -41,8 +41,13 @@ problem_urls = ([
         
         url(r'^checker/$', CheckerChooseView.as_view(), name="checker"),
 
-        url(r'^update/', MergeForksView.as_view(), name="update_working_copy"),
-        url(r'^commit/', CommitWorkingCopy.as_view(), name="update_working_copy"),
+        url(r'^clone/', CreateWorkingCopy.as_view(), name="create_working_copy"),
+        url(r'^update/', UpdateForkView.as_view(), name="update_fork"),
+        url(r'^commit/', CommitWorkingCopy.as_view(), name="commit"),
+        url(r'^conflicts/', ConflictsListView.as_view(), name="conflicts"),
+        url(r'^conflict/(?P<conflict_id>\d+)/', ResolveConflictView.as_view(), name="resolve_conflict"),
+        url(r'^apply/', ApplyForkToMaster.as_view(), name="apply_fork"),
+
     ], None, None)
 
 urlpatterns = [

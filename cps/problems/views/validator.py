@@ -1,19 +1,18 @@
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
 from django.views.generic import View
 
 from problems.forms.validator import ValidatorAddForm
 from problems.models import Validator
 from problems.views.decorators import problem_view
 from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView
-from problems.views.utils import render_for_problem
-
 
 class ValidatorsListView(View):
     @problem_view("read_validators")
     def get(self, request, problem, revision):
         validators = revision.validator_set.all()
 
-        return render_for_problem(request, problem, revision, "problems/validator_list.html", context={
+        return render(request, "problems/validator_list.html", context={
             "validators": validators
         })
 

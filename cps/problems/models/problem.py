@@ -19,8 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class Problem(models.Model):
-    master_revision = models.ForeignKey("ProblemRevision", verbose_name=_("master revision"), related_name='+',
-                                        null=True, blank=True)
+
     users = models.ManyToManyField("accounts.User", through='accounts.UserProblem', related_name='problems')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
@@ -38,8 +37,6 @@ class Problem(models.Model):
                 master_fork.id = None
                 master_fork.owner = user
                 master_fork.save()
-                master_fork.head = master_fork.head.clone()
-                master_fork.save()
                 return master_fork
 
     def __str__(self):
@@ -50,24 +47,57 @@ class ProblemFork(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("fork owner"), null=True, blank=True, db_index=True)
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="forks")
     head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+')
+    working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True)
 
     class Meta:
         unique_together = (("owner", "problem"), )
 
-    def get_editable_head(self):
-        if self.head.committed():
-            # TODO: Implement lock
-            self.head = self.head.clone()
+    def has_working_copy(self):
+        if self.working_copy is not None and self.working_copy.committed():
+            self.working_copy = None
+        return self.working_copy is not None
+
+    def get_slug(self):
+        if self.owner:
+            return self.owner.username
+        else:
+            return "master"
+
+    def discard_working_copy(self, commit=True):
+        self.working_copy = None
+        if commit:
             self.save()
-        return self.head
+
+    def get_or_create_working_copy(self, user):
+        if not self.has_working_copy():
+            self.working_copy = self.head.clone()
+            self.working_copy.author = user
+            self.save()
+        return self.working_copy
+
+    def get_working_copy_or_head(self):
+        if self.has_working_copy():
+            return self.working_copy
+        else:
+            return self.head
+
+    def set_as_head(self, revision, commit=True):
+        # TODO: Maybe we can assert that head is a parent of this revision
+        # TODO: The question is do we really want it?
+        self.head = revision
+        if commit:
+            self.save()
+
+    def set_working_copy_as_head(self):
+        self.set_as_head(self.working_copy, commit=False)
+        self.discard_working_copy(commit=False)
+        self.save()
 
     def __str__(self):
         return str(self.problem) + ": " + str(self.owner)
 
     def merge(self, another_revision):
-        if isinstance(another_revision, ProblemFork):
-            another_revision = another_revision.head
-        self.head = self.head.merge(another_revision)
+        self.working_copy = self.head.merge(another_revision)
         self.save()
 
 
@@ -76,13 +106,15 @@ class ProblemRevision(models.Model):
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="revisions")
     revision_id = models.CharField(verbose_name=_("revision id"), max_length=40, null=True, blank=True, editable=False,
                                    db_index=True, unique=True)
+    commit_message = models.TextField(verbose_name=_("commit message"), blank=False)
     parent_revisions = models.ManyToManyField("ProblemRevision", verbose_name=_("parent revisions"), related_name='+')
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
 
     def __str__(self):
         return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)
 
-    def commit(self):
+    def commit(self, message):
+        self.commit_message = message
         self.revision_id = hashlib.sha1((str(self.id) + settings.SECRET_KEY).encode("utf-8")).hexdigest()
         self.save()
 
@@ -100,21 +132,47 @@ class ProblemRevision(models.Model):
             self.depth = max(self.depth, parent.depth + 1)
         super(ProblemRevision, self).save()
 
+    def _clean_commit_data(self, commit=True):
+        self.revision_id = None
+        self.commit_message = ""
+        if commit:
+            self.save()
+
     @staticmethod
     def _get_cloner():
         return Cloner(blocking_models=["file_repository.FileModel"],
                       ignored_models=["file_repository.FileModel"],
                       ignored_fields=[("problems.ProblemRevision", "parent_revisions"),
                                       ("problems.ProblemRevision", "problem"),
-                                      ("problems.ProblemRevision", "author")],)
+                                      ("problems.ProblemRevision", "author"),
+                                      ("problems.ProblemRevision", "merge_result")],)
 
     def clone(self):
-        self.revision_id = None
-        cloned = self._get_cloner().clone(self)[0]
-        cloned.revision_id = None
-        cloned.parent_revisions = [self]
-        cloned.save()
+        with transaction.atomic():
+            # TODO: This is a hack to handle uniqueness of revision id.
+            # TODO: Find some other way to handle it properly.
+            self.revision_id = None
+            cloned = self._get_cloner().clone(self)[0]
+            cloned._clean_commit_data(commit=False)
+            cloned.parent_revisions = [self]
+            cloned.save()
         return cloned
+
+    def child_of(self, revision):
+        return self.find_merge_base(revision) == revision
+
+    def has_merge_result(self):
+        try:
+            merge_result = self.merge_result
+        except Merge.DoesNotExist:
+            return False
+        return True
+
+    def has_unresolved_conflicts(self):
+        if self.has_merge_result():
+            return self.merge_result.conflicts.filter(resolved=False).count() > 0
+        else:
+            return False
 
     def find_merge_base(self, another_revision):
         import heapq

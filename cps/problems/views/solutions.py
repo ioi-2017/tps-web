@@ -1,10 +1,10 @@
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
 from django.views.generic import View
 from problems.forms.solution import SolutionAddForm
 from .decorators import problem_view
 from problems.models import Solution
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView
-from .utils import render_for_problem
 
 __all__ = ["SolutionAddView", "SolutionDeleteView", "SolutionEditView", "SolutionsListView"]
 
@@ -14,7 +14,7 @@ class SolutionsListView(View):
     def get(self, request, problem, revision):
         solutions = revision.solution_set.all()
 
-        return render_for_problem(request, problem, revision, "problems/solutions_list.html", context={
+        return render(request, "problems/solutions_list.html", context={
             "solutions": solutions
         })
 

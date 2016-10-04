@@ -1,0 +1,31 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Conflicts' %} </h2>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-striped table-responsive">
+        <tbody>
+            {% for conflict in conflicts %}
+            <tr>
+                <td>{{ conflict.current }}</td>
+                <td>
+                    {% if conflict.resolved %}
+                        <span class="text-success">
+                            <i class="fa fa-check"></i> {% trans 'Resolved' %}
+                        </span>
+                    {% else %}
+                        <a class="btn btn-primary" href="{% problem_url "problems:resolve_conflict" conflict.id %}">
+                            {% trans 'Resolve' %}
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+{% endblock %}

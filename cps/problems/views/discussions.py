@@ -1,11 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.views.generic import View
 
 from problems.forms.discussion import DiscussionAddForm, CommentAddForm
 from problems.models import Discussion
 from problems.views.generics import ProblemObjectAddView
-from .utils import render_for_problem
 from .decorators import problem_view
 
 __all__ = ["DiscussionsListView"]
@@ -14,7 +14,7 @@ __all__ = ["DiscussionsListView"]
 class DiscussionsListView(View):
     @problem_view(required_permissions=["read_discussions"])
     def get(self, request, problem, revision):
-        return render_for_problem(request, problem, revision, "problems/discussions_list.html", context={
+        return render(request, "problems/discussions_list.html", context={
             "discussions": problem.discussions.all()}
                                   )
 
@@ -37,7 +37,7 @@ class CommentListView(View):
     required_permissions = ["read_comment"]
 
     def _show_form(self, request, problem, revision, discussion, form):
-        return render_for_problem(request, problem, revision, self.template_name, context={
+        return render(request, self.template_name, context={
             "comments": discussion.comments.all(),
             "form": form,
             "discussion": discussion

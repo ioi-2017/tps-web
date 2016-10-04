@@ -26,6 +26,7 @@
 </head>
 
 <body>
+    {% block header %}
     <nav class="navbar-default navbar navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
@@ -160,7 +161,6 @@
         <!-- /container -->
     </nav>
     <div class="navbar-placeholder"></div>
-    {% block content_header %}
     {% endblock %}
     <div class="container-fluid">
         {% block content %}

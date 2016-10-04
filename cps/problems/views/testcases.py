@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.generic import View
 
 from problems.forms.testcases import TestCaseAddForm
@@ -8,7 +8,6 @@ from problems.forms.testcases import TestCaseAddForm
 from .decorators import problem_view
 from .generics import ProblemObjectAddView
 from problems.models import TestCase
-from .utils import render_for_problem
 
 __all__ = ["TestCasesListView", "TestCaseAddView", "TestCaseInputDownloadView", "TestCaseOutputDownloadView"]
 
@@ -17,7 +16,7 @@ class TestCasesListView(View):
 
     @problem_view(required_permissions=["read_testcases"])
     def get(self, request, problem, revision):
-        return render_for_problem(request, problem, revision,
+        return render(request,
                                   "problems/testcases_list.html",
                                   context={
                                       "testcases": revision.testcase_set.all()

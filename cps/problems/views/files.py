@@ -1,13 +1,12 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.generic import View
 
 from problems.forms.files import SourceFileAddForm, AttachmentAddForm
 from .decorators import problem_view
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView
 from problems.models import SourceFile, Attachment
-from .utils import render_for_problem
 
 __all__ = ["FilesListView", "SourceFileDeleteView",
            "SourceFileAddView", "AttachmentAddView", "AttachmentDeleteView"]
@@ -18,7 +17,7 @@ class FilesListView(View):
     def get(self, request, problem, revision):
         source_files = revision.sourcefile_set.all()
         attachments = revision.attachment_set.all()
-        return render_for_problem(request, problem, revision, "problems/files_list.html", context={
+        return render(request, "problems/files_list.html", context={
             'source_files': source_files,
             'attachments': attachments
         })

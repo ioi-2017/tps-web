@@ -1,0 +1,51 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% block problem_content %}
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    {% trans 'Theirs' %}
+                </div>
+                <div class="panel-body">
+                    <code>
+                        {{ conflict.theirs.get_json_representation }}
+                    </code>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    {% trans 'Current' %}
+                </div>
+                <div class="panel-body">
+                    <code>
+                        {{ conflict.current.get_json_representation }}
+                    </code>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    {% trans 'Ours' %}
+                </div>
+                <div class="panel-body">
+                    <code>
+                        {{ conflict.ours.get_json_representation }}
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <form method="post" action="{% problem_url "problems:resolve_conflict" conflict.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-block" name="confirm">
+                {% trans 'Confirm' %}
+            </button>
+        </form>
+    </div>
+{% endblock %}

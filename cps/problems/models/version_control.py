@@ -125,7 +125,7 @@ class RevisionObject(models.Model):
     def diverged_from(self, other_object):
         our_json = json.loads(self.get_json_representation())
         their_json = json.loads(other_object.get_json_representation())
-        return our_json == their_json
+        return our_json != their_json
 
     @staticmethod
     def differ(version_a, version_b):
@@ -143,7 +143,7 @@ class RevisionObject(models.Model):
 
 
 class Merge(models.Model):
-    merged_revision = models.ForeignKey("ProblemRevision", related_name='merges')
+    merged_revision = models.OneToOneField("ProblemRevision", related_name='merge_result')
     our_revision = models.ForeignKey("ProblemRevision", related_name='+')
     their_revision = models.ForeignKey("ProblemRevision", related_name='+')
     base_revision = models.ForeignKey("ProblemRevision", related_name='+')

@@ -28,7 +28,7 @@
             <td>{{ forloop.revcounter }}</td>
             <td>
                 <a href="{% url "problems:overview" problem.id "master" %}">
-                    {{ problem.master_revision.problem_data.title }}({{problem.master_revision.problem_data.code_name}})
+                    {{ problem.get_upstream_fork.head.problem_data.title }}({{problem.master_revision.problem_data.code_name}})
                 </a>
             </td>
             <td> {{ problem.creator }} </td>

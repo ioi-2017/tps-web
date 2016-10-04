@@ -22,7 +22,7 @@ class ProblemAddForm(forms.ModelForm):
         self.instance.creator = self.owner
         self.instance.save()
         problem_revision = ProblemRevision.objects.create(author=self.owner, problem=self.instance)
-        problem_revision.commit()
+        problem_revision.commit("Created problem")
         problem_fork = ProblemFork.objects.create(problem=self.instance, head=problem_revision)
         problem_data = ProblemData.objects.create(problem=problem_revision, title=self.cleaned_data["title"])
         self.instance.master_revision = problem_revision

@@ -11,7 +11,7 @@ __all__ = ["ProblemsListView"]
 
 class ProblemsListView(View):
     def get(self, request):
-        problems = Problem.objects.all().select_related("master_revision")
+        problems = Problem.objects.all()
 
         return render(request, "problems/problems_list.html", context={"problems": problems})
 

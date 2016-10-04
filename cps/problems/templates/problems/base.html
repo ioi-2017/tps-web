@@ -1,15 +1,14 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load problems_tags %}
-{%  block content_header %}
+{%  block header %}
+    {{ block.super }}
     <nav class="navbar navbar-inverse">
         <div class="navbar-header">
             <a href="{% problem_url "problems:overview" %}" class="navbar-brand"> {{ revision.problem_data.title }} </a>
+
         </div>
-        <a href="{% url "problems:overview" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Working Copy' %}</a>
-        <a href="{% url "problems:overview" problem.id "master" %}" class="navbar-link navbar-text">{% trans 'Master Revision' %}</a>
-        {# <a href="{% url "problems:update_working_copy" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Update working copy' %}</a>  #}
-        <ul class="nav navbar-nav pull-right">
+        <ul class="nav navbar-nav">
             <li><a href="{% problem_url "problems:overview" %}" >{% trans 'Overview' %}</a></li>
             <li><a href="{% problem_url "problems:files" %}" >{% trans 'Files' %}</a></li>
             <li><a href="{% problem_url "problems:testcases" %}" >{% trans 'Testcases' %}</a></li>
@@ -18,12 +17,26 @@
             <li><a href="{% problem_url "problems:validators" %}" >{% trans 'Validators' %}</a></li>
             <li><a href="{% problem_url "problems:discussions" %}" >{% trans 'Discussions' %}</a></li>
         </ul>
+        <ul class="nav navbar-nav pull-right flip">
+            <li {% if revision_slug == "master" %} class="active" {% endif %} ><a href="{% url "problems:overview" problem.id "master" %}">{% trans 'Master' %}</a></li>
+            <li {% if revision_slug == request.user.username %} class="active" {% endif %}><a href="{% url "problems:overview" problem.id request.user.username %}">{% trans 'My Fork' %}</a></li>
+        </ul>
+        {# <a href="{% url "problems:update_working_copy" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Update working copy' %}</a>  #}
 
     </nav>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        {% block problem_content %}
+    <div class="col-sm-9">
+        <div class="container-fluid">
+            {% block problem_content %}
+            {% endblock %}
+        </div>
+    </div>
+    <div class="col-sm-3">
+        {% block right_panels %}
+            {% block version_control_panel %}
+                {% include "problems/blocks/version_control.html" %}
+            {% endblock %}
         {% endblock %}
     </div>
 {% endblock %}

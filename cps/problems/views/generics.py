@@ -1,10 +1,9 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.generic import View, DeleteView
 
-from .utils import render_for_problem
 from .decorators import problem_view
 
 __all__ = ["ProblemObjectDeleteView"]
@@ -50,7 +49,7 @@ class ProblemObjectAddView(View):
         assert self.model_form is not None
 
     def _show_form(self, request, problem, revision, form):
-        return render_for_problem(request, problem, revision, self.template_name, context={
+        return render(request, self.template_name, context={
             "form": form
         })
 
@@ -83,7 +82,7 @@ class ProblemObjectEditView(View):
         assert self.model_form is not None
 
     def _show_form(self, request, problem, revision, form):
-        return render_for_problem(request, problem, revision, self.template_name, context={
+        return render(request, self.template_name, context={
             "form": form,
         })
 
