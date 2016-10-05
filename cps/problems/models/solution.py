@@ -18,6 +18,9 @@ class Solution(RevisionObject):
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
 
+    def __str__(self):
+        return self.code.name
+
 
 class SolutionSubtaskExpectedScore(RevisionObject):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))

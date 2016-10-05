@@ -21,10 +21,10 @@ class TestCase(RevisionObject):
     name = models.CharField(max_length=20, verbose_name=_("name"))
 
     _input_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("input uploaded file"), null=True,
-                                             related_name='+')
+                                             related_name='+', blank=True)
     _input_generation_parameters = models.TextField(
         verbose_name=_("input generation command"),
-        max_length=1,
+        max_length=100,
         blank=True
     )
     _input_generator = models.ForeignKey(SourceFile, verbose_name=_("generator"), null=True, related_name='+', blank=True)
@@ -33,18 +33,23 @@ class TestCase(RevisionObject):
     )
     _input_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
 
-    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output file"), null=True, related_name='+', blank=True)
+    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True, related_name='+', blank=True)
     _output_static = models.BooleanField(
         editable=False,
     )
     _output_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
-    _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+')
+    _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+', blank=True)
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator is None:
             raise ValidationError("Either a static input or a generator must be set")
         if self._input_uploaded_file is not None and self._input_generator is not None:
             raise ValidationError("Only one of generator and static input file must be present.")
+
+        if self._output_uploaded_file is None and self._solution is None:
+            raise ValidationError("Either a static output or a solution must be set")
+        if self._output_uploaded_file is not None and self._solution is not None:
+            raise ValidationError("Only one of solution and static output file must be present.")
 
     def save(self, *args, **kwargs):
         """
@@ -62,9 +67,13 @@ class TestCase(RevisionObject):
             raise ValidationError("Validate the model before saving it")
 
         if self._output_uploaded_file is not None:
+            if self._solution is not None:
+                raise ValidationError("Validate the model before saving it")
             self._output_static = True
-        else:
+        elif self._solution is not None:
             self._output_static = False
+        else:
+            raise ValidationError("Validate the model before saving it")
 
         super(TestCase, self).save(*args, **kwargs)
 
