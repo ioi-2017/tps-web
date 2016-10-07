@@ -7,9 +7,17 @@ from problems.models import RevisionObject
 from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase, Subtask
-
+from multiselectfield import MultiSelectField
 
 __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore"]
+
+VERDICTS = (
+    ("1", 'Accept'),
+    ("2", 'Wrong Answer'),
+    ("3", 'Time Limit'),
+    ("4", 'Memory Limit'),
+    ("5", 'Presentation Error')
+)
 
 
 class Solution(RevisionObject):
@@ -17,6 +25,8 @@ class Solution(RevisionObject):
     code = models.ForeignKey(SourceFile, verbose_name=_("code"))
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
+    should_be_present_verdicts = MultiSelectField(choices=VERDICTS, null=True)
+    should_not_be_present_verdicts = MultiSelectField(choices=VERDICTS, null=True)
 
     def __str__(self):
         return self.code.name

@@ -12,6 +12,8 @@
             <form class="form-horizontal" method="post" action="{% problem_url "problems:add_solution" %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_field form.sourcefile %}
+                {% bootstrap_field form.should_be_present_verdicts %}
+                {% bootstrap_field form.should_not_be_present_verdicts %}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
                         {% trans 'Submit' %}

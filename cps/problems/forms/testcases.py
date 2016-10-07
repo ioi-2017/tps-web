@@ -1,6 +1,5 @@
 from django import forms
 
-from core.templatetags.privileged_get import privileged_get
 from file_repository.models import FileModel
 from .generic import ProblemObjectModelForm
 from problems.models import TestCase, Solution, SourceFile

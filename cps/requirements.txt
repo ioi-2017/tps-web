@@ -6,3 +6,4 @@ celery
 django-bootstrap3
 git+git://github.com/mohammadroghani/django-clone.git
 django-cereal
+django-multiselectfield

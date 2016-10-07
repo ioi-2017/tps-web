@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
@@ -18,7 +19,8 @@ __all__ = ["TestCase", "Subtask"]
 
 class TestCase(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=20, verbose_name=_("name"))
+    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True)
+    testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
 
     _input_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("input uploaded file"), null=True,
                                              related_name='+', blank=True)
@@ -74,6 +76,11 @@ class TestCase(RevisionObject):
             self._output_static = False
         else:
             raise ValidationError("Validate the model before saving it")
+
+        self.testcase_number = TestCase.objects.all().aggregate(Max('testcase_number'))["testcase_number__max"] + 1
+
+        if self.name == "":
+            self.name = "test" + str(self.testcase_number)
 
         super(TestCase, self).save(*args, **kwargs)
 
