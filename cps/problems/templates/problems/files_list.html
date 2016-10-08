@@ -6,11 +6,13 @@
     <div class="row">
         <h2> {% trans 'Sources' %} </h2>
     </div>
+    {% if revision_editable %}
     <div class="row">
         <a href="{% problem_url "problems:add_sourcefile" %}" class="btn btn-success">
             <i class="fa fa-plus"></i> {% trans 'Upload a source' %}
         </a>
     </div>
+    {% endif %}
     <br />
     <div class="row">
     {% if source_files %}
@@ -22,8 +24,10 @@
                     <th> {% trans 'File' %} </th>
                     <th> {% trans 'Language' %} </th>
                     <th> {% trans 'Compile Status' %}</th>
-                    <th></th>
-                    <th></th>
+                    {% if revision_editable %}
+                        <th></th>
+                        <th></th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -41,13 +45,15 @@
                         {% endif %}
 
                     </td>
+                    {% if revision_editable %}
                     <td>
-                        <a href="{% problem_url "problems:compile_sourcefile" source_file.id %}" class="btn btn-primary"> {% trans 'Compile' %}</a>
+                        <a data-method='post' href="{% problem_url "problems:compile_sourcefile" source_file.id %}" class="btn btn-primary"> {% trans 'Compile' %}</a>
                     </td>
                     <td>
                         <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this source?' %}' href='{% problem_url "problems:delete_sourcefile" source_file.id %}'>
                             <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                     </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
@@ -61,11 +67,13 @@
     <div class="row">
         <h2> {% trans 'Attachments' %} </h2>
     </div>
-    <div class="row">
-        <a href="{% problem_url "problems:add_attachment" %}" class="btn btn-success">
-            <i class="fa fa-plus"></i> {% trans 'Upload an attachment' %}
-        </a>
-    </div>
+    {% if revision_editable %}
+        <div class="row">
+            <a href="{% problem_url "problems:add_attachment" %}" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans 'Upload an attachment' %}
+            </a>
+        </div>
+    {% endif %}
     <br />
     <div class="row">
     {% if attachments %}
@@ -84,10 +92,12 @@
                     <td> {{ forloop.counter }} </td>
                     <td> {{ attachment.name }} </td>
                     <td> {{ attachment.file }} </td>
+                    {% if revision_editable %}
                     <td>
                         <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this attachment?' %}' href='{% problem_url "problems:delete_attachment" attachment.id %}'>
                             <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                     </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>

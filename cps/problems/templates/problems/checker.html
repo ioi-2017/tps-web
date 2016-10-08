@@ -9,15 +9,23 @@
         <div class="col-sm-4"></div>
         <div class="col-sm-6">
             <h1>{% trans 'Choose a checker' %}</h1>
+            {% if revision_editable %}
             <form class="form-horizontal" method="post" action="{% problem_url "problems:checker" %}" enctype="multipart/form-data">
                 {% csrf_token %}
+            {% endif %}
+            {% if revision_editable %}
                 {% bootstrap_field form.checker %}
+            {% else %}
+                {% bootstrap_field form.checker layout='readonly' %}
+            {% endif %}
+            {% if revision_editable %}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
                         {% trans 'Submit' %}
                     </button>
                 </div>
             </form>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

@@ -10,6 +10,7 @@ __all__ = ["ProblemsListView"]
 
 
 class ProblemsListView(View):
+
     def get(self, request):
         problems = Problem.objects.all()
 
@@ -25,7 +26,7 @@ class ProblemAddView(View):
             obj = form.save()
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": obj.id,
-                "revision_slug": obj.master_revision.revision_id
+                "revision_slug": obj.get_upstream_fork().get_slug()
             }))
 
         return render(request, self.template_name, context={"form": form})

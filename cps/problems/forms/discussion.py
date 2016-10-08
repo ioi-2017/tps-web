@@ -13,7 +13,6 @@ class DiscussionAddForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.problem = kwargs.pop("problem")
-        self.revision = kwargs.pop("revision")
         self.owner = kwargs.pop("owner")
         super(DiscussionAddForm, self).__init__(*args, **kwargs)
 
@@ -37,8 +36,6 @@ class CommentAddForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.discussion = kwargs.pop("discussion")
-        self.problem = kwargs.pop("problem")
-        self.revision = kwargs.pop("revision")
         self.owner = kwargs.pop("owner")
         super(CommentAddForm, self).__init__(*args, **kwargs)
 

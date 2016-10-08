@@ -4,13 +4,13 @@ from django.views.generic import View
 
 from problems.forms.validator import ValidatorAddForm
 from problems.models import Validator
-from problems.views.decorators import problem_view
-from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView
+from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
-class ValidatorsListView(View):
-    @problem_view("read_validators")
-    def get(self, request, problem, revision):
-        validators = revision.validator_set.all()
+
+class ValidatorsListView(RevisionObjectView):
+
+    def get(self, request, problem_id, revision_slug):
+        validators = self.revision.validator_set.all()
 
         return render(request, "problems/validator_list.html", context={
             "validators": validators
@@ -26,10 +26,10 @@ class ValidatorAddView(ProblemObjectAddView):
     model_form = ValidatorAddForm
     permissions_required = ["add_validator"]
 
-    def get_success_url(self, request, problem, revision, obj):
-        return reverse("problems:add_validator", kwargs={
-            "problem_id": problem.id,
-            "revision_slug": request.resolver_match.kwargs["revision_slug"]
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return reverse("problems:validators", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
         })
 
 

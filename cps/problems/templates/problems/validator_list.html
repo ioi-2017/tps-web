@@ -7,11 +7,13 @@
     <div class="row">
         <h2> {% trans 'Validators' %} </h2>
     </div>
-    <div class="row">
-        <a href="{% problem_url "problems:add_validator" %}" class="btn btn-success">
-            <i class="fa fa-plus"></i> {% trans 'Add a validator' %}
-        </a>
-    </div>
+    {% if revision_editable %}
+        <div class="row">
+            <a href="{% problem_url "problems:add_validator" %}" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans 'Add a validator' %}
+            </a>
+        </div>
+    {% endif %}
     <br />
     <div class="row">
         {% if validators %}
@@ -19,8 +21,12 @@
                 <thead>
                     <tr>
                         <td class="col-md-1">#</td>
-                        <td class="col-md-10">{% trans 'Source Code' %}</td>
-                        <td class="col-md-2"></td>
+                        {% if revision_editable %}
+                            <td class="col-md-10">{% trans 'Source Code' %}</td>
+                            <td class="col-md-1"></td>
+                        {% else %}
+                            <td class="col-md-11">{% trans 'Source Code' %}</td>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -28,12 +34,14 @@
                     <tr>
                         <td> {{ forloop.counter }} </td>
                         <td> {{ validator.code }} </td>
-                        <td>
-                            <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>
-                                <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
-                            <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this validator?' %}' href='{% problem_url "problems:delete_validator" validator.id %}'>
-                                <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
-                        </td>
+                        {% if revision.editalbe %}
+                            <td>
+                                <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>
+                                    <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
+                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this validator?' %}' href='{% problem_url "problems:delete_validator" validator.id %}'>
+                                    <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                            </td>
+                        {% endif %}
                     </tr>
             {% endfor %}
                 </tbody>

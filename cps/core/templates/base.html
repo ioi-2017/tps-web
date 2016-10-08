@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load i18n %}
+{% load bootstrap3 %}
 
 <html lang="{{LANGUAGE_CODE}}">
 
@@ -163,6 +164,7 @@
     <div class="navbar-placeholder"></div>
     {% endblock %}
     <div class="container-fluid">
+    {% bootstrap_messages %}
         {% block content %}
         {% endblock %}
     </div>
