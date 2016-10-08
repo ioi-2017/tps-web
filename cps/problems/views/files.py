@@ -51,9 +51,6 @@ class SourceFileCompileView(View):
     @problem_view(required_permissions=["compile"])
     def get(self, request, problem, revision, object_id):
         sourcefiles = SourceFile.objects.all()
-        for sourcefile in sourcefiles:
-            print(sourcefile.id)
-        print(object_id)
         obj = get_object_or_404(SourceFile, **{
             "problem_id": revision.id,
             "id": object_id

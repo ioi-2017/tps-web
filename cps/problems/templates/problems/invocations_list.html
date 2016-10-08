@@ -1,0 +1,49 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Invocations' %} </h2>
+    </div>
+    <div class="row">
+        <a href="{% problem_url "problems:add_invocation" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add an invocation' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+        {% if invocations %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <td class="col-md-1">#</td>
+                        <td class="col-md-10">{% trans 'Solutions' %}</td>
+                        <td class="col-md-2"></td>
+                    </tr>
+                </thead>
+                <tbody>
+            {% for invocation in invocations %}
+                    <tr>
+                        <td> {{ forloop.counter }} </td>
+                        <td>
+                            {% for solution in invocation.solutions.all %}
+                                <p>{{ solution }}</p>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
+                        </td>
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No invocation exists' %}
+            </h4>
+        {% endif %}
+    </div>
+    {% csrf_token %}
+{% endblock %}

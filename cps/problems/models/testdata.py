@@ -169,6 +169,9 @@ class TestCase(RevisionObject):
         else:
             return self._input_file is not None
 
+    def __str__(self):
+        return self.name
+
 
 class Subtask(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
