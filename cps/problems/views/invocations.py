@@ -5,15 +5,14 @@ from django.views.generic import View
 
 from problems.forms.invocation import InvocationAddForm
 from problems.forms.solution import SolutionAddForm
-from .decorators import problem_view
 from problems.models import Solution, SolutionRun
-from .generics import ProblemObjectDeleteView, ProblemObjectAddView
+from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
 
-class InvocationsListView(View):
-    @problem_view(required_permissions=["read_invocations"])
-    def get(self, request, problem, revision):
-        invocations = revision.solutionrun_set.all()
+class InvocationsListView(RevisionObjectView):
+
+    def get(self, request, problem_id, revision_slug):
+        invocations = self.revision.solutionrun_set.all()
 
         return render(request, "problems/invocations_list.html", context={
             "invocations": invocations
@@ -25,23 +24,22 @@ class InvocationAddView(ProblemObjectAddView):
     model_form = InvocationAddForm
     permissions_required = ["add_invocation"]
 
-    def get_success_url(self, request, problem, revision, obj):
-        return reverse("problems:add_invocation", kwargs={
-            "problem_id": problem.id,
-            "revision_slug": request.resolver_match.kwargs["revision_slug"]
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return reverse("problems:invocations", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
         })
 
 
-class InvocationRunView(View):
-    @problem_view(required_permissions=["run_invocation"])
-    def get(self, request, problem, revision, invocation_id):
+class InvocationRunView(RevisionObjectView):
+    def post(self, request, problem_id, revision_slug, invocation_id):
         invocations = SolutionRun.objects.all()
         obj = get_object_or_404(SolutionRun, **{
-            "problem_id": revision.id,
+            "problem_id": self.revision.id,
             "id": invocation_id
         })
         obj.run()
         return HttpResponseRedirect(reverse("problems:invocations", kwargs={
-            "problem_id": problem.id,
-            "revision_slug": request.resolver_match.kwargs["revision_slug"]
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
         }))

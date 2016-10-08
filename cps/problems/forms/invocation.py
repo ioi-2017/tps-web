@@ -1,7 +1,7 @@
 from django import forms
 
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import SourceFile, Solution, SolutionRun
+from problems.models import SourceFile, Solution, SolutionRun, TestCase
 
 
 class InvocationAddForm(ProblemObjectModelForm):
@@ -13,6 +13,7 @@ class InvocationAddForm(ProblemObjectModelForm):
     def __init__(self, *args, **kwargs):
         super(InvocationAddForm, self).__init__(*args, **kwargs)
         self.fields["solutions"].queryset = Solution.objects.filter(problem=self.revision)
+        self.fields["testcases"].queryset = TestCase.objects.filter(problem=self.revision)
 
     def save(self, commit=True):
         super(InvocationAddForm, self).save(commit=False)

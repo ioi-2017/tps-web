@@ -33,7 +33,7 @@
                             {% endfor %}
                         </td>
                         <td>
-                            <a href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
+                            <a data-method="post" href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
                         </td>
                     </tr>
             {% endfor %}
