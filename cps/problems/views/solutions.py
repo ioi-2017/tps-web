@@ -2,17 +2,16 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.generic import View
 from problems.forms.solution import SolutionAddForm
-from .decorators import problem_view
 from problems.models import Solution
-from .generics import ProblemObjectDeleteView, ProblemObjectAddView
+from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
 __all__ = ["SolutionAddView", "SolutionDeleteView", "SolutionEditView", "SolutionsListView"]
 
 
-class SolutionsListView(View):
-    @problem_view(required_permissions=["read_solutions"])
-    def get(self, request, problem, revision):
-        solutions = revision.solution_set.all()
+class SolutionsListView(RevisionObjectView):
+
+    def get(self, request, problem_id, revision_slug):
+        solutions = self.revision.solution_set.all()
 
         return render(request, "problems/solutions_list.html", context={
             "solutions": solutions
@@ -24,12 +23,11 @@ class SolutionAddView(ProblemObjectAddView):
     model_form = SolutionAddForm
     permissions_required = ["add_solution"]
 
-    def get_success_url(self, request, problem, revision, obj):
-        return reverse("problems:add_solution", kwargs={
-            "problem_id": problem.id,
-            "revision_slug": request.resolver_match.kwargs["revision_slug"]
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return reverse("problems:solutions", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
         })
-
 
 
 class SolutionEditView(View):

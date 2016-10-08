@@ -24,6 +24,6 @@ def extract_revision_data(problem_id, revision_slug):
                 revision = fork.get_working_copy_or_head()
             except ObjectDoesNotExist:
                 raise Http404
-    return problem, revision, fork
+    return problem, fork, revision
 
 

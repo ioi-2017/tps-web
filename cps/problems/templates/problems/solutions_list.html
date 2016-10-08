@@ -1,4 +1,4 @@
-{% extends "problems/base.html" %}
+    {% extends "problems/base.html" %}
 {% load i18n %}
 {% load staticfiles %}
 {% load problems_tags %}
@@ -7,20 +7,26 @@
     <div class="row">
         <h2> {% trans 'Solutions' %} </h2>
     </div>
+    {% if revision_editable %}
     <div class="row">
         <a href="{% problem_url "problems:add_solution" %}" class="btn btn-success">
             <i class="fa fa-plus"></i> {% trans 'Add a solution' %}
         </a>
     </div>
+    {% endif %}
     <br />
     <div class="row">
         {% if solutions %}
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
-                        <td class="col-md-1">#</td>
-                        <td class="col-md-10">{% trans 'Source Code' %}</td>
-                        <td class="col-md-2"></td>
+                        <th class="col-md-1">#</th>
+                        {% if revision_editable %}
+                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1"></th>
+                        {% else %}
+                            <th class="col-md-11">{% trans 'Source Code' %}</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -28,12 +34,15 @@
                     <tr>
                         <td> {{ forloop.counter }} </td>
                         <td> {{ solution.code }} </td>
-                        <td>
-                            <a class="text-primary" href='{% problem_url "problems:edit_solution" solution.id %}'>
-                                <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
-                            <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this solution?' %}' href='{% problem_url "problems:delete_solution" solution.id %}'>
-                                <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
-                        </td>
+                        {% if revision_editable %}
+                            <td>
+
+                                <a class="text-primary" href='{% problem_url "problems:edit_solution" solution.id %}'>
+                                    <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
+                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this solution?' %}' href='{% problem_url "problems:delete_solution" solution.id %}'>
+                                    <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                            </td>
+                        {% endif %}
                     </tr>
             {% endfor %}
                 </tbody>

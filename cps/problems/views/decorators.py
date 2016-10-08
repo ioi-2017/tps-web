@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 
 from .utils import extract_revision_data
 
-
+"""
 def problem_view(required_permissions=None):
 
     def wrap(func):
@@ -20,3 +20,4 @@ def problem_view(required_permissions=None):
 
         return wrapper
     return wrap
+"""

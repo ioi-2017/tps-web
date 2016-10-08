@@ -125,6 +125,9 @@ class ProblemRevision(models.Model):
     def problem_data(self):
         return self.problemdata_set.all()[0]
 
+    def editable(self, user):
+        return not self.committed() and self.author == user
+
     def save(self, *args, **kwargs):
         self.depth = 1
         super(ProblemRevision, self).save(*args, **kwargs)

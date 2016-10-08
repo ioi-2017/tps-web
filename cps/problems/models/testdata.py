@@ -77,7 +77,10 @@ class TestCase(RevisionObject):
         else:
             raise ValidationError("Validate the model before saving it")
 
-        self.testcase_number = TestCase.objects.all().aggregate(Max('testcase_number'))["testcase_number__max"] + 1
+        current_number = TestCase.objects.all().aggregate(Max('testcase_number'))["testcase_number__max"]
+        if current_number is None:
+            current_number = 0
+        self.testcase_number =  current_number + 1
 
         if self.name == "":
             self.name = "test" + str(self.testcase_number)

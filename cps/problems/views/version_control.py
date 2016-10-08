@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 
 from problems.forms.version_control import CommitForm
 from problems.models import Conflict
-from problems.views.decorators import problem_view
 from problems.views.utils import extract_revision_data
 
 __all__ = ["UpdateForkView", "CommitWorkingCopy",
@@ -19,7 +18,7 @@ __all__ = ["UpdateForkView", "CommitWorkingCopy",
 class UpdateForkView(View):
 
     def post(self, request, problem_id, revision_slug):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         if not fork:
             raise Http404
         if fork.has_working_copy():
@@ -39,7 +38,7 @@ class CreateWorkingCopy(View):
 
     def post(self, request, problem_id, revision_slug):
 
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         if not fork:
             raise Http404
         # FIXME: full access is given to superusers.
@@ -64,7 +63,7 @@ class CreateWorkingCopy(View):
 class CommitWorkingCopy(View):
 
     def post(self, request, problem_id, revision_slug):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         # FIXME: full access is given to superusers.
         # FIXME: This is just for testing purposes and must be removed
         if not request.user.is_superuser and fork.owner != request.user:
@@ -92,7 +91,7 @@ class CommitWorkingCopy(View):
                 }))
 
     def get(self, request, problem_id, revision_slug):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         # FIXME: full access is given to superusers.
         # FIXME: This is just for testing purposes and must be removed
         if not request.user.is_superuser and fork.owner != request.user:
@@ -113,7 +112,7 @@ class CommitWorkingCopy(View):
 class ConflictsListView(View):
 
     def get(self, request, problem_id, revision_slug):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         if not revision.has_merge_result():
             raise Http404
         return render(request, "problems/conflicts.html", context={
@@ -124,7 +123,7 @@ class ConflictsListView(View):
 class ResolveConflictView(View):
 
     def post(self, request, problem_id, revision_slug, conflict_id):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         conflict = get_object_or_404(
             Conflict,
             id=conflict_id,
@@ -139,7 +138,7 @@ class ResolveConflictView(View):
         }))
 
     def get(self, request, problem_id, revision_slug, conflict_id):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         conflict = get_object_or_404(
             Conflict,
             id=conflict_id,
@@ -154,7 +153,7 @@ class ResolveConflictView(View):
 class ApplyForkToMaster(View):
 
     def post(self, request, problem_id, revision_slug):
-        problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         master = problem.get_upstream_fork()
         if fork.has_working_copy():
             messages.error(request, _("You must first commit your changes"))
