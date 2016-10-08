@@ -7,11 +7,13 @@
     <div class="row">
         <h2> {% trans 'Invocations' %} </h2>
     </div>
+    {% if revision_editable %}
     <div class="row">
         <a href="{% problem_url "problems:add_invocation" %}" class="btn btn-success">
             <i class="fa fa-plus"></i> {% trans 'Add an invocation' %}
         </a>
     </div>
+    {% endif %}
     <br />
     <div class="row">
         {% if invocations %}
@@ -19,8 +21,12 @@
                 <thead>
                     <tr>
                         <td class="col-md-1">#</td>
-                        <td class="col-md-10">{% trans 'Solutions' %}</td>
-                        <td class="col-md-2"></td>
+                        {% if revision_editable %}
+                            <td class="col-md-10">{% trans 'Solutions' %}</td>
+                            <td class="col-md-2"></td>
+                        {% else %}
+                            <td class="col-md-12">{% trans 'Solutions' %}</td>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -32,9 +38,11 @@
                                 <p>{{ solution }}</p>
                             {% endfor %}
                         </td>
+                        {% if revision_editable %}
                         <td>
                             <a data-method="post" href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
                         </td>
+                        {% endif %}
                     </tr>
             {% endfor %}
                 </tbody>
