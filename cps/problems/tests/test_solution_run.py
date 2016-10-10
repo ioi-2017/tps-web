@@ -1,5 +1,7 @@
 import tempfile
 
+from celery import Task
+from celery.contrib.methods import task_method
 from django.core.files import File
 
 from model_mommy import mommy
@@ -11,20 +13,29 @@ from problems.models import ProblemRevision, SolutionRun, Solution, TestCase
 
 
 class SolutionRunTests(UnitTestCase):
-
     def test_creation_and_run(self):
         def false_evaluation(obj):
             obj.score = 10
             obj.save()
+        class FalseEvaluationTask(object):
+            def __call__(self, *args, **kwargs):
+                false_evaluation(self.__self__)
+            def async(self, *args, **kwargs):
+                self(*args, **kwargs)
+            def __get__(self, instance, owner):
+                self.__self__ = instance
+                return self
         with mock.patch(
             target='problems.models.solution_run.SolutionRunResult.evaluate',
-            autospec=True,
-            side_effect=false_evaluation,
+            new=FalseEvaluationTask()
         ) as evalutate_patch:
             problem_revision = mommy.make(ProblemRevision)
             solutions = mommy.make(Solution, _quantity=2, problem=problem_revision)
             testcases = mommy.make(TestCase, _quantity=2, problem=problem_revision,
-                                   _input_static=True, _input_uploaded_file=mommy.make(FileModel)
+                                   _input_static=True,
+                                   _input_uploaded_file=mommy.make(FileModel),
+                                   _output_static=True,
+                                   _output_uploaded_file=mommy.make(FileModel),
             )
             solution_run = SolutionRun.create(solutions, testcases)
 

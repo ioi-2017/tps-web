@@ -4,7 +4,7 @@
 {% load bootstrap3 %}
 {% block problem_content %}
     <div class="row">
-        <h2> {{ discussion.title }} {% trans 'Comments' %} </h2>
+        <h2> {{ discussion.title }} </h2>
         <p class="badge"> {{ discussion.get_priority_display }}</p>
     </div>
     <br />
@@ -26,12 +26,10 @@
     <br />
     <br />
     <div class="row">
-        <div class="col-sm-4"></div>
-        <div class="col-sm-6">
-            <h1>{% trans 'Add a comment' %}</h1>
+        <div class="col-sm-12">
             <form class="form-horizontal" method="post" action="{% problem_url "problems:comments" discussion.id %}" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% bootstrap_field form.text %}
+                {% bootstrap_field form.text layout='inline'%}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
                         {% trans 'Submit' %}

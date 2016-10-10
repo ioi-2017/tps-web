@@ -32,7 +32,8 @@ def get_execution_command(language, executable_filename):
         logger.error("Language" + language + "not supported in runner")
 
     if language == "c++":
-        command_list = [".", executable_filename]
+        import os
+        command_list = [os.path.join(".", executable_filename)]
         return command_list
 
 
