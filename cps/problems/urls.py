@@ -8,9 +8,6 @@ from problems.views.problems import ProblemAddView
 from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
 from .views import *
 
-
-
-
 problem_urls = ([
         url(r'^$', Overview.as_view(), name="overview"),
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),

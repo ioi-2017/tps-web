@@ -1,9 +1,10 @@
 from runner import get_execution_command
-from runner.models import JobFile, JobModel
+#from runner.models import JobFile, JobModel
 
 
 def run_with_input(source_file, input_file, time_limit, memory_limit):
 
+    """
     SOLUTION_FILENAME = "solution"
     INPUT_FILENAME = "input.txt"
     STDOUT_FILENAME = "stdout.txt"
@@ -22,10 +23,12 @@ def run_with_input(source_file, input_file, time_limit, memory_limit):
     job.run()
     job_file.refresh_from_db()
     return job_file.file_model, job.execution_time, job.execution_memory, job.exit_code
-
+    """
+    pass
 
 def run_checker(source_file, input_file, jury_output, contestant_output):
 
+    """
     SOLUTION_FILENAME = "solution"
     INPUT_FILENAME = "input.txt"
     JURY_FILENAME = "jury.out"
@@ -54,3 +57,5 @@ def run_checker(source_file, input_file, jury_output, contestant_output):
     stdout_job_file.file_model.delete()
     stderr_job_file.file_model.delete()
     return score, contestant_comment, jury_comment
+    """
+    pass

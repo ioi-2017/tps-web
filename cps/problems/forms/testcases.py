@@ -6,8 +6,8 @@ from problems.models import TestCase, Solution, SourceFile
 
 
 class TestCaseAddForm(ProblemObjectModelForm):
-    input_uploaded_file = forms.FileField(label="Input uploaded file")
-    output_uploaded_file = forms.FileField(label="Output uploaded file")
+    input_uploaded_file = forms.FileField(label="Input uploaded file", required=False)
+    output_uploaded_file = forms.FileField(label="Output uploaded file", required=False)
 
     class Meta:
         model = TestCase

@@ -8,11 +8,18 @@ from file_repository.models import FileModel
 from problems.models.problem import ProblemRevision
 from problems.models.version_control import RevisionObject
 from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
-from runner import get_compilation_command, get_source_file_name
-from runner.models import JobModel, JobFile
+from runner import get_compilation_commands, get_source_file_name
+from runner.actions.action import ActionDescription
+from runner.actions.compile_source import compile_source
+from runner.decorators import allow_async_method
+from django.conf import settings
+
+import logging
 
 
 __all__ = ["Attachment", "SourceFile"]
+
+logger = logging.getLogger(__name__)
 
 
 class Attachment(RevisionObject):
@@ -28,8 +35,6 @@ class Attachment(RevisionObject):
         return self.file != other_object.file
 
 
-
-
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
@@ -42,24 +47,34 @@ class SourceFile(RevisionObject):
     )
 
     _compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
-                                       related_name="+", null=True, blank=True  )
+                                       related_name="+", null=True, blank=True)
 
+    @allow_async_method
     def compile(self):
         """
         use runner to compile a file and update compiled_file
         """
+
         code_name = get_source_file_name(self.source_language)
         compiled_file_name = "code.out"
-        compile_command = get_compilation_command(self.source_language, code_name,
+        compile_commands = get_compilation_commands(self.source_language, code_name,
                                                   compiled_file_name)
-        job = JobModel(command=compile_command, compile_job=True)
-        job.save()
-        job.add_file(file_model=self.source_file, filename=code_name, type=JobFile.READONLY)
-        job_file = job.mark_file_for_extraction(filename=compiled_file_name)
-        job.run()
-        job_file.refresh_from_db()
-        self._compiled_file = job_file.file_model
-        self.save()
+        action = ActionDescription(
+            commands=compile_commands,
+            files=[(code_name, self.source_file)],
+            output_files=[compiled_file_name],
+            time_limit=settings.DEFAULT_COMPILATION_TIME_LIMIT,
+            memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
+        )
+
+        success, outputs, sandbox_data = compile_source(action)
+
+        if not success:
+            logger.error("Compilation failed")
+        else:
+            self._compiled_file = outputs[0]
+            self.save()
+
 
     def compiled_file(self):
         """

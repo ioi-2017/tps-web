@@ -8,9 +8,11 @@ from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
+from runner.actions.action import ActionDescription
+from runner.actions.execute_with_input import execute_with_input
 from runner.decorators import allow_async_method
-from runner.models import JobModel, JobFile
 
+from django.conf import settings
 
 __all__ = ["Validator", "ValidatorResult"]
 
@@ -64,10 +66,15 @@ class ValidatorResult(RevisionObject):
     def run(self):
         validation_command = get_execution_command(self.validator.code.source_language, "validator")
 
-        job = JobModel(command=validation_command)
-        job.add_file(file_model=self.testcase.input_file, filename="input.txt", type=JobFile.READONLY)
-        job.add_file(file_model=self.validator.code.compiled_file(), filename="validator", type=JobFile.EXECUTABLE)
-        job.run()
-        self.exit_code = job.exit_code
-        self.exit_status = job.exit_status
+        action = ActionDescription(
+            commands=[validation_command],
+            files=[("input.txt", self.testcase.input_file)],
+            executables=[("validator", self.validator.code.compiled_file())],
+            time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
+            memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT,
+        )
+
+        success, outputs, data = execute_with_input(action)
+        self.exit_code = data["exit_code"]
+        self.exit_status = data["exit_status"]
         self.save()

@@ -185,6 +185,12 @@ DEFAULT_COMPILATION_TIME_LIMIT = 10
 # default compilation memory limit
 DEFAULT_COMPILATION_MEMORY_LIMIT = DEFAULT_MEMORY_LIMIT
 
+# default compilation time limit
+DEFAULT_GENERATOR_TIME_LIMIT = 30
+
+# default compilation memory limit
+DEFAULT_GENERATOR_MEMORY_LIMIT = DEFAULT_MEMORY_LIMIT
+
 SANDBOX_TEMP_DIR = "/tmp"
 # SANDBOX_TEMP_DIR = os.path.join(BASE_DIR, "tmp")
 

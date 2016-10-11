@@ -10,8 +10,14 @@ from problems.models import SourceFile, RevisionObject
 from problems.models.problem import ProblemRevision
 from problems.utils import run_with_input
 from runner import get_execution_command
+from runner.actions.action import ActionDescription
+from runner.actions.execute_with_input import execute_with_input
 from runner.decorators import allow_async_method
-from runner.models import JobModel, JobFile
+from django.conf import settings
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 __all__ = ["TestCase", "Subtask"]
@@ -39,8 +45,8 @@ class TestCase(RevisionObject):
     _output_static = models.BooleanField(
         editable=False,
     )
-    _output_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+')
-    _solution = models.ForeignKey(SourceFile, verbose_name=_("solution"), null=True, related_name='+', blank=True)
+    _output_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
+    _solution = models.ForeignKey("Solution", verbose_name=_("solution"), null=True, related_name='+', blank=True)
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator is None:
@@ -97,14 +103,22 @@ class TestCase(RevisionObject):
                 raise AssertionError("static input dose not have generator")
             else:
                 generation_command = get_execution_command(self._input_generator.source_language, "generator")
-                generation_command.extend([self._input_generation_parameters])
-                job = JobModel(command=generation_command, stdout_filename="output.txt")
-                job.add_file(file_model=self._input_generator.compiled_file(), filename="generator",
-                             type=JobFile.EXECUTABLE)
-                job_file = job.mark_file_for_extraction(filename="output.txt")
-                job.run()
-                self._input_file = job_file.file_model
-                self.save()
+                # FIXME: The split must be done in another way so it preserves spaces in quotes
+                generation_command.extend(self._input_generation_parameters.split(" "))
+                action = ActionDescription(
+                    commands=[generation_command],
+                    executables=[("generator", self._input_generator.compiled_file())],
+                    stdout_redirect="output.txt",
+                    output_files=["output.txt"],
+                    time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
+                    memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT
+                )
+                success, outputs, sandbox_data = execute_with_input(action)
+                if not success:
+                    logger.error("Generating input for testcase {} failed".format(str(self)))
+                else:
+                    self._input_file = outputs[0]
+                    self.save()
         else:
             raise AssertionError("can't generate input for static input")
 
@@ -135,7 +149,7 @@ class TestCase(RevisionObject):
                 raise AssertionError("test case does not have solution")
             else:
                 self._output_file = run_with_input(
-                    self._solution,
+                    self._solution.code,
                     self.input_file,
                     self.problem.problem_data.time_limit,
                     self.problem.problem_data.memory_limit
@@ -155,7 +169,7 @@ class TestCase(RevisionObject):
             if self._output_file is not None:
                 return self._output_file
             else:
-                self.generate_output_file.async(self)
+                self.generate_output_file.async()
                 return None
         else:
             return self._output_uploaded_file

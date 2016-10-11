@@ -32,9 +32,11 @@ import tempfile
 from functools import wraps, partial
 
 import subprocess
+from django.core.files import File
 from .cms.GeventUtils import copyfileobj, rmtree
 from .cmscommon.commands import pretty_print_cmdline
 from django.conf import settings
+from file_repository.models import FileModel
 
 logger = logging.getLogger(__name__)
 
@@ -299,6 +301,18 @@ class SandboxBase(object):
         file_.write(content)
         file_.close()
 
+    def create_file_from_storage(self, path, file_model, executable=False):
+        """Write a file taken from database in the sandbox.
+
+        path (string): relative path of the file inside the sandbox.
+        digest (string): digest of the file in FS.
+        executable (bool): to set permissions.
+
+        """
+        file_ = self.create_file(path, executable)
+        copyfileobj(file_model.file, file_)
+        file_.close()
+
     def create_file_from_fileobj(self, path, file_obj, executable=False):
         """Write a file in the sandbox copying the content of an open
         file-like object.
@@ -328,6 +342,25 @@ class SandboxBase(object):
         if trunc_len is not None:
             file_ = Truncator(file_, trunc_len)
         return file_
+
+    def get_file_to_storage(self, path, description="", trunc_len=None):
+        """Put a sandbox file in database and return its pk.
+
+        path (string): relative path of the file inside the sandbox.
+        description (string): the description for FileModel.
+        trunc_len (int|None): if None, does nothing; otherwise, before
+            returning truncate it at the specified length.
+
+        return (string): the digest of the file.
+
+        """
+        file_ = self.get_file(path, trunc_len=trunc_len)
+        file_model = FileModel.objects.create(
+            file=File(file_),
+            description=description
+        )
+        file_.close()
+        return file_model
 
     def get_file_to_string(self, path, maxlen=1024):
         """Return the content of a file in the sandbox given its
@@ -517,7 +550,15 @@ class IsolateSandbox(SandboxBase):
         for filename in os.listdir(path):
             os.chmod(os.path.join(path, filename), 0o755)
 
-    def allow_writing(self, paths, only_these=True):
+    def allow_writing(self, paths):
+        # If one of the specified file do not exists, we touch it to
+        # assign the correct permissions.
+        for path in (os.path.join(self.path, path) for path in paths):
+            if not os.path.exists(path):
+                open(path, "w").close()
+            os.chmod(path, 0o722)
+
+    def allow_writing_only(self, paths):
         """Set permissions in so that the user can write and read only some paths.
 
         paths ([string]): the only paths that the user is allowed to
@@ -531,10 +572,8 @@ class IsolateSandbox(SandboxBase):
                 open(path, "w").close()
 
         # Close everything, then open only the specified.
-        if only_these:
-            self.allow_writing_none()
-        for path in (os.path.join(self.path, path) for path in paths):
-            os.chmod(path, 0o766)
+        self.allow_writing_none()
+        self.allow_writing(paths)
 
     def get_root_path(self):
         """Return the toplevel path of the sandbox.

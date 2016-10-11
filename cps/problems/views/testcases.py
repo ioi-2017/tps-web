@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import View
 
@@ -40,7 +40,13 @@ class TestCaseInputDownloadView(RevisionObjectView):
             "problem_id": self.revision.id,
             "id": testcase_id
         })
-        return FileResponse(testcase.input_file.file, content_type="txt")
+        file = testcase.input_file
+        if file:
+            return FileResponse(file.file, content_type="txt")
+        else:
+            return HttpResponse(content="Please wait while the input file is being generated. "
+                                        "Reload the page to check if generation has completed",
+                                content_type="txt")
 
 
 class TestCaseOutputDownloadView(RevisionObjectView):
@@ -50,4 +56,10 @@ class TestCaseOutputDownloadView(RevisionObjectView):
             "problem_id": self.revision.id,
             "id": testcase_id
         })
-        return FileResponse(testcase.output_file.file, content_type="txt")
+        file = testcase.output_file
+        if file:
+            return FileResponse(file.file, content_type="txt")
+        else:
+            return HttpResponse(content="Please wait while the output file is being generated. "
+                                        "Reload the page to check if generation has completed",
+                                content_type="txt")

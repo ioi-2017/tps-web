@@ -55,7 +55,7 @@ class SourceFileCompileView(RevisionObjectView):
             "problem_id": self.revision.id,
             "id": object_id
         })
-        obj.compile()
+        obj.compile.async()
         return HttpResponseRedirect(reverse("problems:files", kwargs={
             "problem_id": problem_id,
             "revision_slug": revision_slug
