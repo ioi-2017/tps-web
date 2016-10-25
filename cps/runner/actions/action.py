@@ -3,14 +3,14 @@ class ActionDescription(object):
     def __init__(
         self,
         commands,
-        time_limit,
-        memory_limit,
+        time_limit=None,
+        memory_limit=None,
         files=None,
         executables=None,
         output_files=None,
         stdin_redirect=None,
         stdout_redirect=None,
-        stderr_redirect=None
+        stderr_redirect=None,
     ):
         self.commands = commands
 

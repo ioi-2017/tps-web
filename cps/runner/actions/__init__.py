@@ -20,10 +20,16 @@ def execute_command(sandbox, command,
 
     logger.debug("Initializing sandbox for executing {command}".format(command=command))
 
-    sandbox.timeout = time_limit
-    sandbox.wallclock_timeout = 2 * time_limit + 1
+    if time_limit:
+        sandbox.timeout = time_limit
+        sandbox.wallclock_timeout = 2 * time_limit + 1
+    else:
+        time_limit = 0
 
-    sandbox.address_space = memory_limit * 1024
+    if memory_limit:
+        sandbox.address_space = memory_limit * 1024
+    else:
+        sandbox.address_space = 0
 
     sandbox.stdin_file = stdin_redirect
 
@@ -43,10 +49,13 @@ def execute_command(sandbox, command,
 
 
 def run_compilation_commands(sandbox, commands,
-                            time_limit, memory_limit):
+                             time_limit, memory_limit):
     sandbox.dirs += [("/etc", None, None)]
     sandbox.preserve_env = True
     sandbox.max_processes = None
+
+    stdouts = []
+    stderrs = []
 
     sandbox.allow_writing_all()
     idx = 0
@@ -54,6 +63,14 @@ def run_compilation_commands(sandbox, commands,
         if not execute_command(sandbox, command, time_limit, memory_limit,
                                stdout_redirect="stdout_{}.txt".format(idx),
                                stderr_redirect="stderr_{}.txt".format(idx)):
-            return False
+            stdout = str(sandbox.get_file_to_string(sandbox.stdout_file),
+                         "utf-8", errors="replace").strip()
+            stderr = str(sandbox.get_file_to_string(sandbox.stderr_file),
+                         "utf-8", errors="replace").strip()
+
+            stdouts.append(stdout)
+            stderrs.append(stderr)
+
+            return False, None, None
         idx += 1
-    return True
+    return True, stdouts, stderrs
