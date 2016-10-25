@@ -49,6 +49,8 @@ class SourceFile(RevisionObject):
     _compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
                                        related_name="+", null=True, blank=True)
 
+    last_compile_log = models.TextField(verbose_name=_("last compile log"))
+
     @allow_async_method
     def compile(self):
         """
@@ -58,7 +60,7 @@ class SourceFile(RevisionObject):
         code_name = get_source_file_name(self.source_language)
         compiled_file_name = "code.out"
         compile_commands = get_compilation_commands(self.source_language, code_name,
-                                                  compiled_file_name)
+                                                    compiled_file_name)
         action = ActionDescription(
             commands=compile_commands,
             files=[(code_name, self.source_file)],
@@ -67,14 +69,18 @@ class SourceFile(RevisionObject):
             memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
         )
 
-        success, outputs, sandbox_data = compile_source(action)
+        success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
+
+        self._compiled_file = None
 
         if not success:
-            logger.error("Compilation failed")
+            logger.error("Running compilation command failed due to sandbox error")
         else:
-            self._compiled_file = outputs[0]
-            self.save()
-
+            self.last_compile_log = "Standard output:\n" + stdout + "\n"
+            self.last_compile_log += "Standard error:\n" + stderr + "\n"
+            if compilation_success:
+                self._compiled_file = outputs[0]
+        self.save()
 
     def compiled_file(self):
         """

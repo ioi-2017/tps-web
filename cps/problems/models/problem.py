@@ -8,6 +8,7 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_clone.clone import Cloner
 
+from judge import Judge
 from problems.models import RevisionObject, Conflict, Merge
 
 import logging
@@ -109,6 +110,21 @@ class ProblemRevision(models.Model):
     commit_message = models.TextField(verbose_name=_("commit message"), blank=False)
     parent_revisions = models.ManyToManyField("ProblemRevision", verbose_name=_("parent revisions"), related_name='+')
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
+
+    judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
+
+    def get_judge_code(self, judge=None):
+        if judge is None:
+            judge = Judge.get_judge()
+        self.judge_code = judge.initialize_problem(
+                problem_id=self.pk,
+                task_type=self.problem_data.task_type,
+                score_type=self.problem_data.score_type,
+                helpers=[],  # TODO: Add solution helpers
+                problem_code=self.judge_code
+            )
+        self.save()
+        return self.judge_code
 
     def __str__(self):
         return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)

@@ -57,8 +57,11 @@ class Validator(RevisionObject):
         validator_result.run()
 
 class ValidatorResult(RevisionObject):
-    exit_code = models.CharField(max_length=200, verbose_name=_("exit code"))
-    exit_status = models.CharField(max_length=200, verbose_name=_("exit status"))
+    exit_code = models.CharField(max_length=200, verbose_name=_("exit code"), null=True)
+    exit_status = models.CharField(max_length=200, verbose_name=_("exit status"), null=True)
+    valid = models.NullBooleanField(verbose_name=_("valid"))
+    executed = models.BooleanField(verbose_name=_("executed"), default=False)
+
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     validator = models.ForeignKey(Validator, verbose_name=_("validator"))
 
@@ -74,7 +77,10 @@ class ValidatorResult(RevisionObject):
             memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT,
         )
 
-        success, outputs, data = execute_with_input(action)
-        self.exit_code = data["exit_code"]
-        self.exit_status = data["exit_status"]
+        success, execution_success, outputs, data = execute_with_input(action)
+        if success:
+            self.exit_code = data[0]["exit_code"]
+            self.exit_status = data[0]["exit_status"]
+            self.valid = execution_success
+        self.executed = True
         self.save()

@@ -4,10 +4,12 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
+from judge import Judge
+from judge.results import JudgeVerdict
 from problems.models import Solution, RevisionObject
 from problems.models.testdata import TestCase
 from problems.models.problem import ProblemRevision
-from problems.utils import run_with_input, run_checker
+from problems.utils import run_checker
 from runner.decorators import allow_async_method
 
 
@@ -44,31 +46,80 @@ class SolutionRun(RevisionObject):
 
 
 class SolutionRunResult(models.Model):
+
+    _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
+
     solution_run = models.ForeignKey(SolutionRun, verbose_name=_("solution run"), editable=False,
                                      related_name="results")
     solution = models.ForeignKey(Solution, verbose_name=_("solution"), editable=False)
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"), editable=False)
 
+    verdict = models.CharField(
+        max_length=max([len(x[0]) for x in _VERDICTS]),
+        verbose_name=_("verdict"),
+        choices=_VERDICTS,
+        null=True
+    )
     score = models.FloatField(verbose_name=_("score"), null=True)
-    checker_contestant_comment = models.TextField(verbose_name=_("checker comment to contestant"), null=True)
-    checker_jury_comment = models.TextField(verbose_name=_("checker comment to jury"), null=True)
-    output_file = models.ForeignKey(FileModel, verbose_name=_("output file"), null=True)
-    execution_time = models.FloatField(verbose_name=_("execution time"), null=True)
-    memory_usage = models.IntegerField(verbose_name=_("memory usage"), null=True)
-    exit_code = models.CharField(verbose_name=_("exit code"), max_length=100)
+    contestant_message = models.TextField(verbose_name=_("checker comment to contestant"), null=True)
+
+    solution_output = models.ForeignKey(FileModel, verbose_name=_("solution output file"), null=True, related_name='+')
+    solution_execution_time = models.FloatField(verbose_name=_("solution execution time"), null=True)
+    solution_memory_usage = models.IntegerField(verbose_name=_("solution memory usage"), null=True)
+    solution_exit_code = models.CharField(verbose_name=_("solution exit code"), max_length=100, null=True)
+    solution_execution_success = models.NullBooleanField(verbose_name=_("solution execution success"), null=True)
+    solution_execution_message = models.TextField(verbose_name=_("solution execution message"), null=True)
+
+    checker_standard_output = models.ForeignKey(
+        FileModel,
+        verbose_name=_("checker standard output"),
+        null=True, related_name='+'
+    )
+    checker_standard_error = models.ForeignKey(
+        FileModel,
+        verbose_name=_("checker standard error"),
+        null=True, related_name='+'
+    )
+    checker_exit_code = models.CharField(verbose_name=_("checker exit code"), max_length=100, null=True)
+    checker_execution_success = models.NullBooleanField(verbose_name=_("checker execution success"), null=True)
 
     @allow_async_method
     def evaluate(self):
-        problem_data = self.solution_run.problem.problem_data
-        self.output_file, self.execution_time, self.memory_usage, self.exit_code = \
-            run_with_input(self.solution.code,
-                           input_file=self.testcase.input_file,
-                           time_limit=problem_data.time_limit,
-                           memory_limit=problem_data.memory_limit)
-        self.score, self.checker_contestant_comment, self.checker_jury_comment = \
-            run_checker(self.solution_run.problem.problem_data.checker,
-                        input_file=self.testcase.input_file,
-                        jury_output=self.testcase.output_file,
-                        contestant_output=self.output_file
-                        )
+        problem = self.solution_run.problem
+        problem_code = problem.get_judge_code()
+        testcase_code = self.testcase.get_judge_code()
+        judge = Judge.get_judge()
+        evaluation_result = judge.generate_output(
+            problem_code,
+            self.solution.code.source_language,
+            [(self.solution.code.name, self.solution.code.source_file)],
+            testcase_code
+        )
+        self.solution_output, self.solution_execution_success, \
+            self.solution_execution_time, self.solution_memory_usage, self.solution_exit_code, \
+            self.verdict, \
+            self.solution_execution_message = \
+            evaluation_result.output_file, \
+            evaluation_result.success, \
+            evaluation_result.execution_time, \
+            evaluation_result.execution_memory, \
+            evaluation_result.exit_code, \
+            evaluation_result.verdict.name, \
+            evaluation_result.message
+
+        self.save()
+
+        if self.verdict == JudgeVerdict.ok.name:
+            self.checker_execution_success, self.checker_exit_code, \
+                self.score, self.checker_contestant_comment,\
+                self.checker_standard_output, \
+                self.checker_standard_error = run_checker(
+                    self.solution_run.problem.problem_data.checker,
+                    input_file=self.testcase.input_file,
+                    jury_output=self.testcase.output_file,
+                    contestant_output=self.solution_output
+                )
+        else:
+            self.score = 0
+
         self.save()

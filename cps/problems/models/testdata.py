@@ -6,9 +6,9 @@ from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
+from judge import Judge
 from problems.models import SourceFile, RevisionObject
 from problems.models.problem import ProblemRevision
-from problems.utils import run_with_input
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
@@ -47,6 +47,22 @@ class TestCase(RevisionObject):
     )
     _output_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
     _solution = models.ForeignKey("Solution", verbose_name=_("solution"), null=True, related_name='+', blank=True)
+
+    judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
+
+    def get_judge_code(self, judge=None):
+        if judge is None:
+            judge = Judge.get_judge()
+        self.judge_code = judge.add_testcase(
+            problem_code=self.problem.get_judge_code(),
+            testcase_id=self.pk,
+            input_file=self.input_file,
+            output_file=self.output_file,
+            time_limit=self.problem.problem_data.time_limit,
+            memory_limit=self.problem.problem_data.memory_limit,
+        )
+        self.save()
+        return self.judge_code
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator is None:
@@ -113,8 +129,8 @@ class TestCase(RevisionObject):
                     time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
                     memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT
                 )
-                success, outputs, sandbox_data = execute_with_input(action)
-                if not success:
+                success, execution_success, outputs, sandbox_data = execute_with_input(action)
+                if not success or not execution_success:
                     logger.error("Generating input for testcase {} failed".format(str(self)))
                 else:
                     self._input_file = outputs[0]
