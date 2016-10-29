@@ -1,5 +1,8 @@
 # Amir Keivan Mohtashami
 
+import logging
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max
@@ -12,10 +15,7 @@ from problems.models.problem import ProblemRevision
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
-from runner.decorators import allow_async_method
-from django.conf import settings
-
-import logging
+from tasks.decorators import allow_async_method
 
 logger = logging.getLogger(__name__)
 
@@ -121,11 +121,12 @@ class TestCase(RevisionObject):
                 generation_command = get_execution_command(self._input_generator.source_language, "generator")
                 # FIXME: The split must be done in another way so it preserves spaces in quotes
                 generation_command.extend(self._input_generation_parameters.split(" "))
+                stdout_redirect = "output.txt"
                 action = ActionDescription(
                     commands=[generation_command],
                     executables=[("generator", self._input_generator.compiled_file())],
-                    stdout_redirect="output.txt",
-                    output_files=["output.txt"],
+                    stdout_redirect=stdout_redirect,
+                    output_files=[stdout_redirect],
                     time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
                     memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT
                 )
@@ -133,7 +134,7 @@ class TestCase(RevisionObject):
                 if not success or not execution_success:
                     logger.error("Generating input for testcase {} failed".format(str(self)))
                 else:
-                    self._input_file = outputs[0]
+                    self._input_file = outputs[stdout_redirect]
                     self.save()
         else:
             raise AssertionError("can't generate input for static input")

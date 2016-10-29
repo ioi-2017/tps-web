@@ -79,16 +79,17 @@ class Runner(Judge):
                 message=compilation_message
             )
 
-        compiled = outputs[0]
+        compiled = outputs[compiled_file_name]
 
         execution_command = get_execution_command(language, "compiled")
+        stdout_redirect = "output.txt"
         action = ActionDescription(
             commands=[execution_command],
             executables=[("compiled", compiled)],
             files=[("input.txt", testcase.input_file)],
             stdin_redirect="input.txt",
-            stdout_redirect="output.txt",
-            output_files=["output.txt"],
+            stdout_redirect=stdout_redirect,
+            output_files=[stdout_redirect],
             time_limit=time_limit,
             memory_limit=memory_limit
         )
@@ -102,7 +103,7 @@ class Runner(Judge):
         if not execution_success:
             output_file = None
         else:
-            output_file = outputs[0]
+            output_file = outputs[stdout_redirect]
 
         return EvaluationResult(
                 success=evaluation_success,

@@ -3,8 +3,8 @@ class ActionDescription(object):
     def __init__(
         self,
         commands,
-        time_limit=None,
-        memory_limit=None,
+        time_limit=None,  # in seconds
+        memory_limit=None,  # in MB
         files=None,
         executables=None,
         output_files=None,
@@ -12,6 +12,7 @@ class ActionDescription(object):
         stdout_redirect=None,
         stderr_redirect=None,
     ):
+
         self.commands = commands
 
         if files:

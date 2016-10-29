@@ -2,7 +2,7 @@ import logging
 
 from runner.sandbox.sandbox import SandboxBase
 from runner.sandbox.utils import create_sandbox, delete_sandbox, get_sandbox_execution_data_as_dict
-from runner.actions import run_compilation_commands
+from runner.actions import run_compilation_commands, retrieve_files
 from runner.actions.action import ActionDescription
 
 
@@ -37,7 +37,7 @@ def compile_source(action: ActionDescription):
         logger.error("Compilation was not successful. Exit Status: {}".format(sandbox.get_exit_status()))
         return True, False, None, compilation_stdout, compilation_stderr, sandbox_data
 
-    output_files = [sandbox.get_file_to_storage(file) for file in action.output_files]
+    output_files = retrieve_files(sandbox, action.output_files)
 
     delete_sandbox(sandbox)
 

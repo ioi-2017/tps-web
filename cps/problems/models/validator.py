@@ -1,5 +1,6 @@
 # Amir Keivan Mohtashami
 
+from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -10,9 +11,8 @@ from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
-from runner.decorators import allow_async_method
-
-from django.conf import settings
+from tasks.decorators import allow_async_method
+from tasks.models import Task
 
 __all__ = ["Validator", "ValidatorResult"]
 
@@ -54,9 +54,10 @@ class Validator(RevisionObject):
             pass
         validator_result = ValidatorResult(testcase=testcase, validator=self)
         validator_result.save()
-        validator_result.run()
+        validator_result.apply_async()
 
-class ValidatorResult(RevisionObject):
+
+class ValidatorResult(Task):
     exit_code = models.CharField(max_length=200, verbose_name=_("exit code"), null=True)
     exit_status = models.CharField(max_length=200, verbose_name=_("exit status"), null=True)
     valid = models.NullBooleanField(verbose_name=_("valid"))
@@ -65,7 +66,9 @@ class ValidatorResult(RevisionObject):
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     validator = models.ForeignKey(Validator, verbose_name=_("validator"))
 
-    @allow_async_method
+    class Meta:
+        unique_together = ("testcase", "validator")
+
     def run(self):
         validation_command = get_execution_command(self.validator.code.source_language, "validator")
 

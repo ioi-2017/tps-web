@@ -2,7 +2,7 @@ import logging
 
 from runner.sandbox.utils import create_sandbox, get_sandbox_execution_data_as_dict, delete_sandbox, \
     execution_successful
-from runner.actions import execute_command
+from runner.actions import execute_command, retrieve_files
 from runner.actions.action import ActionDescription
 
 
@@ -43,7 +43,7 @@ def execute_with_input(action: ActionDescription):
         if not execution_successful(sandbox):
             return True, False, None, sandbox_datas
 
-    output_files = [sandbox.get_file_to_storage(file) for file in action.output_files]
+    output_files = retrieve_files(sandbox, action.output_files)
 
     delete_sandbox(sandbox)
 

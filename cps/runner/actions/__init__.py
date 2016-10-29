@@ -74,3 +74,18 @@ def run_compilation_commands(sandbox, commands,
             return False, None, None
         idx += 1
     return True, stdouts, stderrs
+
+
+def retrieve_files(sandbox, files):
+    retrieved_files = {}
+    for file in files:
+        try:
+            stored_file = sandbox.get_file_to_storage(file)
+            retrieved_files[file] = stored_file
+        except IOError as e:
+            logger.debug(
+                "The following problem occurred when retrieving file {}: \n {}".format(
+                    file, repr(e))
+            )
+            retrieved_files[file] = None
+    return retrieved_files

@@ -17,17 +17,9 @@ class SolutionRunTests(UnitTestCase):
         def false_evaluation(obj):
             obj.score = 10
             obj.save()
-        class FalseEvaluationTask(object):
-            def __call__(self, *args, **kwargs):
-                false_evaluation(self.__self__)
-            def async(self, *args, **kwargs):
-                self(*args, **kwargs)
-            def __get__(self, instance, owner):
-                self.__self__ = instance
-                return self
         with mock.patch(
-            target='problems.models.solution_run.SolutionRunResult.evaluate',
-            new=FalseEvaluationTask()
+            target='problems.models.solution_run.SolutionRunResult.run',
+            new=false_evaluation
         ) as evalutate_patch:
             problem_revision = mommy.make(ProblemRevision)
             solutions = mommy.make(Solution, _quantity=2, problem=problem_revision)

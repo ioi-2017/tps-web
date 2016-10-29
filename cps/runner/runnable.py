@@ -1,6 +1,8 @@
 # Amirmohsen Ahanchi
 
+
 class Runnable(object):
+
     def execute(self):
         raise NotImplementedError("This must be implemented in subclass")
 

@@ -3,15 +3,15 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from tasks.models import Task
 from file_repository.models import FileModel
 from judge import Judge
 from judge.results import JudgeVerdict
 from problems.models import Solution, RevisionObject
-from problems.models.testdata import TestCase
 from problems.models.problem import ProblemRevision
+from problems.models.testdata import TestCase
 from problems.utils import run_checker
-from runner.decorators import allow_async_method
-
+from tasks.decorators import allow_async_method
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
@@ -27,7 +27,7 @@ class SolutionRun(RevisionObject):
             for testcase in self.testcases.all():
                 result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
                 result.save()
-                result.evaluate.async()
+                result.apply_async()
 
     @classmethod
     def create(cls, solutions, testcases):
@@ -45,7 +45,7 @@ class SolutionRun(RevisionObject):
         return solution_run
 
 
-class SolutionRunResult(models.Model):
+class SolutionRunResult(Task):
 
     _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
 
@@ -83,8 +83,7 @@ class SolutionRunResult(models.Model):
     checker_exit_code = models.CharField(verbose_name=_("checker exit code"), max_length=100, null=True)
     checker_execution_success = models.NullBooleanField(verbose_name=_("checker execution success"), null=True)
 
-    @allow_async_method
-    def evaluate(self):
+    def run(self):
         problem = self.solution_run.problem
         problem_code = problem.get_judge_code()
         testcase_code = self.testcase.get_judge_code()

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'trader',
     'file_repository',
     'runner',
+    'tasks',
 
     # Allauth Apps (must be after accounts)
     'allauth',

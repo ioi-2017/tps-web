@@ -40,8 +40,10 @@ def run_checker(source_file, input_file, jury_output, contestant_output):
     )
     success, execution_success, output_files, sandbox_datas = execute_with_input(action)
     if success and execution_success:
-        score = float(output_files[0].file.readline())
-        contestant_comment = str(output_files[1].file.readline())
-        return True, score, contestant_comment, output_files[0], output_files[1], sandbox_datas["exit_code"]
+        score = float(output_files[STDOUT_FILENAME].file.readline())
+        contestant_comment = str(output_files[STDERR_FILENAME].file.readline())
+        return True, score, contestant_comment, \
+            output_files[STDOUT_FILENAME], output_files[STDERR_FILENAME], \
+            sandbox_datas["exit_code"]
     else:
         return False, None, None, None, None, sandbox_datas["exit_code"]
