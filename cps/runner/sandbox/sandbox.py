@@ -281,7 +281,7 @@ class SandboxBase(object):
         except OSError as e:
             logger.error("Failed create file %s in sandbox. Unable to "
                          "evalulate this submission. This may be due to "
-                         "cheating. %s", real_path, e, exc_info=True)
+                         "cheating. %s", real_path, e, exc_info=True) # FIXME : The error is wrong
             raise
         mod = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR
         if executable:

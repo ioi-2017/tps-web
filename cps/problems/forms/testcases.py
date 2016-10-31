@@ -6,18 +6,18 @@ from problems.models import TestCase, Solution, SourceFile
 
 
 class TestCaseAddForm(ProblemObjectModelForm):
-    input_uploaded_file = forms.FileField(label="Input uploaded file", required=False)
-    output_uploaded_file = forms.FileField(label="Output uploaded file", required=False)
+    input_uploaded_file = forms.FileField(label="Input uploaded file", required=True)
+    output_uploaded_file = forms.FileField(label="Output uploaded file", required=True)
 
     class Meta:
         model = TestCase
         #TODO add generator and solution for IOI
-        fields = ['name', '_input_uploaded_file', '_output_uploaded_file',]
+        fields = ['name', '_input_uploaded_file', '_output_uploaded_file']
 
     def __init__(self, *args, **kwargs):
         super(TestCaseAddForm, self).__init__(*args, **kwargs)
-        #self.fields["_solution"].queryset = Solution.objects.filter(problem=self.revision)
-        #self.fields["_input_generator"].queryset = SourceFile.objects.filter(problem=self.revision)
+        # self.fields["_solution"].queryset = Solution.objects.filter(problem=self.revision)
+        # self.fields["_input_generator"].queryset = SourceFile.objects.filter(problem=self.revision)
 
     def clean(self):
         cleaned_data = super(TestCaseAddForm, self).clean()

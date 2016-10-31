@@ -4,6 +4,7 @@
 import logging
 
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -21,10 +22,16 @@ __all__ = ["Attachment", "SourceFile"]
 
 logger = logging.getLogger(__name__)
 
+FileNameValidator = RegexValidator(
+    regex=r'^{character}(?:\.|{character})*$'.format(character=r'[a-zA-Z0-9_\-]'),
+    message=_("please enter a valid file name."),
+    code='invalid_file_name',
+    inverse_match=False
+)
 
-class Attachment(RevisionObject):
+class Attachment (RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=256, verbose_name=_("name"))
+    name = models.CharField(max_length=256, verbose_name=_("name"), validators=[FileNameValidator])
     file = models.ForeignKey(FileModel, verbose_name=_("file"))
 
     @staticmethod
@@ -38,7 +45,7 @@ class Attachment(RevisionObject):
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=256, verbose_name=_("name"))
+    name = models.CharField(max_length=256, verbose_name=_("name"), validators=[FileNameValidator])
     source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
     source_language = models.CharField(
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
@@ -50,6 +57,9 @@ class SourceFile(RevisionObject):
                                        related_name="+", null=True, blank=True)
 
     last_compile_log = models.TextField(verbose_name=_("last compile log"))
+
+    class Meta:
+        unique_together = ("problem", "name")
 
     def compile(self):
         # TODO: Abort currently running compile jobs
@@ -76,8 +86,8 @@ class CompileJob(Task):
     source_file = models.ForeignKey(SourceFile, related_name="compile_jobs")
 
     def run(self):
-        code_name = get_source_file_name(self.source_file.source_language)
-        compiled_file_name = "code.out"
+        code_name = self.source_file.name
+        compiled_file_name = self.source_file.name + ".out"
         compile_commands = get_compilation_commands(self.source_file.source_language, code_name,
                                                     compiled_file_name)
         action = ActionDescription(

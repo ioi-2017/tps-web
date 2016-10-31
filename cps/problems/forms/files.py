@@ -20,7 +20,7 @@ class SourceFileAddForm(ProblemObjectModelForm):
     def save(self, commit=True):
         super(SourceFileAddForm, self).save(commit=False)
         self.instance.source_file = \
-            FileModel.objects.create(name=self.cleaned_data["file"].name, file=self.cleaned_data["file"])
+            FileModel.objects.create(file=self.cleaned_data["file"])
         if commit:
             self.instance.save()
             self.save_m2m()
@@ -41,9 +41,7 @@ class AttachmentAddForm(ProblemObjectModelForm):
     def save(self, commit=True):
         super(AttachmentAddForm, self).save(commit=False)
         self.instance.file = \
-            FileModel.objects.create(name=self.cleaned_data["uploaded_file"].name,
-                                     file=self.cleaned_data["uploaded_file"])
-        self.instance.problem = self.revision
+            FileModel.objects.create(file=self.cleaned_data["uploaded_file"])
         if commit:
             self.instance.save()
             self.save_m2m()

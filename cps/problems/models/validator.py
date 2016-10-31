@@ -25,6 +25,9 @@ class Validator(RevisionObject):
         help_text=_("if marked, it validates all subtasks")
     )
 
+    def __str__(self):
+        return str(self.code)
+
     @property
     def subtasks(self):
         if self.global_validator:
