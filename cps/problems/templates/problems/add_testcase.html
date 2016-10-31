@@ -14,10 +14,10 @@
                 {% csrf_token %}
                 {% bootstrap_field form.name %}
                 {% bootstrap_field form.input_uploaded_file %}
-                {% bootstrap_field form|privileged_get:"_input_generator" %}
-                {% bootstrap_field form|privileged_get:"_input_generation_parameters" %}
+                {# {% bootstrap_field form|privileged_get:"_input_generator" %} #}
+                {# {% bootstrap_field form|privileged_get:"_input_generation_parameters" %} #}
                 {% bootstrap_field form.output_uploaded_file %}
-                {% bootstrap_field form|privileged_get:"_solution" %}
+                {# {% bootstrap_field form|privileged_get:"_solution" %} #}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
                         {% trans 'Upload' %}

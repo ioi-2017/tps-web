@@ -7,7 +7,8 @@ from problems.models import SourceFile, Validator
 class ValidatorAddForm(ProblemObjectModelForm):
     class Meta:
         model = Validator
-        fields = ["global_validator"]
+        # TODO add global subtask for IOI
+        fields = []
 
     def __init__(self, *args, **kwargs):
         super(ValidatorAddForm, self).__init__(*args, **kwargs)
@@ -18,6 +19,7 @@ class ValidatorAddForm(ProblemObjectModelForm):
     def save(self, commit=True):
         super(ValidatorAddForm, self).save(commit=False)
         self.instance.code = self.cleaned_data['sourcefile']
+        self.instance.global_validator = True
         if commit:
             self.instance.save()
             self.save_m2m()

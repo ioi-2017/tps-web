@@ -11,13 +11,13 @@ class TestCaseAddForm(ProblemObjectModelForm):
 
     class Meta:
         model = TestCase
-        fields = ['name', '_input_uploaded_file', '_input_generator', '_input_generation_parameters',
-                  '_output_uploaded_file', '_solution']
+        #TODO add generator and solution for IOI
+        fields = ['name', '_input_uploaded_file', '_output_uploaded_file',]
 
     def __init__(self, *args, **kwargs):
         super(TestCaseAddForm, self).__init__(*args, **kwargs)
-        self.fields["_solution"].queryset = Solution.objects.filter(problem=self.revision)
-        self.fields["_input_generator"].queryset = SourceFile.objects.filter(problem=self.revision)
+        #self.fields["_solution"].queryset = Solution.objects.filter(problem=self.revision)
+        #self.fields["_input_generator"].queryset = SourceFile.objects.filter(problem=self.revision)
 
     def clean(self):
         cleaned_data = super(TestCaseAddForm, self).clean()
