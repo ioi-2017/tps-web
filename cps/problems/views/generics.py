@@ -78,7 +78,7 @@ class ProblemObjectDeleteView(RevisionObjectView):
     revision_field_name = "problem"
 
     def delete(self, request, problem_id, revision_slug, *args, **kwargs):
-        object_id = kwargs.pop(self.url_slug, args[0])
+        object_id = kwargs.pop(self.url_slug, args[0] if len(args) > 0 else None)
         if not self.object_type:
             raise ImproperlyConfigured("you must specify an object type for delete view")
         if not self.redirect_to:

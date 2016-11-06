@@ -34,7 +34,7 @@
                     <tr>
                         <td> {{ forloop.counter }} </td>
                         <td> {{ validator.code }} </td>
-                        {% if revision.editalbe %}
+                        {% if revision_editable %}
                             <td>
                                 <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>
                                     <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>

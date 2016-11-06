@@ -36,5 +36,6 @@ class ValidatorAddView(ProblemObjectAddView):
 ValidatorDeleteView = ProblemObjectDeleteView.as_view(
     object_type=Validator,
     permissions_required="delete_validator",
-    redirect_to="problems:validators"
+    redirect_to="problems:validators",
+    url_slug="validator_id"
 )
