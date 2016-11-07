@@ -171,7 +171,7 @@ class ProblemRevision(models.Model):
             # TODO: This is a hack to handle uniqueness of revision id.
             # TODO: Find some other way to handle it properly.
             self.revision_id = None
-            cloned = self._get_cloner().clone(self)[0]
+            cloned = self._get_cloner().clone(self)
             cloned._clean_commit_data(commit=False)
             cloned.parent_revisions = [self]
             cloned.save()
