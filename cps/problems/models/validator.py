@@ -16,17 +16,13 @@ from tasks.models import Task
 
 __all__ = ["Validator", "ValidatorResult"]
 
-class Validator(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    code = models.ForeignKey(SourceFile, verbose_name=_("source code"))
+class Validator(SourceFile):
+
     _subtasks = models.ManyToManyField(Subtask, verbose_name=_("subtasks"))
     global_validator = models.BooleanField(
         verbose_name=_("all subtasks"),
         help_text=_("if marked, it validates all subtasks")
     )
-
-    def __str__(self):
-        return str(self.code)
 
     @property
     def subtasks(self):
@@ -73,12 +69,12 @@ class ValidatorResult(Task):
         unique_together = ("testcase", "validator")
 
     def run(self):
-        validation_command = get_execution_command(self.validator.code.source_language, "validator")
+        validation_command = get_execution_command(self.validator.source_language, "validator")
 
         action = ActionDescription(
             commands=[validation_command],
             files=[("input.txt", self.testcase.input_file)],
-            executables=[("validator", self.validator.code.compiled_file())],
+            executables=[("validator", self.validator.compiled_file())],
             time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
             memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT,
         )

@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
 from judge import Judge
-from problems.models import SourceFile, RevisionObject
+from problems.models import RevisionObject, SourceFile
 from problems.models.problem import ProblemRevision
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["TestCase", "Subtask"]
 
+class InputGenerator(SourceFile):
+    pass
 
 class TestCase(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
@@ -35,7 +37,7 @@ class TestCase(RevisionObject):
         max_length=100,
         blank=True
     )
-    _input_generator = models.ForeignKey(SourceFile, verbose_name=_("generator"), null=True, related_name='+', blank=True)
+    _input_generator = models.ForeignKey(InputGenerator, verbose_name=_("generator"), null=True, related_name='+', blank=True)
     _input_static = models.BooleanField(
         editable=False,
     )

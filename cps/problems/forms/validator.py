@@ -1,24 +1,18 @@
 from django import forms
 
+from problems.forms.files import SourceFileAddForm
 from problems.forms.generic import ProblemObjectModelForm
 from problems.models import SourceFile, Validator
 
 
-class ValidatorAddForm(ProblemObjectModelForm):
+class ValidatorAddForm(SourceFileAddForm):
     class Meta:
         model = Validator
         # TODO add global subtask for IOI
-        fields = []
-
-    def __init__(self, *args, **kwargs):
-        super(ValidatorAddForm, self).__init__(*args, **kwargs)
-        self.fields['sourcefile'] = forms.ModelChoiceField(
-            queryset=SourceFile.objects.filter(problem=self.revision)
-        )
+        fields = ["name", "source_language"]
 
     def save(self, commit=True):
         super(ValidatorAddForm, self).save(commit=False)
-        self.instance.code = self.cleaned_data['sourcefile']
         self.instance.global_validator = True
         if commit:
             self.instance.save()

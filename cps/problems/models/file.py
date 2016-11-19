@@ -4,6 +4,10 @@
 import logging
 
 from django.conf import settings
+
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
+
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -12,11 +16,11 @@ from file_repository.models import FileModel
 from problems.models.problem import ProblemRevision
 from problems.models.version_control import RevisionObject
 from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
-from runner import get_compilation_commands, get_source_file_name
+from runner import get_compilation_commands
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
-from tasks.decorators import allow_async_method
 from tasks.models import Task
+
 
 __all__ = ["Attachment", "SourceFile"]
 
@@ -29,7 +33,9 @@ FileNameValidator = RegexValidator(
     inverse_match=False
 )
 
-class Attachment (RevisionObject):
+
+class AttachmentBase(RevisionObject):
+
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     name = models.CharField(max_length=256, verbose_name=_("name"), validators=[FileNameValidator])
     file = models.ForeignKey(FileModel, verbose_name=_("file"))
@@ -41,6 +47,13 @@ class Attachment (RevisionObject):
     def diverged_from(self, other_object):
         return self.file != other_object.file
 
+    class Meta:
+        abstract = True
+
+
+class Attachment(AttachmentBase):
+    pass
+
 
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(RevisionObject):
@@ -49,9 +62,10 @@ class SourceFile(RevisionObject):
     source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
     source_language = models.CharField(
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
-        null=True,
         max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
     )
+
+    compile_jobs = GenericRelation("CompileJob", related_query_name='sourcefile')
 
     _compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
                                        related_name="+", null=True, blank=True)
@@ -59,7 +73,15 @@ class SourceFile(RevisionObject):
     last_compile_log = models.TextField(verbose_name=_("last compile log"))
 
     class Meta:
+        abstract = True
         unique_together = ("problem", "name")
+
+    @staticmethod
+    def get_matching_fields():
+        return ["name"]
+
+    def diverged_from(self, other_object):
+        return self.source_file != other_object.source_file
 
     def compile(self):
         # TODO: Abort currently running compile jobs
@@ -82,8 +104,9 @@ class SourceFile(RevisionObject):
 
 
 class CompileJob(Task):
-
-    source_file = models.ForeignKey(SourceFile, related_name="compile_jobs")
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    source_file = GenericForeignKey('content_type', 'object_id')
 
     def run(self):
         code_name = self.source_file.name

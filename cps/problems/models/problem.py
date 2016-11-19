@@ -1,7 +1,7 @@
 # Amir Keivan Mohtashami
 # Mohammad Javad Naderi
 import hashlib
-
+import heapq
 
 from django.conf import settings
 from django.db import models, transaction
@@ -194,15 +194,17 @@ class ProblemRevision(models.Model):
             return False
 
     def find_merge_base(self, another_revision):
-        import heapq
         priority_queue = []
         revision_a = self
         revision_b = another_revision
         heapq.heappush(priority_queue, (-revision_a.pk, revision_a))
         heapq.heappush(priority_queue, (-revision_b.pk, revision_b))
         marks = {}
-        marks[revision_a.pk] = 1
-        marks[revision_b.pk] = 2
+        # Updating mark in the following way to handle
+        # the case where both revision are the same
+        marks[revision_a.pk] = marks[revision_b.pk] = 0
+        marks[revision_a.pk] |= 1
+        marks[revision_b.pk] |= 2
         while len(priority_queue) > 0:
             revision = heapq.heappop(priority_queue)[1]
             if marks[revision.pk] == 3:
@@ -216,7 +218,7 @@ class ProblemRevision(models.Model):
 
     def find_matching_pairs(self, another_revision):
         attributes = {
-            "testcase_set", "solution_set", "validator_set", "sourcefile_set",
+            "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
             "attachment_set", "solutionrun_set", "subtasks"
         }
         res = [(self.problem_data, another_revision.problem_data)]
@@ -309,7 +311,7 @@ class ProblemData(RevisionObject):
     score_type = models.CharField(verbose_name=_("score type"), max_length=150, null=True)
     score_type_parameters = models.TextField(verbose_name=_("score type parameters"), null=True)
 
-    checker = models.ForeignKey("SourceFile", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
+    checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

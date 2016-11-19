@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from problems.views.checker import CheckerChooseView
+from problems.views.checker import CheckerListView
 from problems.views.discussions import DiscussionAddView, CommentListView
 from problems.views.files import SourceFileCompileView
 from problems.views.invocations import InvocationAddView, InvocationsListView, InvocationRunView
@@ -40,7 +40,10 @@ problem_urls = ([
         url(r'^validator/(?P<validator_id>\d+)/delete/$', ValidatorDeleteView, name="delete_validator"),
         url(r'^validator/add/$', ValidatorAddView.as_view(), name="add_validator"),
 
-        url(r'^checker/$', CheckerChooseView.as_view(), name="checker"),
+        url(r'^checker/$', CheckerListView.as_view(), name="checker"),
+        url(r'^checker/add/$', CheckerAddView.as_view(), name="add_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/activate/$', CheckerActivateView.as_view(), name="activate_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/delete/$', CheckerDeleteView, name="delete_checker"),
 
         url(r'^clone/', CreateWorkingCopy.as_view(), name="create_working_copy"),
         url(r'^update/', UpdateForkView.as_view(), name="update_fork"),

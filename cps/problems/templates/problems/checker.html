@@ -1,31 +1,57 @@
-{%  extends "problems/base.html" %}
-
-{% load bootstrap3 %}
+    {% extends "problems/base.html" %}
 {% load i18n %}
+{% load staticfiles %}
 {% load problems_tags %}
 
 {% block problem_content %}
     <div class="row">
-        <div class="col-sm-4"></div>
-        <div class="col-sm-6">
-            <h1>{% trans 'Choose a checker' %}</h1>
-            {% if revision_editable %}
-            <form class="form-horizontal" method="post" action="{% problem_url "problems:checker" %}" enctype="multipart/form-data">
-                {% csrf_token %}
-            {% endif %}
-            {% if revision_editable %}
-                {% bootstrap_field form.checker %}
-            {% else %}
-                {% bootstrap_field form.checker layout='readonly' %}
-            {% endif %}
-            {% if revision_editable %}
-                <div class="form-group">
-                    <button type="submit" class="form-control btn btn-success">
-                        {% trans 'Submit' %}
-                    </button>
-                </div>
-            </form>
-            {% endif %}
-        </div>
+        <h2> {% trans 'Checkers' %} </h2>
     </div>
+    {% if revision_editable %}
+    <div class="row">
+        <a href="{% problem_url "problems:add_checker" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a checker' %}
+        </a>
+    </div>
+    {% endif %}
+    <br />
+    <div class="row">
+        {% if checkers %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <th class="col-md-1">#</th>
+                        {% if revision_editable %}
+                            <th class="col-md-10">{% trans 'Checker' %}</th>
+                            <th class="col-md-1"></th>
+                        {% else %}
+                            <th class="col-md-11">{% trans 'Checker' %}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+            {% for checker in checkers %}
+
+                    <tr {% if checker == revision.problem_data.checker %} style="background-color: palegreen;" {% endif %}>
+                        <td> {{ forloop.counter }} </td>
+                        <td> {{ checker }} </td>
+                        {% if revision_editable %}
+                            <td>
+                                <a class="text-success" data-method='post' data-confirm='{% trans 'Are you sure you want to activate this checker?' %}' href='{% problem_url "problems:activate_checker" checker.id %}'>
+                                    <i class="fa fa-umbrella fa-lg" title="{% trans 'Activate' %}"></i></a>
+                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this checker?' %}' href='{% problem_url "problems:delete_checker" checker.id %}'>
+                                    <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                            </td>
+                        {% endif %}
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="text-muted">
+                {% trans 'No checker exists' %}
+            </h4>
+        {% endif %}
+    </div>
+    {% csrf_token %}
 {% endblock %}

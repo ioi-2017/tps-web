@@ -3,9 +3,9 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from file_repository.models import FileModel
 from judge.results import JudgeVerdict
 from problems.models import RevisionObject
-from problems.models.file import SourceFile
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase, Subtask
 from multiselectfield import MultiSelectField
@@ -18,11 +18,11 @@ __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScor
 class Solution(RevisionObject):
     _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    code = models.ForeignKey(SourceFile, verbose_name=_("code"))
+    code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
-    should_be_present_verdicts = MultiSelectField(choices=_VERDICTS, null=True)
-    should_not_be_present_verdicts = MultiSelectField(choices=_VERDICTS, null=True)
+    should_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
+    should_not_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
 
     def __str__(self):
         return self.code.name

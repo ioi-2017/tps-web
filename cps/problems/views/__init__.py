@@ -5,3 +5,4 @@ from .files import *
 from .overview import *
 from .testcases import *
 from .version_control import *
+from .checker import *
