@@ -1,0 +1,54 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {{ invocation }} </h2>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-bordered table-responsive table-striped">
+            <thead>
+                <td></td>
+                {% for solution in solutions %}
+                    <td>{{ solution }}</td>
+                {% endfor %}
+            </thead>
+            <tbody>
+                {% for testcase,testcase_results in results %}
+                    <tr>
+                        <td>{{ testcase }}</td>
+                        {% for result in testcase_results %}
+                            {% if result.verdict == judge_result.ok.name %}
+                                {% if result.checker_exit_code == None %}
+                                    <td>N/A</td>
+                                {% elif result.checker_exit_code == 0 %}
+                                    {% if result.score == 1 %}
+                                        <td>AC</td>
+                                    {% elif result.score == 0 %}
+                                        <td>WA</td>
+                                    {% else %}
+                                        <td>result.score</td>
+                                {% endif %}
+                                {% else %}
+                                    <td>Failed</td>
+                                {% endif %}
+                            {% elif result.verdict == None %}
+                                <td>N/A</td>
+                            {% elif result.verdict == judge_result.memory_limit_exceeded.name %}
+                                <td>TL</td>
+                            {% elif result.verdict == judge_result.time_limit_exceeded.name %}
+                                <td>ME</td>
+                            {% else %}
+                                <td>RE</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% csrf_token %}
+{% endblock %}

@@ -3,7 +3,7 @@ from django.conf.urls import url
 from problems.views.checker import CheckerListView
 from problems.views.discussions import DiscussionAddView, CommentListView
 from problems.views.files import SourceFileCompileView
-from problems.views.invocations import InvocationAddView, InvocationsListView, InvocationRunView
+from problems.views.invocations import InvocationAddView, InvocationsListView, InvocationRunView, InvocationViewView
 from problems.views.problems import ProblemAddView
 from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
 from .views import *
@@ -17,6 +17,7 @@ problem_urls = ([
         url(r'^invocations/$', InvocationsListView.as_view(), name="invocations"),
         url(r'^invocation/add/$', InvocationAddView.as_view(), name="add_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/run/$', InvocationRunView.as_view(), name="run_invocation"),
+        url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationViewView.as_view(), name="view_invocation"),
 
         url(r'^sourcefile/add/$', SourceFileAddView.as_view(), name="add_sourcefile"),
         url(r'^sourcefile/(?P<object_id>\d+)/delete/$', SourceFileDeleteView, name="delete_sourcefile"),
