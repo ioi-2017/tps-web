@@ -88,10 +88,15 @@ class SolutionRunResult(Task):
         problem_code = problem.get_judge_code()
         testcase_code = self.testcase.get_judge_code()
         judge = Judge.get_judge()
+        if self.solution.language not in judge.get_supported_languages():
+            self.verdict = JudgeVerdict.invalid_submission.name
+            self.save()
+            return
+
         evaluation_result = judge.generate_output(
             problem_code,
-            self.solution.code.source_language,
-            [(self.solution.code.name, self.solution.code.source_file)],
+            self.solution.language,
+            [(self.solution.name, self.solution.code)],
             testcase_code
         )
         self.solution_output, self.solution_execution_success, \

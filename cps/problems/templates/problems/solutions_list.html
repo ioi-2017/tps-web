@@ -22,10 +22,12 @@
                     <tr>
                         <th class="col-md-1">#</th>
                         {% if revision_editable %}
-                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-9">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %}</th>
                             <th class="col-md-1"></th>
                         {% else %}
-                            <th class="col-md-11">{% trans 'Source Code' %}</th>
+                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -34,6 +36,7 @@
                     <tr>
                         <td> {{ forloop.counter }} </td>
                         <td> {{ solution.code }} </td>
+                        <td> {{ solution.get_language_representation }}
                         {% if revision_editable %}
                             <td>
 
@@ -43,6 +46,7 @@
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>
                         {% endif %}
+
                     </tr>
             {% endfor %}
                 </tbody>

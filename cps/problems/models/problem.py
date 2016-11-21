@@ -113,6 +113,10 @@ class ProblemRevision(models.Model):
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
+    def get_judge(self):
+        # TODO: Determine how handle judges
+        return Judge.get_judge()
+
     def get_judge_code(self, judge=None):
         if judge is None:
             judge = Judge.get_judge()

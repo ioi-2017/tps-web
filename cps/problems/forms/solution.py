@@ -12,10 +12,11 @@ class SolutionAddForm(ProblemObjectModelForm):
 
     class Meta:
         model = Solution
-        fields = ["should_be_present_verdicts", "should_not_be_present_verdicts"]
+        fields = ["should_be_present_verdicts", "should_not_be_present_verdicts", "language"]
 
     def __init__(self, *args, **kwargs):
         super(SolutionAddForm, self).__init__(*args, **kwargs)
+        self.fields["language"] = forms.ChoiceField(choices=[(a, a) for a in self.revision.get_judge().get_supported_languages()], required=True, )
 
     def save(self, commit=True):
         super(SolutionAddForm, self).save(commit=False)

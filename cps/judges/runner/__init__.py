@@ -74,9 +74,10 @@ class Runner(Judge):
             compilation_message = "Compilation not successful"
             compilation_message += "Standard output:\n" + stdout
             compilation_message += "Standard error:\n" + stderr
-            return None, EvaluationResult(
+            return EvaluationResult(
                 success=False,
-                message=compilation_message
+                message=compilation_message,
+                verdict=JudgeVerdict.compilation_failed
             )
 
         compiled = outputs[compiled_file_name]
@@ -139,3 +140,5 @@ class Runner(Judge):
             return JudgeVerdict.nonzero_exit_code
         elif exit_status == SandboxBase.EXIT_OK:
             return JudgeVerdict.ok
+        else:
+            raise ValueError ("We should not reach this line")
