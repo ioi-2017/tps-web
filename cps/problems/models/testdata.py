@@ -153,11 +153,6 @@ class TestCase(RevisionObject):
         if self._input_uploaded_file is not None and self._input_generator is not None:
             raise ValidationError("Only one of generator and static input file must be present.")
 
-        if self._output_uploaded_file is None and self._solution is None:
-            raise ValidationError("Either a static output or a solution must be set")
-        if self._output_uploaded_file is not None and self._solution is not None:
-            raise ValidationError("Only one of solution and static output file must be present.")
-
     def save(self, *args, **kwargs):
         """
         We first determine whether input and output is a static file and then continue saving process normally.
