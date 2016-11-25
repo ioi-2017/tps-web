@@ -310,7 +310,9 @@ class SandboxBase(object):
 
         """
         file_ = self.create_file(path, executable)
+        file_model.file.open()
         copyfileobj(file_model.file, file_)
+        file_model.file.close()
         file_.close()
 
     def create_file_from_fileobj(self, path, file_obj, executable=False):

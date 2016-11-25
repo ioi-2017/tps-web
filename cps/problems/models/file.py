@@ -1,12 +1,13 @@
 # Amir Keivan Mohtashami
 # Amirmohsen Ahanchi
-
+import hashlib
 import logging
 
 from django.conf import settings
 
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 
 from django.core.validators import RegexValidator
 from django.db import models
@@ -58,7 +59,7 @@ class Attachment(AttachmentBase):
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=256, verbose_name=_("name"), validators=[FileNameValidator])
+    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator])
     source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
     source_language = models.CharField(
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
@@ -84,9 +85,32 @@ class SourceFile(RevisionObject):
         return self.source_file != other_object.source_file
 
     def compile(self):
-        # TODO: Abort currently running compile jobs
-        compile_job = CompileJob.objects.create(source_file=self)
-        compile_job.apply_async()
+        # TODO: Handling of simulataneous compilation of a single source file
+
+        code_name = self.name
+        compiled_file_name = self.name + ".out"
+        compile_commands = get_compilation_commands(self.source_language, code_name,
+                                                    compiled_file_name)
+        action = ActionDescription(
+            commands=compile_commands,
+            files=[(code_name, self.source_file)],
+            output_files=[compiled_file_name],
+            time_limit=settings.DEFAULT_COMPILATION_TIME_LIMIT,
+            memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
+        )
+
+        success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
+
+        self._compiled_file = None
+
+        if not success:
+            logger.error("Running compilation command failed due to sandbox error")
+        else:
+            self.last_compile_log = "Standard output:\n" + stdout + "\n"
+            self.last_compile_log += "Standard error:\n" + stderr + "\n"
+            if compilation_success:
+                self._compiled_file = outputs[compiled_file_name]
+        self.save()
 
     def compiled_file(self):
         """
@@ -102,6 +126,23 @@ class SourceFile(RevisionObject):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.name == "":
+            initial_prefix = "prefix_"
+            self.name = initial_prefix
+            for char in self.source_file.name:
+                try:
+                    FileNameValidator(self.name + char)
+                except ValidationError:
+                    continue
+                self.name += char
+            self.name = self.name[len(initial_prefix):]
+            if self.name == "":
+                self.name = "{}".format(hashlib.md5(self.source_file.name))
+
+        super(SourceFile, self).save(*args, **kwargs)
+
+
 
 class CompileJob(Task):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -109,27 +150,4 @@ class CompileJob(Task):
     source_file = GenericForeignKey('content_type', 'object_id')
 
     def run(self):
-        code_name = self.source_file.name
-        compiled_file_name = self.source_file.name + ".out"
-        compile_commands = get_compilation_commands(self.source_file.source_language, code_name,
-                                                    compiled_file_name)
-        action = ActionDescription(
-            commands=compile_commands,
-            files=[(code_name, self.source_file.source_file)],
-            output_files=[compiled_file_name],
-            time_limit=settings.DEFAULT_COMPILATION_TIME_LIMIT,
-            memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
-        )
-
-        success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
-
-        self.source_file._compiled_file = None
-
-        if not success:
-            logger.error("Running compilation command failed due to sandbox error")
-        else:
-            self.source_file.last_compile_log = "Standard output:\n" + stdout + "\n"
-            self.source_file.last_compile_log += "Standard error:\n" + stderr + "\n"
-            if compilation_success:
-                self.source_file._compiled_file = outputs[compiled_file_name]
-        self.source_file.save()
+        self.source_file.compile()

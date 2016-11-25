@@ -39,6 +39,47 @@ def get_sandbox_execution_data_as_dict(sandbox):
     }
 
 
+def get_exit_status_human_translation(exit_status):
+    if exit_status == SandboxBase.EXIT_TIMEOUT:
+        return "Time Limit Exceeded"
+
+    # Wall clock timeout: returning the error to the user.
+    elif exit_status == SandboxBase.EXIT_TIMEOUT_WALL:
+        return "Timed out (wall clock limit exceeded)"
+
+    # Suicide with signal (memory limit, segfault, abort): returning
+    # the error to the user.
+    elif exit_status == SandboxBase.EXIT_SIGNAL:
+        return "Killed"
+
+    # Sandbox error: this isn't a user error, the administrator needs
+    # to check the environment.
+    elif exit_status == SandboxBase.EXIT_SANDBOX_ERROR:
+        return "Sandbox Error. Infrom the admin."
+
+    # Forbidden syscall: returning the error to the user. Note: this
+    # can be triggered also while allocating too much memory
+    # dynamically (offensive syscall is mprotect).
+    elif exit_status == SandboxBase.EXIT_SYSCALL:
+        return "Killed because of forbidden syscall"
+
+    # Forbidden file access: returning the error to the user, without
+    # disclosing the offending file (can't we?).
+    elif exit_status == SandboxBase.EXIT_FILE_ACCESS:
+        return "Killed because of forbidden file access"
+
+    # The exit code was nonzero: returning the error to the user.
+    elif exit_status == SandboxBase.EXIT_NONZERO_RETURN:
+        return "Failed because the return code was nonzero."
+
+    elif exit_status == SandboxBase.EXIT_OK:
+        return "OK"
+
+    else:
+        logger.error("Should not reach here")
+        return None
+
+
 def execution_successful(sandbox):
     exit_status = sandbox.get_exit_status()
 

@@ -12,7 +12,7 @@ class TestCaseAddForm(ProblemObjectModelForm):
     class Meta:
         model = TestCase
         #TODO add generator and solution for IOI
-        fields = ['name', '_input_uploaded_file', '_output_uploaded_file']
+        fields = ['_input_uploaded_file', '_output_uploaded_file']
 
     def __init__(self, *args, **kwargs):
         super(TestCaseAddForm, self).__init__(*args, **kwargs)

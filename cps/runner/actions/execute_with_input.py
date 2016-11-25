@@ -35,13 +35,14 @@ def execute_with_input(action: ActionDescription):
             stderr_redirect=action.stderr_redirect
         ):
             # Sandbox error
-            logger.debug("Sandbox error while executing %s" % str(command))
+            logger.error("Sandbox error while executing %s" % str(command))
             return False, False, None, None
 
         sandbox_data = get_sandbox_execution_data_as_dict(sandbox)
         sandbox_datas.append(sandbox_data)
         if not execution_successful(sandbox):
-            return True, False, None, sandbox_datas
+            partial_output_files = retrieve_files(sandbox, action.output_files)
+            return True, False, partial_output_files, sandbox_datas
 
     output_files = retrieve_files(sandbox, action.output_files)
 

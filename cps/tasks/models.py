@@ -46,7 +46,8 @@ class Task(models.Model):
             self.queue_reference_key = result.id
             self.state = State.queued.value
             self.save()
-            sig.apply() # FIXME: Make this async
+            result = sig.apply() # FIXME: Make this async
+            result.wait(propagate = True)
 
     def abort(self):
         """

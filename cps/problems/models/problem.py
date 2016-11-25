@@ -317,5 +317,11 @@ class ProblemData(RevisionObject):
 
     checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
 
+    model_solution = models.ForeignKey(
+        "Solution",
+        verbose_name=_("model solution"),
+        on_delete=models.SET_NULL, null=True, blank=True
+    )
+
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

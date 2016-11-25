@@ -1,4 +1,7 @@
+import hashlib
 import os
+import stat
+import shutil
 import tempfile
 
 from django.core.files import File
@@ -8,31 +11,52 @@ import mock as mock
 from django.test import TestCase
 
 from file_repository.models import FileModel
-from problems.models import SourceFile
-from runner.models import JobFile
+from problems.models import Checker, SourceFile
+from .utils import get_resource_as_file_model
+import subprocess
 
 
 class SourceFileTests(TestCase):
-    @mock.patch(target='problems.models.file.get_compilation_command', return_value="A")
-    @mock.patch(target='problems.models.file.JobModel')
-    def test_name_of_compiled_file(self, mock_job_model, mock_get_compilation_command):
-        file1 = tempfile.NamedTemporaryFile()
-        file_model1 = FileModel(file=File(file1), name="keyvan")
-        file_model1.save()
-        job_file = mommy.make(JobFile, file_model=file_model1)
-        mock_job_model.return_value.mark_file_for_extraction.return_value = job_file
-        file = tempfile.NamedTemporaryFile()
-        file_model = FileModel(file=File(file), name="mohammad")
-        file_model.save()
-        source_file = mommy.make(SourceFile, source_language="c++", source_file=file_model)
-        source_file.compile()
-        self.assertEqual(source_file.compiled_file().name, "keyvan")
 
-    def test_compile(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, 'codes', 'empty.cpp')
-        file = open(file_path, 'r')
-        file_model = FileModel(file=File(file), name="code")
-        file_model.save()
-        source_file = mommy.make(SourceFile, source_language="c++", source_file=file_model)
+    def test_successful_compile(self):
+        source_file = mommy.make(Checker,
+                                 name="print_hello_world.cpp",
+                                 source_language="c++",
+                                 source_file=get_resource_as_file_model("codes", "print_hello_world.cpp"))
         source_file.compile()
+        self.assertIsNotNone(source_file._compiled_file)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            exec_path = os.path.join(temp_dir, "executable")
+            shutil.copy(source_file.compiled_file().file.path, exec_path)
+            os.chmod(exec_path, stat.S_IREAD | stat.S_IEXEC)
+            execution_output = subprocess.check_output([exec_path])
+            self.assertEqual("Hello World", execution_output.decode().strip())
+
+
+    def test_compilation_error(self):
+        source_file = mommy.make(Checker,
+                                 name="print_hello_world.cpp",
+                                 source_language="c++",
+                                 source_file=get_resource_as_file_model("codes", "compilation_error.cpp"))
+        source_file.compile()
+        self.assertIsNone(source_file._compiled_file)
+
+    def test_auto_naming_containing_good_characters(self):
+        file_model = get_resource_as_file_model("codes", "print_hello_world.cpp")
+        file_model.name = "%%%print_hello_%%%world.cpp%%%"
+        file_model.save()
+        source_file = mommy.make(Checker,
+                                 name="",
+                                 source_language="c++",
+                                 source_file=file_model)
+        self.assertEqual(source_file.name, "print_hello_world.cpp")
+
+    def test_auto_naming_with_no_good_characters(self):
+        file_model = get_resource_as_file_model("codes", "print_hello_world.cpp")
+        file_model.name = "%%%"
+        file_model.save()
+        source_file = mommy.make(Checker,
+                                 name="",
+                                 source_language="c++",
+                                 source_file=file_model)
+        self.assertEqual(source_file.name, hashlib.md5("print_hello_world.cpp"))

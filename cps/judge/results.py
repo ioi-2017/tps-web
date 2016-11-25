@@ -6,8 +6,7 @@ class JudgeVerdict(Enum):
 
     invalid_submission = _noop("Invalid Submission")
     compilation_failed = _noop("Compilation Failed")
-    crashed = _noop("Crashed")
-    nonzero_exit_code = _noop("Exited with non-zero exit code")
+    runtime_error = _noop("Runtime error")
     time_limit_exceeded = _noop("Time limit exceeded")
     memory_limit_exceeded = _noop("Memory limit exceeded")
     ok = _noop("OK")
@@ -18,7 +17,6 @@ class EvaluationResult(object):
             self,
             success,
             verdict,
-            exit_code=None,
             output_file=None,
             execution_time=None,
             execution_memory=None,
@@ -30,4 +28,3 @@ class EvaluationResult(object):
         self.execution_time = execution_time
         self.execution_memory = execution_memory
         self.verdict = verdict
-        self.exit_code = exit_code

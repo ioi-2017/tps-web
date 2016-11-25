@@ -34,11 +34,13 @@ def compile_source(action: ActionDescription):
 
     # TODO: Provide more log data regarding why execution failed
     if sandbox.get_exit_status() != SandboxBase.EXIT_OK:
-        logger.error("Compilation was not successful. Exit Status: {}".format(sandbox.get_exit_status()))
+        if sandbox.get_exit_status() == SandboxBase.EXIT_SANDBOX_ERROR:
+            logger.error("Compilation was not successful due to sandbox error. \n")
+        delete_sandbox(sandbox)
         return True, False, None, compilation_stdout, compilation_stderr, sandbox_data
+    else:
+        output_files = retrieve_files(sandbox, action.output_files)
+        delete_sandbox(sandbox)
 
-    output_files = retrieve_files(sandbox, action.output_files)
-
-    delete_sandbox(sandbox)
 
     return True, True, output_files, compilation_stdout, compilation_stderr, sandbox_data

@@ -15,7 +15,7 @@ def get_compilation_commands(language, source_filenames, executable_filename):
         logger.error("Language" + language + "not supported in runner")
     command_list = []
     if language == "c++":
-        command_list.append(["/usr/bin/g++", source_filenames, "-O2", "-o", executable_filename])
+        command_list.append(["/usr/bin/g++",  "-x", "c++", source_filenames, "-O2", "-o", executable_filename])
     return command_list
 
 

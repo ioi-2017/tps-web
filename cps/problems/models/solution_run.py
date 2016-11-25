@@ -23,6 +23,7 @@ class SolutionRun(RevisionObject):
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
 
     def run(self):
+        self.results.all().delete()
         for solution in self.solutions.all():
             for testcase in self.testcases.all():
                 result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
@@ -54,6 +55,9 @@ class SolutionRunResult(Task):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"), editable=False)
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"), editable=False)
 
+    class Meta:
+        unique_together = ("solution_run", "solution", "testcase")
+
     verdict = models.CharField(
         max_length=max([len(x[0]) for x in _VERDICTS]),
         verbose_name=_("verdict"),
@@ -66,7 +70,6 @@ class SolutionRunResult(Task):
     solution_output = models.ForeignKey(FileModel, verbose_name=_("solution output file"), null=True, related_name='+')
     solution_execution_time = models.FloatField(verbose_name=_("solution execution time"), null=True)
     solution_memory_usage = models.IntegerField(verbose_name=_("solution memory usage"), null=True)
-    solution_exit_code = models.CharField(verbose_name=_("solution exit code"), max_length=100, null=True)
     solution_execution_success = models.NullBooleanField(verbose_name=_("solution execution success"), null=True)
     solution_execution_message = models.TextField(verbose_name=_("solution execution message"), null=True)
 
@@ -80,11 +83,12 @@ class SolutionRunResult(Task):
         verbose_name=_("checker standard error"),
         null=True, related_name='+'
     )
-    checker_exit_code = models.CharField(verbose_name=_("checker exit code"), max_length=100, null=True)
     checker_execution_success = models.NullBooleanField(verbose_name=_("checker execution success"), null=True)
+    checker_execution_message = models.TextField(verbose_name=_("checker execution message"), null=True)
 
     def run(self):
         problem = self.solution_run.problem
+        # FIXME: Handle the case in which the judge code can't be acquired
         problem_code = problem.get_judge_code()
         testcase_code = self.testcase.get_judge_code()
         judge = Judge.get_judge()
@@ -100,24 +104,24 @@ class SolutionRunResult(Task):
             testcase_code
         )
         self.solution_output, self.solution_execution_success, \
-            self.solution_execution_time, self.solution_memory_usage, self.solution_exit_code, \
+            self.solution_execution_time, self.solution_memory_usage, \
             self.verdict, \
             self.solution_execution_message = \
             evaluation_result.output_file, \
             evaluation_result.success, \
             evaluation_result.execution_time, \
             evaluation_result.execution_memory, \
-            evaluation_result.exit_code, \
             evaluation_result.verdict.name, \
             evaluation_result.message
 
         self.save()
 
         if self.verdict == JudgeVerdict.ok.name:
-            self.checker_execution_success, self.checker_exit_code, \
-                self.score, self.checker_contestant_comment,\
+            self.checker_execution_success, \
+                self.score, self.contestant_message,\
                 self.checker_standard_output, \
-                self.checker_standard_error = run_checker(
+                self.checker_standard_error,\
+                self.checker_execution_message = run_checker(
                     self.solution_run.problem.problem_data.checker,
                     input_file=self.testcase.input_file,
                     jury_output=self.testcase.output_file,

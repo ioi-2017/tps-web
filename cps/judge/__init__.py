@@ -74,7 +74,7 @@ class Judge(object):
         """
         raise NotImplementedError
 
-    def add_testcase(self, problem_code, testcase_id, input_file, output_file, time_limit, memory_limit):
+    def add_testcase(self, problem_code, testcase_id, input_file, time_limit, memory_limit):
         """
         Adds a testcase to a problem
 

@@ -31,7 +31,7 @@ class Runner(Judge):
     def get_score_types(self):
         pass
 
-    def add_testcase(self, problem_code, testcase_id, input_file, output_file, time_limit, memory_limit):
+    def add_testcase(self, problem_code, testcase_id, input_file, time_limit, memory_limit):
         """
         For details about arguments refer to parent class.
         uid for each testcase must be its pk.
@@ -112,7 +112,6 @@ class Runner(Judge):
                 execution_time=execution_sandbox_datas[0]["execution_time"],
                 execution_memory=execution_sandbox_datas[0]["execution_memory"],
                 verdict=self.get_verdict_from_exit_status(execution_sandbox_datas[0]["exit_status"]),
-                exit_code=execution_sandbox_datas[0]["exit_code"],
         )
 
     def get_score_type(self, name):
@@ -131,13 +130,13 @@ class Runner(Judge):
         elif exit_status == SandboxBase.EXIT_TIMEOUT_WALL:
             return JudgeVerdict.time_limit_exceeded
         elif exit_status == SandboxBase.EXIT_SIGNAL:
-            return JudgeVerdict.crashed
+            return JudgeVerdict.runtime_error
         elif exit_status == SandboxBase.EXIT_SYSCALL:
-            return JudgeVerdict.crashed
+            return JudgeVerdict.runtime_error
         elif exit_status == SandboxBase.EXIT_FILE_ACCESS:
-            return JudgeVerdict.crashed
+            return JudgeVerdict.runtime_error
         elif exit_status == SandboxBase.EXIT_NONZERO_RETURN:
-            return JudgeVerdict.nonzero_exit_code
+            return JudgeVerdict.runtime_error
         elif exit_status == SandboxBase.EXIT_OK:
             return JudgeVerdict.ok
         else:

@@ -12,7 +12,7 @@ class SolutionAddForm(ProblemObjectModelForm):
 
     class Meta:
         model = Solution
-        fields = ["should_be_present_verdicts", "should_not_be_present_verdicts", "language"]
+        fields = ["name", "language", "should_be_present_verdicts", "should_not_be_present_verdicts"]
 
     def __init__(self, *args, **kwargs):
         super(SolutionAddForm, self).__init__(*args, **kwargs)

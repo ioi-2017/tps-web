@@ -35,7 +35,7 @@
             {% for solution in solutions %}
                     <tr>
                         <td> {{ forloop.counter }} </td>
-                        <td> {{ solution.code }} </td>
+                        <td> {{ solution }} </td>
                         <td> {{ solution.get_language_representation }}
                         {% if revision_editable %}
                             <td>

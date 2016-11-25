@@ -20,17 +20,20 @@ class Solution(RevisionObject):
     _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(verbose_name=_("name"), blank=True, validators=[FileNameValidator], max_length=255)
+    name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255)
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
     # TODO: Should we validate the language here as well?
-    language = models.CharField(verbose_name=_("language"), null=True, blank=True, max_length=20)
+    language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
     should_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
     should_not_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
 
+    class Meta:
+        unique_together = ("problem", "name",)
+
     def __str__(self):
-        return self.code.name
+        return self.name
 
 
     def get_language_representation(self):
