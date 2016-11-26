@@ -17,6 +17,8 @@
             <li><a href="{% problem_url "problems:checker" %}" >{% trans 'Checker' %}</a></li>
             <li><a href="{% problem_url "problems:validators" %}" >{% trans 'Validators' %}</a></li>
             <li><a href="{% problem_url "problems:discussions" %}" >{% trans 'Discussions' %}</a></li>
+            <li><a href="{% problem_url "problems:history" %}" >{% trans 'History' %}</a></li>
+
         </ul>
         <ul class="nav navbar-nav pull-right flip">
             <li {% if revision_slug == "master" %} class="active" {% endif %} ><a href="{% url "problems:overview" problem.id "master" %}">{% trans 'Master' %}</a></li>

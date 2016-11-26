@@ -3,7 +3,6 @@ from django.core.urlresolvers import reverse
 from problems.forms.overview import OverviewForm
 from problems.views.generics import ProblemObjectEditView, RevisionObjectView
 
-
 __all__ = ["Overview"]
 
 

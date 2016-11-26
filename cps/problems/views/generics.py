@@ -1,10 +1,11 @@
 from functools import update_wrapper
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import classonlymethod
-from django.views.generic import View, DeleteView
+from django.views.generic import View
 
 from problems.views.utils import extract_revision_data
 
@@ -12,7 +13,6 @@ __all__ = ["ProblemObjectDeleteView"]
 
 
 class RevisionObjectView(View):
-
     http_method_names_requiring_edit_access = ['post', 'put', 'delete', 'patch']
 
     @classonlymethod
@@ -42,6 +42,7 @@ class RevisionObjectView(View):
                 extract_revision_data(problem_id, revision_slug)
 
             return self.dispatch(request, problem_id, revision_slug, *args, **kwargs)
+
         view.view_class = cls
         view.view_initkwargs = initkwargs
 

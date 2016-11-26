@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
+
     # Vendor Apps
     'bootstrap3',
 
@@ -63,7 +64,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    
+
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -75,6 +76,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'cps.middlewares.middleware.LoginRequiredMiddleware'
 ]
 
 ROOT_URLCONF = 'cps.urls'
@@ -107,7 +109,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Accounts and Auth
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
@@ -213,3 +214,11 @@ BOOTSTRAP3 = {
         'readonly': 'problems.forms.renderers.ReadOnlyFieldRenderer',
     },
 }
+
+LOGIN_REQUIRED_URLS_EXCEPTIONS = (
+    r'/accounts/login/$',
+    r'/admin/login/$',
+    r'/admin/$'
+)
+
+LOGIN_URL = '/accounts/login/'

@@ -9,7 +9,6 @@ from problems.views.generics import ProblemObjectEditView, RevisionObjectView, P
 
 
 class CheckerListView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug):
         checkers = self.revision.checker_set.all()
 
@@ -17,19 +16,19 @@ class CheckerListView(RevisionObjectView):
             "checkers": checkers
         })
 
-class CheckerActivateView(RevisionObjectView):
 
+class CheckerActivateView(RevisionObjectView):
     def post(self, request, problem_id, revision_slug, checker_id):
         checker = get_object_or_404(Checker, problem=self.revision, id=checker_id)
         problem_data = self.revision.problem_data
         problem_data.checker = checker
         problem_data.save()
 
-
         return HttpResponseRedirect(reverse("problems:checker", kwargs={
             "problem_id": problem_id,
             "revision_slug": revision_slug
         }))
+
 
 class CheckerAddView(ProblemObjectAddView):
     template_name = "problems/add_checker.html"
@@ -41,8 +40,6 @@ class CheckerAddView(ProblemObjectAddView):
             "problem_id": problem_id,
             "revision_slug": revision_slug
         })
-
-
 
 
 CheckerDeleteView = ProblemObjectDeleteView.as_view(

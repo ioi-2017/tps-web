@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% block content %}
+    <div class="col-md-6 col-md-offset-3">
+        <br />
+        {% if not form.errors %}
+        <div class="panel panel-primary">
+            <div class="panel-body bg-primary">
+                {% if next %}
+                    {% trans "Please login to see this page." %}
+                {% else %}
+                    {% trans "Please login." %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+
+        <form method="post" action="{% url 'accounts:login' %}">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+
+            <button class="btn btn-primary btn-block" type="submit"> {% trans 'Login' %} </button>
+            <input type="hidden" name="next" value="{{ next }}"/>
+        </form>
+    </div>
+{% endblock %}

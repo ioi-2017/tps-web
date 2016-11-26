@@ -1,14 +1,15 @@
 from django.conf.urls import url
 
-from problems.views.checker import CheckerListView
 from problems.views.discussions import DiscussionAddView, CommentListView
 from problems.views.files import SourceFileCompileView
+from problems.views.version_control import HistoryView
 from problems.views.invocations import InvocationAddView, InvocationsListView, InvocationRunView, InvocationViewView
 from problems.views.problems import ProblemAddView
 from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
 from .views import *
 
 problem_urls = ([
+        url(r'^history/$', HistoryView.as_view(), name="history"),
         url(r'^$', Overview.as_view(), name="overview"),
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),
         url(r'^discussion/add/$', DiscussionAddView.as_view(), name="add_discussion"),
