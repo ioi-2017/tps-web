@@ -63,10 +63,14 @@ class InvocationViewView(RevisionObjectView):
             current_results = []
             for solution in solutions:
                 current_results.append(dic[testcase][solution])
+                print(dic[testcase][solution].verdict)
+                print(dic[testcase][solution].validate())
             results.append((testcase,current_results))
 
         validations = []
         for solution in solutions:
+            print(obj.validate_solution(solution))
+            print(solution.verdict)
             validations.append((solution, obj.validate_solution(solution)))
 
         return render(request, "problems/invocation_view.html", context={

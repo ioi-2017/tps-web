@@ -25,7 +25,7 @@
                     <tr>
                         <td>{{ testcase }}</td>
                         {% for result in testcase_results %}
-                            {% if result.validate %}
+                            {% if result.validate == False %}
                                 <td bgcolor="#FF0000">
                             {% else %}
                                 <td>
