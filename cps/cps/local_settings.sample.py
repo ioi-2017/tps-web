@@ -7,5 +7,5 @@ JUDGE_HANDLERS = {
             'compile_time_limit': 30,
             'compile_memory_limit': 1024,
         }
-    }
+    },
 }

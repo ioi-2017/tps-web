@@ -3,6 +3,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from problems.models.solution import SolutionVerdict
 from tasks.models import Task
 from file_repository.models import FileModel
 from judge import Judge
@@ -30,6 +31,24 @@ class SolutionRun(RevisionObject):
                 result.save()
                 result.apply_async()
 
+    def validate(self):
+        is_valid = True
+        for solution in self.solutions.all():
+            if not self.validate_solution(solution):
+                is_valid = False
+        return is_valid
+
+    def validate_solution(self, solution):
+        results = SolutionRunResult.objects.filter(solution_run=self, solution=solution)
+        verdict_happend = False
+        only_dont_care_happend = True
+        for result in results:
+            if result.validate(strict=True):
+                verdict_happend = True
+            if not result.validate(strict=False):
+                only_dont_care_happend = False
+        return verdict_happend and only_dont_care_happend
+
     @classmethod
     def create(cls, solutions, testcases):
         assert len(solutions) != 0, "At least one solution must exist in solution run"
@@ -47,7 +66,6 @@ class SolutionRun(RevisionObject):
 
 
 class SolutionRunResult(Task):
-
     _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
 
     solution_run = models.ForeignKey(SolutionRun, verbose_name=_("solution run"), editable=False,
@@ -104,9 +122,9 @@ class SolutionRunResult(Task):
             testcase_code
         )
         self.solution_output, self.solution_execution_success, \
-            self.solution_execution_time, self.solution_memory_usage, \
-            self.verdict, \
-            self.solution_execution_message = \
+        self.solution_execution_time, self.solution_memory_usage, \
+        self.verdict, \
+        self.solution_execution_message = \
             evaluation_result.output_file, \
             evaluation_result.success, \
             evaluation_result.execution_time, \
@@ -118,16 +136,37 @@ class SolutionRunResult(Task):
 
         if self.verdict == JudgeVerdict.ok.name:
             self.checker_execution_success, \
-                self.score, self.contestant_message,\
-                self.checker_standard_output, \
-                self.checker_standard_error,\
-                self.checker_execution_message = run_checker(
-                    self.solution_run.problem.problem_data.checker,
-                    input_file=self.testcase.input_file,
-                    jury_output=self.testcase.output_file,
-                    contestant_output=self.solution_output
-                )
+            self.score, self.contestant_message, \
+            self.checker_standard_output, \
+            self.checker_standard_error, \
+            self.checker_execution_message = run_checker(
+                self.solution_run.problem.problem_data.checker,
+                input_file=self.testcase.input_file,
+                jury_output=self.testcase.output_file,
+                contestant_output=self.solution_output
+            )
         else:
             self.score = 0
 
         self.save()
+
+    def validate(self, strict=False):
+        if self.checker_execution_success is None:
+            return None
+        if not strict and (self.verdict == JudgeVerdict.ok and self.score == 1):
+            return True
+        if self.solution.verdict == SolutionVerdict.correct:
+            return self.verdict == JudgeVerdict.ok and self.score == 1
+        elif self.solution.verdict == SolutionVerdict.incorrect:
+            return self.verdict == JudgeVerdict.ok and self.score == 0
+        elif self.solution.verdict == SolutionVerdict.runtime_error:
+            return self.verdict == JudgeVerdict.runtime_error
+        elif self.solution.verdict == SolutionVerdict.memory_limit:
+            return self.verdict == JudgeVerdict.memory_limit_exceeded
+        elif self.solution.verdict == SolutionVerdict.time_limit:
+            return self.verdict == JudgeVerdict.time_limit_exceeded
+        elif self.solution.verdict == SolutionVerdict.failed:
+            return self.verdict != JudgeVerdict.ok or self.score != 1
+        elif self.solution.verdict == SolutionVerdict.time_limit_and_runtime_error:
+            return self.verdict == JudgeVerdict.runtime_error or self.verdict == JudgeVerdict.time_limit_exceeded
+        return False

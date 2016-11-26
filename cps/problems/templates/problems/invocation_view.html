@@ -12,8 +12,12 @@
         <table class="table table-bordered table-responsive table-striped">
             <thead>
                 <td></td>
-                {% for solution in solutions %}
-                    <td>{{ solution }}</td>
+                {% for solution,is_valid in validations %}
+                    {% if is_valid == False %}
+                        <td bgcolor="#FF0000">{{ solution }}</td>
+                    {% else %}
+                        <td>{{ solution }}</td>
+                    {% endif %}
                 {% endfor %}
             </thead>
             <tbody>
@@ -21,29 +25,35 @@
                     <tr>
                         <td>{{ testcase }}</td>
                         {% for result in testcase_results %}
+                            {% if result.validate %}
+                                <td bgcolor="#FF0000">
+                            {% else %}
+                                <td>
+                            {% endif %}
                             {% if result.verdict == judge_result.ok.name %}
                                 {% if result.checker_execution_success == None %}
-                                    <td>N/A</td>
+                                    N/A
                                 {% elif result.checker_execution_success == True %}
                                     {% if result.score == 1 %}
-                                        <td>AC</td>
+                                        AC
                                     {% elif result.score == 0 %}
-                                        <td>WA</td>
+                                        WA
                                     {% else %}
-                                        <td>result.score</td>
+                                        result.score
                                     {% endif %}
                                 {% else %}
-                                    <td>Failed</td>
+                                    Failed
                                 {% endif %}
                             {% elif result.verdict == None %}
-                                <td>N/A</td>
+                                N/A
                             {% elif result.verdict == judge_result.memory_limit_exceeded.name %}
-                                <td>TL</td>
+                                ML
                             {% elif result.verdict == judge_result.time_limit_exceeded.name %}
-                                <td>ME</td>
+                                TL
                             {% else %}
-                                <td>RE</td>
+                                RE
                             {% endif %}
+                            </td>
                         {% endfor %}
                     </tr>
                 {% endfor %}

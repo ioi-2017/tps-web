@@ -1,4 +1,6 @@
 # Amir Keivan Mohtashami
+from enum import Enum
+from urllib.parse import _noop
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -14,10 +16,18 @@ from multiselectfield import MultiSelectField
 __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore"]
 
 
+class SolutionVerdict(Enum):
+    correct = _noop("Correct")
+    time_limit = _noop("Time limit")
+    memory_limit = _noop("Memory limit")
+    incorrect = _noop("Incorrect")
+    runtime_error = _noop("Runtime error")
+    failed = _noop("Failed")
+    time_limit_and_runtime_error = _noop("Time limit / Runtime error")
 
 
 class Solution(RevisionObject):
-    _VERDICTS = [(x.name, x.value) for x in list(JudgeVerdict)]
+    _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255)
@@ -26,8 +36,8 @@ class Solution(RevisionObject):
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
-    should_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
-    should_not_be_present_verdicts = MultiSelectField(choices=_VERDICTS, blank=True)
+    verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
+
 
     class Meta:
         unique_together = ("problem", "name",)
