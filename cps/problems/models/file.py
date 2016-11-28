@@ -143,7 +143,6 @@ class SourceFile(RevisionObject):
         super(SourceFile, self).save(*args, **kwargs)
 
 
-
 class CompileJob(Task):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()

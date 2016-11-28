@@ -91,8 +91,8 @@ class RevisionObject(models.Model):
             limited_dump[field_name] = full_dump['fields'][field_name]
         return json.dumps(limited_dump)
 
-    def get_json_representation(self):
-        return self._get_json_representation()
+    def get_json_representation(self, *args, **kwargs):
+        return self._get_json_representation(*args, **kwargs)
 
     def diff(self, other_object):
         """

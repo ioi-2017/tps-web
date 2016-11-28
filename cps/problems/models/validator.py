@@ -26,6 +26,13 @@ class Validator(SourceFile):
         help_text=_("if marked, it validates all subtasks")
     )
 
+    @property
+    def subtasks(self):
+        if self.global_validator:
+            return self.problem.subtasks.all()
+        else:
+            return self._subtasks
+
     def validate(self):
         """
         This method is used to validate the testcases in the given subtasks.

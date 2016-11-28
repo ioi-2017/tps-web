@@ -4,6 +4,7 @@ from model_mommy import mommy
 from problems.models import *
 import os
 from file_repository.models import FileModel
+from problems.models.solution import SolutionVerdict
 
 __all__ = ["get_resource_as_file_model", "create_mommy_valid_testcase"]
 
@@ -45,5 +46,4 @@ def create_mommy_valid_testcase(problem=None,
             testcase_data["_output_uploaded_file"] = get_resource_as_file_model("statics", "hello_world.txt")
 
     return mommy.make(TestCase, **testcase_data)
-
 

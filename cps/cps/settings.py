@@ -55,10 +55,10 @@ INSTALLED_APPS = [
     'accounts',
     'problems',
     'judge',
-    'trader',
     'file_repository',
     'runner',
     'tasks',
+    'trader',
 
     # Allauth Apps (must be after accounts)
     'allauth',

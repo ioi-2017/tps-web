@@ -8,11 +8,15 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_clone.clone import Cloner
 
+from file_repository.models import FileModel
 from judge import Judge
 from problems.models import RevisionObject, Conflict, Merge
 
 import logging
 
+from tasks.models import Task
+from trader import get_exporter
+from trader.exporters import AVAILABLE_EXPORTERS
 
 __all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemFork"]
 
@@ -325,3 +329,5 @@ class ProblemData(RevisionObject):
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
+
+
