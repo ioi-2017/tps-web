@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from file_repository.models import FileModel
-from tasks.models import Task
+from tasks.models import Task, State
 from trader import get_exporter
 from trader.exporters import AVAILABLE_EXPORTERS
 
@@ -33,10 +33,13 @@ class ExportPackage(models.Model):
                 format=self.export_format
             )
 
+    def being_created(self):
+        return self.export_tasks.exclude(state=State.finished.value).count() > 0
+
 
 class ExportPackageCreationTask(Task):
 
-    request = models.ForeignKey(ExportPackage)
+    request = models.ForeignKey(ExportPackage, related_name="export_tasks")
 
     def run(self):
         self.request.create_archive()
