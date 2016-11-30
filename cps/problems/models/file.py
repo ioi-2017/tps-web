@@ -21,6 +21,7 @@ from runner import get_compilation_commands
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
 from tasks.models import Task
+import os
 
 
 __all__ = ["Attachment", "SourceFile"]
@@ -29,10 +30,25 @@ logger = logging.getLogger(__name__)
 
 FileNameValidator = RegexValidator(
     regex=r'^{character}(?:\.|{character})*$'.format(character=r'[a-zA-Z0-9_\-]'),
-    message=_("please enter a valid file name."),
+    message=_("Please enter a valid file name."),
     code='invalid_file_name',
     inverse_match=False
 )
+
+def get_valid_name(name):
+    initial_prefix = "prefix_"
+    valid_name = initial_prefix
+    for char in name:
+        try:
+            FileNameValidator(valid_name + char)
+        except ValidationError:
+            continue
+        valid_name += char
+    valid_name = valid_name[len(initial_prefix):]
+    if valid_name == "" or valid_name[0] == ".":
+        valid_name = "{}".format(hashlib.md5(name.encode()).hexdigest()) + valid_name
+
+    return valid_name
 
 
 class AttachmentBase(RevisionObject):
@@ -59,7 +75,7 @@ class Attachment(AttachmentBase):
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator])
+    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator], blank=True)
     source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
     source_language = models.CharField(
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
@@ -128,17 +144,7 @@ class SourceFile(RevisionObject):
 
     def save(self, *args, **kwargs):
         if self.name == "":
-            initial_prefix = "prefix_"
-            self.name = initial_prefix
-            for char in self.source_file.name:
-                try:
-                    FileNameValidator(self.name + char)
-                except ValidationError:
-                    continue
-                self.name += char
-            self.name = self.name[len(initial_prefix):]
-            if self.name == "":
-                self.name = "{}".format(hashlib.md5(self.source_file.name))
+            self.name = get_valid_name(self.source_file.name)
 
         super(SourceFile, self).save(*args, **kwargs)
 

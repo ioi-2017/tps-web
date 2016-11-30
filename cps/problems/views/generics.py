@@ -9,7 +9,9 @@ from django.views.generic import View
 
 from problems.views.utils import extract_revision_data
 
-__all__ = ["ProblemObjectDeleteView"]
+__all__ = ["ProblemObjectDeleteView", "RevisionObjectView",
+           "ProblemObjectAddView", "ProblemObjectEditView",
+           "ProblemObjectShowSourceView"]
 
 
 class RevisionObjectView(View):
@@ -152,31 +154,58 @@ class ProblemObjectEditView(RevisionObjectView):
         assert self.template_name is not None
         assert self.model_form is not None
 
-    def _show_form(self, request, form):
+    def _show_form(self, request, form, instance):
         return render(request, self.template_name, context={
             "form": form,
+            "instance": instance,
         })
 
     def post(self, request, problem_id, revision_slug, *args, **kwargs):
+        instance = self.get_instance(request, *args, **kwargs)
         form = self.model_form(request.POST, request.FILES,
                                problem=self.problem,
                                revision=self.revision,
                                owner=request.user,
-                               instance=self.get_instance(request, *args, **kwargs))
+                               instance=instance)
         if form.is_valid():
             obj = form.save()
             return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
-        return self._show_form(request, form)
+        return self._show_form(request, form, instance)
 
     def get(self, request, problem_id, revision_slug, *args, **kwargs):
+        instance = self.get_instance(request, *args, **kwargs)
         form = self.model_form(problem=self.problem,
                                revision=self.revision,
                                owner=request.user,
-                               instance=self.get_instance(request, *args, **kwargs))
-        return self._show_form(request, form)
+                               instance=instance)
+        return self._show_form(request, form, instance)
 
     def get_success_url(self, request, problem_id, revision_slug, obj):
         raise NotImplementedError("This must be implemented in subclasses")
 
     def get_instance(self, request, *args, **kwargs):
         raise NotImplementedError("This must be implemented in subclasses")
+
+
+class ProblemObjectShowSourceView(RevisionObjectView):
+    instance_slug = None
+    model = None
+    template_name = "problems/view_source.html"
+    language_field_name = None
+    code_field_name = None
+
+    def get(self, request, problem_id, revision_slug, **kwargs):
+        instance_pk = kwargs.get(self.instance_slug)
+        instance = self.model.objects.get(pk=instance_pk)
+        code = getattr(instance, self.code_field_name).file.read()
+        lang = getattr(instance, self.language_field_name)
+        title = str(instance)
+        return render(request, self.template_name, context={
+            "code": code,
+            "lang": lang,
+            "title": title,
+            "next_url": self.get_next_url(request, problem_id, revision_slug, instance)
+        })
+
+    def get_next_url(self, request, problem_id, revision_slug, obj):
+        raise NotImplementedError("Must be implemented in subclasses")

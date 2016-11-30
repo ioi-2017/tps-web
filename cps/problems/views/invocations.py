@@ -10,6 +10,8 @@ from problems.models import Solution, SolutionRun
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
 
+__all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView"]
+
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug):
         invocations = self.revision.solutionrun_set.all()
@@ -45,7 +47,7 @@ class InvocationRunView(RevisionObjectView):
         }))
 
 
-class InvocationViewView(RevisionObjectView):
+class InvocationDetailsView(RevisionObjectView):
     def get(self, request, problem_id, revesion_slug, invocation_id):
         obj = get_object_or_404(SolutionRun, **{
             "problem_id": self.revision.id,
@@ -63,14 +65,10 @@ class InvocationViewView(RevisionObjectView):
             current_results = []
             for solution in solutions:
                 current_results.append(dic[testcase][solution])
-                print(dic[testcase][solution].verdict)
-                print(dic[testcase][solution].validate())
             results.append((testcase,current_results))
 
         validations = []
         for solution in solutions:
-            print(obj.validate_solution(solution))
-            print(solution.verdict)
             validations.append((solution, obj.validate_solution(solution)))
 
         return render(request, "problems/invocation_view.html", context={

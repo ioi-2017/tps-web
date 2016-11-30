@@ -157,25 +157,26 @@ class TestCase(RevisionObject):
         """
         We first determine whether input and output is a static file and then continue saving process normally.
         """
+
         if self._input_uploaded_file is not None:
-            if self._input_generator is not None:
-                raise ValidationError("Validate the model before saving it")
             self._input_static = True
         elif self._input_generator is not None:
             self._input_static = False
         else:
             # Since a model must be cleaned before saving and this is checked in the validation method,
-            # we can either do nothing here or raise an error as a fail-safe.
-            raise ValidationError("Validate the model before saving it")
+            # we simply ignore it here in order to avoid problems with django-clone
+            pass
 
         if self._output_uploaded_file is not None:
             self._output_static = True
         else:
             self._output_static = False
-        current_number = self.problem.testcase_set.all().aggregate(Max('testcase_number'))["testcase_number__max"]
-        if current_number is None:
-            current_number = 0
-        self.testcase_number = current_number + 1
+
+        if getattr(self, "testcase_number", None) is None:
+            current_number = self.problem.testcase_set.all().aggregate(Max('testcase_number'))["testcase_number__max"]
+            if current_number is None:
+                current_number = 0
+            self.testcase_number = current_number + 1
 
         if not self.name or len(self.name) == 0:
             self.name = "auto_{}".format(str(self.testcase_number))

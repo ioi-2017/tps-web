@@ -1,6 +1,12 @@
-body, html {
+
+html {
+    min-height: 100%;
+    height: auto;
+}
+
+body {
+  height: 100%;
     background-color: whitesmoke;
-    height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -59,26 +65,14 @@ body, html {
 
 }
 
-.overlay {
-  position: fixed;
-  display: none;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 1;
-}
-
 
 /*** Problem sidebar ***/
 
 .full-wrapper {
+
     height: 100%;
-    padding-left: 20%;
     display: none;
+    padding-left: 20%;
 
 }
 
@@ -94,6 +88,8 @@ body, html {
     height: 100%;
     width: 20%;
     left: 0;
+    padding: 0;
+    margin: 0;
     overflow-y: auto;
     overflow-x: hidden;
 
@@ -123,13 +119,18 @@ body, html {
 }
 
 .sidebar {
-    position: absolute;
-    left:0;
+    position: relative;
+    margin: 0;
+    padding: 0;
     width: 100%;
     background-color: ghostwhite;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     transition: width 0.2s ease;
 
+}
+.sidebar-content {
+    padding-bottom: 120px;
 }
 
 .sidebar .sidebar-footer {
@@ -167,12 +168,30 @@ body, html {
   position: relative;
   display: block;
 
+
 }
 .sidebar-menu > li > a {
   color: inherit;
   position: relative;
-    display: block;
+  display: block;
   padding: 10px 20px;
+
+}
+
+pre.source-code {
+    border: none;
+}
+
+.collapsed-sidebar .sidebar-menu > li {
+    text-align: center;
+}
+
+.collapsed-sidebar .sidebar-menu > li > a{
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
 
 }
 
@@ -212,3 +231,4 @@ body, html {
     line-height: 30px;
     font-size: 1.5em;
 }
+

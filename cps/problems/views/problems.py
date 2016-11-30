@@ -6,7 +6,7 @@ from django.shortcuts import render
 from problems.forms.problem import ProblemAddForm
 from problems.models import Problem
 
-__all__ = ["ProblemsListView"]
+__all__ = ["ProblemsListView", "ProblemAddView"]
 
 
 class ProblemsListView(View):

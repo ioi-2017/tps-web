@@ -33,6 +33,8 @@ class Discussion(models.Model):
     priority = models.CharField(verbose_name=_("priority"), choices=PRIORITIES, max_length=100,
                                 default=Priority.medium.value)
 
+    closed = models.BooleanField(verbose_name=_("closed"), default=False)
+
     def last_comment(self):
         return self.comments.latest()
 

@@ -14,7 +14,7 @@
                 <td></td>
                 {% for solution,is_valid in validations %}
                     {% if is_valid == False %}
-                        <td bgcolor="#FF0000">{{ solution }}</td>
+                        <td bgcolor="#f08080">{{ solution }}</td>
                     {% else %}
                         <td>{{ solution }}</td>
                     {% endif %}
@@ -26,7 +26,7 @@
                         <td>{{ testcase }}</td>
                         {% for result in testcase_results %}
                             {% if result.validate == False %}
-                                <td bgcolor="#FF0000">
+                                <td bgcolor="#f08080">
                             {% else %}
                                 <td>
                             {% endif %}
@@ -39,10 +39,10 @@
                                     {% elif result.score == 0 %}
                                         WA
                                     {% else %}
-                                        result.score
+                                        {{ result.score }}
                                     {% endif %}
                                 {% else %}
-                                    Failed
+                                    Checker Failed
                                 {% endif %}
                             {% elif result.verdict == None %}
                                 N/A
@@ -50,6 +50,8 @@
                                 ML
                             {% elif result.verdict == judge_result.time_limit_exceeded.name %}
                                 TL
+                            {% elif result.verdict == judge_result.compilation_failed.name %}
+                                CE
                             {% else %}
                                 RE
                             {% endif %}

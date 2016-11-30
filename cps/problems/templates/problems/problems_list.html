@@ -15,25 +15,22 @@
     <table class="table table-striped table-responsive">
     <thead>
         <tr>
-            <th class="col-md-1">#</th>
-            <th class="col-md-6">{% trans 'Name' %}</th>
+            <th class="col-md-8">{% trans 'Name' %}</th>
             <th class="col-md-2">{% trans 'Creator' %}</th>
-            <th class="col-md-1">{% trans 'Revision' %}</th>
-            <th class="col-md-2">{% trans 'Status' %}</th>
+            <th class="col-md-2">{% trans 'Revision' %}</th>
         </tr>
     </thead>
     <tbody>
         {% for problem in problems %}
         <tr>
-            <td>{{ forloop.revcounter }}</td>
             <td>
                 <a href="{% url "problems:overview" problem.id "master" %}">
                     {{ problem.get_upstream_fork.head.problem_data.title }}({{problem.master_revision.problem_data.code_name}})
                 </a>
             </td>
             <td> {{ problem.creator }} </td>
-            <td>{{ problem.master_revision.depth }}</td>
-            <td><i class="fa fa-check"></i> </td>
+            <td>{{ problem.get_upstream_fork.head.depth }}</td>
+
         </tr>
         {% endfor %}
     </tbody>

@@ -20,20 +20,27 @@
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
-                        <td class="col-md-1">#</td>
                         {% if revision_editable %}
-                            <td class="col-md-10">{% trans 'Source Code' %}</td>
-                            <td class="col-md-1"></td>
+                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %} </th>
+                            <th class="col-md-1"></th>
                         {% else %}
-                            <td class="col-md-11">{% trans 'Source Code' %}</td>
+                            <th class="col-md-11">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %} </th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
             {% for validator in validators %}
                     <tr>
-                        <td> {{ forloop.counter }} </td>
-                        <td> {{ validator.code }} </td>
+                        <td>
+                            <a href="{% problem_url "problems:validator_source" validator.pk %}">
+                                {{ validator }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ validator.source_language }}
+                        </td>
                         {% if revision_editable %}
                             <td>
                                 <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>

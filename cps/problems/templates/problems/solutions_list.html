@@ -22,12 +22,14 @@
                     <tr>
                         <th class="col-md-1">#</th>
                         {% if revision_editable %}
-                            <th class="col-md-9">{% trans 'Source Code' %}</th>
+                            <th class="col-md-6">{% trans 'Source Code' %}</th>
                             <th class="col-md-1">{% trans 'Language' %}</th>
+                            <th class="col-md-3">{% trans 'Verdict' %}</th>
                             <th class="col-md-1"></th>
                         {% else %}
-                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-7">{% trans 'Source Code' %}</th>
                             <th class="col-md-1">{% trans 'Language' %}</th>
+                            <th class="col-md-3">{% trans 'Verdict' %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -35,8 +37,9 @@
             {% for solution in solutions %}
                     <tr>
                         <td> {{ forloop.counter }} </td>
-                        <td> {{ solution }} </td>
-                        <td> {{ solution.get_language_representation }}
+                        <td> <a href="{% problem_url "problems:solution_source" solution.pk %}"> {{ solution }} </a> </td>
+                        <td> {{ solution.get_language_representation }} </td>
+                        <td> {{ solution.get_verdict_representation }} </td>
                         {% if revision_editable %}
                             <td>
 

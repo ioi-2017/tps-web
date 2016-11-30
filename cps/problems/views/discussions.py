@@ -8,7 +8,7 @@ from problems.models import Discussion
 from problems.views.generics import ProblemObjectAddView
 from problems.views.utils import extract_revision_data
 
-__all__ = ["DiscussionsListView"]
+__all__ = ["DiscussionsListView", "DiscussionAddView", "CommentListView"]
 
 
 class DiscussionsListView(View):

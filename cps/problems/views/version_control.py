@@ -13,7 +13,7 @@ from problems.views.utils import extract_revision_data
 
 __all__ = ["UpdateForkView", "CommitWorkingCopy",
            "CreateWorkingCopy", "ConflictsListView", "ResolveConflictView",
-           "ApplyForkToMaster"]
+           "ApplyForkToMaster", "HistoryView"]
 
 
 class UpdateForkView(View):

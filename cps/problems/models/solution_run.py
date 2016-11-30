@@ -151,22 +151,22 @@ class SolutionRunResult(Task):
         self.save()
 
     def validate(self, strict=False):
-        if self.checker_execution_success is None:
-            return None
-        if not strict and (self.verdict == JudgeVerdict.ok and self.score == 1):
+        if self.checker_execution_success is not True:
+            return False
+        if not strict and (self.verdict == JudgeVerdict.ok.name and self.score == 1):
             return True
-        if self.solution.verdict == SolutionVerdict.correct:
-            return self.verdict == JudgeVerdict.ok and self.score == 1
-        elif self.solution.verdict == SolutionVerdict.incorrect:
-            return self.verdict == JudgeVerdict.ok and self.score == 0
-        elif self.solution.verdict == SolutionVerdict.runtime_error:
-            return self.verdict == JudgeVerdict.runtime_error
-        elif self.solution.verdict == SolutionVerdict.memory_limit:
-            return self.verdict == JudgeVerdict.memory_limit_exceeded
-        elif self.solution.verdict == SolutionVerdict.time_limit:
-            return self.verdict == JudgeVerdict.time_limit_exceeded
-        elif self.solution.verdict == SolutionVerdict.failed:
-            return self.verdict != JudgeVerdict.ok or self.score != 1
-        elif self.solution.verdict == SolutionVerdict.time_limit_and_runtime_error:
-            return self.verdict == JudgeVerdict.runtime_error or self.verdict == JudgeVerdict.time_limit_exceeded
+        if self.solution.verdict == SolutionVerdict.correct.name:
+            return self.verdict == JudgeVerdict.ok.name and self.score == 1
+        elif self.solution.verdict == SolutionVerdict.incorrect.name:
+            return self.verdict == JudgeVerdict.ok.name and self.score == 0
+        elif self.solution.verdict == SolutionVerdict.runtime_error.name:
+            return self.verdict == JudgeVerdict.runtime_error.name
+        elif self.solution.verdict == SolutionVerdict.memory_limit.name:
+            return self.verdict == JudgeVerdict.memory_limit_exceeded.name
+        elif self.solution.verdict == SolutionVerdict.time_limit.name:
+            return self.verdict == JudgeVerdict.time_limit_exceeded.name
+        elif self.solution.verdict == SolutionVerdict.failed.name:
+            return self.verdict != JudgeVerdict.ok.name or self.score != 1
+        elif self.solution.verdict == SolutionVerdict.time_limit_and_runtime_error.name:
+            return self.verdict == JudgeVerdict.runtime_error.name or self.verdict == JudgeVerdict.time_limit_exceeded.name
         return False

@@ -20,12 +20,15 @@
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
-                        <th class="col-md-1">#</th>
                         {% if revision_editable %}
-                            <th class="col-md-10">{% trans 'Checker' %}</th>
+                            <th class="col-md-7">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %}</th>
+                            <th class="col-md-1">{% trans 'Status' %}</th>
                             <th class="col-md-1"></th>
                         {% else %}
-                            <th class="col-md-11">{% trans 'Checker' %}</th>
+                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-1">{% trans 'Language' %}</th>
+                            <th class="col-md-1">{% trans 'Status' %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -33,12 +36,24 @@
             {% for checker in checkers %}
 
                     <tr {% if checker == revision.problem_data.checker %} style="background-color: palegreen;" {% endif %}>
-                        <td> {{ forloop.counter }} </td>
-                        <td> {{ checker }} </td>
+                        <td>
+                            <a href="{% problem_url "problems:checker_source" checker.pk %}"> {{ checker }} </a>
+                        </td>
+                        <td>
+                            {{ checker.source_language }}
+                        </td>
+                        <td>
+                            {% if checker == revision.problem_data.checker %}
+                                <span disabled class="btn btn-default btn-block">{% trans 'Active' %}</span>
+                            {% elif revision_editable %}
+                                <a class="btn btn-success btn-block" data-method='post' data-confirm='{% trans 'Are you sure you want to activate this checker?' %}' href='{% problem_url "problems:activate_checker" checker.id %}'>
+                                        {% trans 'Activate' %}</a>
+                            {% endif %}
+                        </td>
                         {% if revision_editable %}
                             <td>
-                                <a class="text-success" data-method='post' data-confirm='{% trans 'Are you sure you want to activate this checker?' %}' href='{% problem_url "problems:activate_checker" checker.id %}'>
-                                    <i class="fa fa-umbrella fa-lg" title="{% trans 'Activate' %}"></i></a>
+                                 <a class="text-primary" href='{% problem_url "problems:edit_checker" checker.id %}'>
+                                    <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
                                 <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this checker?' %}' href='{% problem_url "problems:delete_checker" checker.id %}'>
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>

@@ -1,11 +1,6 @@
 from django.conf.urls import url
 
-from problems.views.discussions import DiscussionAddView, CommentListView
-from problems.views.files import SourceFileCompileView
-from problems.views.version_control import HistoryView
-from problems.views.invocations import InvocationAddView, InvocationsListView, InvocationRunView, InvocationViewView
-from problems.views.problems import ProblemAddView
-from problems.views.validator import ValidatorsListView, ValidatorEditView, ValidatorDeleteView, ValidatorAddView
+
 from .views import *
 
 problem_urls = ([
@@ -18,11 +13,7 @@ problem_urls = ([
         url(r'^invocations/$', InvocationsListView.as_view(), name="invocations"),
         url(r'^invocation/add/$', InvocationAddView.as_view(), name="add_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/run/$', InvocationRunView.as_view(), name="run_invocation"),
-        url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationViewView.as_view(), name="view_invocation"),
-
-        url(r'^sourcefile/add/$', SourceFileAddView.as_view(), name="add_sourcefile"),
-        url(r'^sourcefile/(?P<object_id>\d+)/delete/$', SourceFileDeleteView, name="delete_sourcefile"),
-        url(r'^sourcefile/(?P<object_id>\d+)/compile/$', SourceFileCompileView.as_view(), name="compile_sourcefile"),
+        url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationDetailsView.as_view(), name="view_invocation"),
 
         url(r'^attachment/add/$', AttachmentAddView.as_view(), name="add_attachment"),
         url(r'^attachment/(?P<object_id>\d+)/delete/$', AttachmentDeleteView, name="delete_attachment"),
@@ -31,6 +22,7 @@ problem_urls = ([
         url(r'^solution/add/$', SolutionAddView.as_view(), name="add_solution"),
         url(r'^solution/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solution/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
+        url(r'^solution/(?P<solution_id>\d+)/source/$', SolutionShowSourceView.as_view(), name="solution_source"),
 
         url(r'^testcases/$', TestCasesListView.as_view(), name="testcases"),
         url(r'^testcase/add/$', TestCaseAddView.as_view(), name="add_testcase"),
@@ -40,12 +32,16 @@ problem_urls = ([
         url(r'^validators/$', ValidatorsListView.as_view(), name="validators"),
         url(r'^validator/(?P<validator_id>\d+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),
         url(r'^validator/(?P<validator_id>\d+)/delete/$', ValidatorDeleteView, name="delete_validator"),
+        url(r'^validator/(?P<validator_id>\d+)/source/$', ValidatorShowSourceView.as_view(), name="validator_source"),
         url(r'^validator/add/$', ValidatorAddView.as_view(), name="add_validator"),
 
-        url(r'^checker/$', CheckerListView.as_view(), name="checker"),
+
+        url(r'^checkers/$', CheckerListView.as_view(), name="checkers"),
         url(r'^checker/add/$', CheckerAddView.as_view(), name="add_checker"),
         url(r'^checker/(?P<checker_id>\d+)/activate/$', CheckerActivateView.as_view(), name="activate_checker"),
         url(r'^checker/(?P<checker_id>\d+)/delete/$', CheckerDeleteView, name="delete_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/edit/$', CheckerEditView.as_view(), name="edit_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/source/$', CheckerShowSourceView.as_view(), name="checker_source"),
 
         url(r'^clone/', CreateWorkingCopy.as_view(), name="create_working_copy"),
         url(r'^update/', UpdateForkView.as_view(), name="update_fork"),

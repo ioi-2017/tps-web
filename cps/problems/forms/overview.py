@@ -7,18 +7,16 @@ from problems.models import ProblemData
 class OverviewForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
-        exclude = ['checker', 'problem', 'title']
+        fields = ['code_name', 'title', 'time_limit', 'memory_limit']
 
     def __init__(self, *args, **kwargs):
         super(OverviewForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder = [
             'code_name',
-            'task_type',
-            'task_type_parameters',
-            'score_type',
-            'score_type_parameters',
+            'title',
             'time_limit',
-            'memory_limit']
+            'memory_limit'
+        ]
 
     def save(self, commit=True):
         super(OverviewForm, self).save(commit=False)

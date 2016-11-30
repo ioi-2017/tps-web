@@ -1,0 +1,26 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% load staticfiles %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static "highlightjs/styles/default.css" %}" type="text/css" />
+{% endblock %}
+{% block head_js %}
+    {{ block.super }}
+    <script src="{% static "highlightjs/highlight.pack.js" %}"></script>
+{% endblock %}
+
+{% block problem_content %}
+    <pre class="source-code"><code lang="{{lang}}">{{code}}</code></pre>
+    <a href="{{ next_url }}" class="btn btn-success btn-block">
+        {% trans "Back" %}
+    </a>
+{% endblock %}
+
+{% block foot_js %}
+    {{ block.super }}
+
+    <script>hljs.initHighlightingOnLoad();</script>
+{% endblock %}
