@@ -66,6 +66,16 @@
 
 
                         </li>
+                    </ul>
+                    <ul class="list-inline text-center full-open-only">
+                        <li {% if revision_slug == "master" %} class="active" {% endif %} >
+                            <a href="{% url "problems:overview" problem.id "master" %}" class="btn btn-primary">{% trans 'Master' %}</a>
+                        </li>
+                        <li {% if revision_slug == request.user.username %} class="active" {% endif %}>
+                            <a href="{% url "problems:overview" problem.id request.user.username %}" class="btn btn-primary">{% trans 'My Fork' %}</a>
+                        </li>
+                    </ul>
+                    <ul class="sidebar-menu">
 
                          <li>
                              <a href="{% problem_url "problems:overview" %}" >
@@ -131,12 +141,42 @@
                                 </span>
                              </a>
                          </li>
+                        {% if revision_editable %}
+                             <li>
+                                 <a href="{% problem_url "problems:history" %}" >
+                                     <i class="fa fa-save "></i>
+                                    <span class="full-open-only">
+                                        {% trans 'Review & Commit' %}
+                                    </span>
+                                 </a>
+                             </li>
+                            <li>
+                                 <a href="{% problem_url "problems:history" %}" >
+                                     <i class="fa fa-upload "></i>
+                                    <span class="full-open-only">
+                                        {% trans 'Push to master' %}
+                                    </span>
+                                 </a>
+                             </li>
+                            <li>
+                                 <a href="{% problem_url "problems:history" %}" >
+                                     <i class="fa fa-refresh "></i>
+                                    <span class="full-open-only">
+                                        {% trans 'Update from master' %}
+                                    </span>
+                                 </a>
+                             </li>
+                        {% endif %}
+
+                        <li>
+                             <a href="{% problem_url "problems:history" %}" >
+                                 <i class="fa fa-cloud-download "></i>
+                                <span class="full-open-only">
+                                    {% trans 'Export' %}
+                                </span>
+                             </a>
+                         </li>
                     </ul>
-                    {% block right_panels %}
-                        {% block version_control_panel %}
-                            {% include "problems/blocks/version_control.html" %}
-                        {% endblock %}
-                    {% endblock %}
                 </div>
 
                 <div  class="sidebar-footer text-center">
@@ -177,9 +217,11 @@
         {{ block.super }}
         <script type="text/javascript">
             $(document).ready(function () {
+
                 var last = Cookies.get("sidebar-toggle-state");
+                var full_wrapper = $(".full-wrapper");
                 if (last != null) {
-                    var full_wrapper = $(".full-wrapper");
+
 
                     if (last === "collapsed") {
                         if (full_wrapper.hasClass("collapsed-sidebar") == false)
@@ -188,9 +230,11 @@
 
                         full_wrapper.removeClass("collapsed-sidebar");
                     }
+
                     document.getElementsByClassName("full-wrapper")[0].offsetHeight;
-                    full_wrapper.addClass("smooth-transition");
+
                 }
+                full_wrapper.addClass("smooth-transition");
             });
 
             $("[data-toggle-id='full-wrapper']").click(function()

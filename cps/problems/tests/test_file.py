@@ -59,4 +59,4 @@ class SourceFileTests(TestCase):
                                  name="",
                                  source_language="c++",
                                  source_file=file_model)
-        self.assertEqual(source_file.name, hashlib.md5("print_hello_world.cpp"))
+        self.assertEqual(source_file.name, hashlib.md5("%%%".encode()).hexdigest())

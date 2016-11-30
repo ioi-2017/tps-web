@@ -91,7 +91,8 @@ body {
     padding: 0;
     margin: 0;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
+    background-color: ghostwhite;
 
 
 }
@@ -123,10 +124,9 @@ body {
     margin: 0;
     padding: 0;
     width: 100%;
-    background-color: ghostwhite;
     height: auto;
     min-height: 100%;
-    transition: width 0.2s ease;
+    transition: all 0.2s ease;
 
 }
 .sidebar-content {

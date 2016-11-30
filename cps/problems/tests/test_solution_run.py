@@ -25,7 +25,9 @@ class SolutionRunMockedTests(UnitTestCase):
             new=false_evaluation
         ) as evalutate_patch:
             problem_revision = mommy.make(ProblemRevision)
-            solutions = mommy.make(Solution, _quantity=2, problem=problem_revision)
+            solutions = []
+            solutions.append(mommy.make(Solution, name="S1" , problem=problem_revision))
+            solutions.append(mommy.make(Solution, name="S2", problem=problem_revision))
             testcases = mommy.make(TestCase, _quantity=2, problem=problem_revision,
                                    _input_static=True,
                                    _input_uploaded_file=mommy.make(FileModel),
