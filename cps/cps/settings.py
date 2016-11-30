@@ -217,8 +217,10 @@ BOOTSTRAP3 = {
 
 LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r'/accounts/login/$',
+    r'/accounts/logout/$',
     r'/admin/login/$',
     r'/admin/$'
 )
 
 LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'

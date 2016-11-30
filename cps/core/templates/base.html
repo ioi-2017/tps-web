@@ -7,173 +7,66 @@
 <html lang="{{LANGUAGE_CODE}}">
 
 <head>
-    <title>
-        {% block title %}
-            {{ request.site.name }}
+    {% block header_content %}
+        <title>
+            {% block title %}
+                {{ request.site.name }}
+            {% endblock %}
+        </title>
+        {% block css %}
+            {% if debug and False   %}
+                <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+                <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.css' %}" />
+            {% else %}
+                <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
+                <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
+            {% endif %}
+            <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}" />
         {% endblock %}
-    </title>
-    {% block css %}
-        {% if debug and False   %}
-            <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
-            <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.css' %}" />
-        {% else %}
-            <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
-            <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
-        {% endif %}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}" />
-    {% endblock %}
-    {% block head_js %}
+        {% block head_js %}
+        {% endblock %}
     {% endblock %}
 </head>
 
 <body>
-    {% block header %}
-    <nav class="navbar-default navbar navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
+    {% block body_content %}
+        {% block header %}
+        <nav class="navbar-default navbar">
+            <div class="container-fluid" >
+                <div class="navbar-header ">
 
-                <a href="/" class="navbar-brand"><img class="img img-responsive" src="{% static 'img/logo.png' %}" alt="{{ request.site.name }}" /></a>
-                <h1 class="sr-only">{{ request.site.name }}</h1>
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">Toggle</span>
-                    <span class="fa fa-bars"></span>
-                </button>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse pull-right-no-xs">
-                <ul class="nav navbar-nav">
-                    {% comment %}
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" >
-                            <i class="fa fa-bell"></i><span class="badge badge-notify">8</span>
-                            <span class="visible-xs-inline">Notifications</span>
+                        <a href="#" class="navbar-brand">
+                            <img class="img img-responsive" src="{% static 'img/logo-full.png' %}"  alt="{{ request.site.name }}" />
                         </a>
-                        <ul class="dropdown-menu" role="menu">
-                            <li class="notification-header">
-                                <em>You have 8 notifications</em>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-comment green-font"></i>
-                                    <span class="text">New comment on the blog post</span>
-                                    <span class="timestamp">1 minute ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-user green-font"></i>
-                                    <span class="text">New registered user</span>
-                                    <span class="timestamp">12 minutes ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-comment green-font"></i>
-                                    <span class="text">New comment on the blog post</span>
-                                    <span class="timestamp">18 minutes ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-shopping-cart red-font"></i>
-                                    <span class="text">4 new sales order</span>
-                                    <span class="timestamp">4 hours ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-edit yellow-font"></i>
-                                    <span class="text">3 product reviews awaiting moderation</span>
-                                    <span class="timestamp">1 day ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-comment green-font"></i>
-                                    <span class="text">New comment on the blog post</span>
-                                    <span class="timestamp">3 days ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-comment green-font"></i>
-                                    <span class="text">New comment on the blog post</span>
-                                    <span class="timestamp">Oct 15</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    <i class="fa fa-warning red-font"></i>
-                                    <span class="text red-font">Low disk space!</span>
-                                    <span class="timestamp">Oct 11</span>
-                                </a>
-                            </li>
-                            <li class="notification-footer">
-                                <a href="#">View All Notifications</a>
-                            </li>
-                        </ul>
-                    </li>
-
-
-                    {% if user.is_authenticated %}
-                        <li>
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                {{ user }} <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li>
-                                    <a href="#">
-                                        <i class="fa fa-user"></i>
-                                        <span class="text">{% trans 'Profile' %}</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <i class="fa fa-cog"></i>
-                                        <span class="text">{% trans 'Settings' %} </span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <i class="fa fa-power-off"></i>
-                                        <span class="text">{% trans 'Logout' %}</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        {% if USER_REGISTRATION_ALLOWED %}
-                            <li>
-                                <a href="{% url 'account_signup' %}">
-                                    {% trans 'Register' %}
-                                </a>
-                            </li>
+                    <h1 class="sr-only">{{ request.site.name }}</h1>
+                </div>
+                <div class="navbar-right ">
+                    <p class="navbar-text">
+                        {% if user.is_authenticated %}
+                            {% blocktrans with user=user %}
+                                You are logged in as {{ user }}
+                            {% endblocktrans %}
+                            (<a href="{% url "accounts:logout" %}">{% trans 'Logout' %}</a>)
                         {% endif %}
-                        <li>
-                            <a href="{% url 'account_login' %}">
-                                {% trans 'Login' %}
-                            </a>
-                        </li>
-                    {% endif %}
-                    {%  endcomment %}
-                    <li> <a href="{% url "problems:problems" %}"> {% trans 'Problems' %} </a> </li>
-                </ul>
+                    </p>
+                </div>
             </div>
-        </div>
-        <!-- /container -->
-    </nav>
-    <div class="navbar-placeholder"></div>
-    {% endblock %}
-    <div class="container-fluid">
-    {% bootstrap_messages %}
-        {% block content %}
+            <!-- /container -->
+        </nav>
         {% endblock %}
-    </div>
-    {% block foot_js %}
-        <script src="{% static 'jquery/js/jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script src="{% static 'js/js.cookie.js' %}"></script>
-        <script src="{% static 'js/http_requests.js' %}"></script>
+        {% bootstrap_messages %}
+        <div class="container-fluid">
 
+            {% block content %}
+            {% endblock %}
+        </div>
+        {% block foot_js %}
+            <script src="{% static 'jquery/js/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script src="{% static 'js/js.cookie.js' %}"></script>
+            <script src="{% static 'js/http_requests.js' %}"></script>
+
+        {% endblock %}
     {% endblock %}
 </body>
 

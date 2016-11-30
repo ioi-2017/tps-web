@@ -155,6 +155,8 @@ class ApplyForkToMaster(View):
 
     def post(self, request, problem_id, revision_slug):
         problem, fork, revision = extract_revision_data(problem_id, revision_slug)
+        if not fork:
+            raise Http404
         master = problem.get_upstream_fork()
         if fork.has_working_copy():
             messages.error(request, _("You must first commit your changes"))

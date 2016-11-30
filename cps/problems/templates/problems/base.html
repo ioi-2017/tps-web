@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load problems_tags %}
+{% load staticfiles %}
 {%  block header %}
-    {{ block.super }}
+
+    {% comment %}
     <nav class="navbar navbar-inverse">
         <div class="navbar-header">
             <a href="{% problem_url "problems:overview" %}" class="navbar-brand"> {{ revision.problem_data.title }} </a>
@@ -27,19 +29,175 @@
         {# <a href="{% url "problems:update_working_copy" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Update working copy' %}</a>  #}
 
     </nav>
+    {% endcomment %}
 {% endblock %}
-{% block content %}
-    <div class="col-sm-9">
-        <div class="container-fluid">
-            {% block problem_content %}
-            {% endblock %}
+{% block body_content %}
+    <div class="full-wrapper">
+        <div class="sidebar-wrapper ">
+            <div class="sidebar">
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="{% url "problems:problems" %}">
+                            <i class="fa fa-arrow-left" title="{% trans "All Problems" %}"> </i>
+                            <span class="full-open-only">
+                                {% trans 'All Problems' %}
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+
+                        <a href="#" data-toggle-id="full-wrapper">
+                            <i class="fa fa-bars"></i>
+                            <span class="full-open-only">
+                                {% trans "Shrink" %}
+                            </span>
+                        </a>
+                    </li>
+                    <li class="text-center problem-title">
+
+
+                        <a href="#" class="full-open-only">
+
+                            {{ revision.problem_data.title }}
+
+                        </a>
+
+
+                    </li>
+
+                     <li>
+                         <a href="{% problem_url "problems:overview" %}" >
+                             <i class="fa fa-eye"></i>
+                            <span class="full-open-only">
+                                {% trans 'Overview' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:testcases" %}" >
+                             <i class="fa fa-list-alt "></i>
+                            <span class="full-open-only">
+                                {% trans 'Testcases' %}
+                            </span>
+                         </a>
+                     </li>
+                     <li>
+                         <a href="{% problem_url "problems:solutions" %}" >
+                             <i class="fa fa-key "></i>
+                            <span class="full-open-only">
+                                {% trans 'Solutions' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:invocations" %}" >
+                             <i class="fa fa-play-circle-o "></i>
+                            <span class="full-open-only">
+                                {% trans 'Invocations' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:checker" %}" >
+                             <i class="fa fa-balance-scale "></i>
+                            <span class="full-open-only">
+                                {% trans 'Checker' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:validators" %}" >
+                             <i class="fa fa-support "></i>
+                            <span class="full-open-only">
+                                {% trans 'Validators' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:discussions" %}" >
+                             <i class="fa fa-comment "></i>
+                            <span class="full-open-only">
+                                {% trans 'Discussions' %}
+                            </span>
+                         </a>
+                     </li>
+                    <li>
+                         <a href="{% problem_url "problems:history" %}" >
+                             <i class="fa fa-history "></i>
+                            <span class="full-open-only">
+                                {% trans 'History' %}
+                            </span>
+                         </a>
+                     </li>
+                </ul>
+                {% block right_panels %}
+                    {% block version_control_panel %}
+                        {% include "problems/blocks/version_control.html" %}
+                    {% endblock %}
+                {% endblock %}
+                <div  class="sidebar-footer text-center">
+                <a href="#" >
+                        <img class="center-block logo img img-responsive" src="{% static 'img/logo.png' %}"  alt="{{ request.site.name }}" />
+                    </a>
+
+                <ul class="sidebar-menu">
+                    <li>
+                        <span class="full-open-only">
+                        {% blocktrans with user=user %}
+                                You are logged in as {{ user }}
+                        {% endblocktrans %}
+                        </span>
+                    <li>
+                         <a href="{% url "accounts:logout" %}" >
+                             <i class="fa fa-sign-out "></i>
+                            <span class="full-open-only">
+                                {% trans 'Logout' %}
+                            </span>
+                         </a>
+                     </li>
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper">
+            <div class="container-fluid">
+                {% block problem_content %}
+                {% endblock %}
+            </div>
+
         </div>
     </div>
-    <div class="col-sm-3">
-        {% block right_panels %}
-            {% block version_control_panel %}
-                {% include "problems/blocks/version_control.html" %}
-            {% endblock %}
-        {% endblock %}
-    </div>
+    {% block foot_js %}
+
+        {{ block.super }}
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var last = Cookies.get("sidebar-toggle-state");
+                if (last != null) {
+                    var full_wrapper = $(".full-wrapper");
+
+                    if (last === "collapsed") {
+                        if (full_wrapper.hasClass("collapsed-sidebar") == false)
+                            full_wrapper.addClass("collapsed-sidebar");
+                    } else if (last === "open") {
+
+                        full_wrapper.removeClass("collapsed-sidebar");
+                    }
+                    document.getElementsByClassName("full-wrapper")[0].offsetHeight;
+                    full_wrapper.addClass("smooth-transition");
+                }
+            });
+
+            $("[data-toggle-id='full-wrapper']").click(function()
+            {
+                var full_wrapper = $(".full-wrapper");
+                full_wrapper.toggleClass("collapsed-sidebar");
+                if (full_wrapper.hasClass("collapsed-sidebar"))
+                    Cookies.set('sidebar-toggle-state', "collapsed");
+                else
+                    Cookies.set('sidebar-toggle-state', "open");
+
+            });
+        </script>
+    {% endblock %}
 {% endblock %}
