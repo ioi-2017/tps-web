@@ -119,6 +119,7 @@ body {
 
 }
 
+
 .sidebar {
     position: relative;
     margin: 0;
@@ -203,15 +204,15 @@ pre.source-code {
 .sidebar-menu > li > a:focus {
   text-decoration: none;
 }
-.sidebar-menu > li.disabled > a {
-  color: #777;
-}
-.sidebar-menu > li.disabled > a:hover,
-.sidebar-menu > li.disabled > a:focus {
-    color: #777;
-    text-decoration: none;
-    cursor: not-allowed;
-    background-color: transparent;
+
+.sidebar-menu > li.active:before {
+    background-color: yellowgreen;
+    width: 8px;
+    content: '';
+    height: 100%;
+    position: absolute;
+    left:0;
+    z-index: 1;
 }
 
 .collapsed-sidebar .full-open-only {
@@ -226,9 +227,124 @@ pre.source-code {
     display: none;
 }
 
+.fork-selection {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+.fork-selection > li {
+    display: inline-block;
+    width: 50%;
+    padding: 0;
+    line-height: 50px;
+    text-align: center;
+    height: 50px;
+    position: relative;
+}
+
+.fork-selection > li > a {
+    color: inherit;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: block;
+}
+
+.fork-selection > li > a:hover,
+.fork-selection > li > a:focus {
+    text-decoration: none;
+    background-color: lightblue;
+
+}
+
+.fork-selection > li > a:hover:before,
+.fork-selection > li > a:focus:before {
+    position: absolute;
+    bottom: 0;
+    left:0 ;
+    content: '';
+    background-color: #80d0d0;
+    height: 10px;
+    width: 100%;
+
+
+}
+
+.fork-selection > li.active:before {
+    position: absolute;
+    bottom: 0;
+    left:0 ;
+    content: '';
+    background-color: #50a0a0;
+    height: 10px;
+    width: 100%;
+    z-index: 1;
+}
+
 
 .problem-title {
     line-height: 30px;
     font-size: 1.5em;
 }
 
+.text-over-line {
+    position: relative;
+    text-align: center;
+}
+
+.text-over-line > span:first-child {
+    background-color: red;
+    width: 100%;
+    position: absolute;
+    height: 1px;
+    top: 50%;
+    left: 0;
+    z-index: -1;
+}
+
+.strike {
+    display: block;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+}
+
+.strike > span {
+    position: relative;
+    display: inline-block;
+
+}
+
+.strike > span:before,
+.strike > span:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 9999px;
+    height: 1px;
+    background: black;
+}
+
+.strike > span:before {
+    right: 100%;
+    margin-right: 15px;
+}
+
+.strike > span:after {
+    left: 100%;
+    margin-left: 15px;
+}
+
+.form-group {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}

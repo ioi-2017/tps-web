@@ -2,7 +2,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 
-from problems.forms.checker import CheckerAddForm, CheckerEditForm
+from problems.forms.checker import CheckerAddForm
+from problems.forms.files import SourceFileEditForm
 from problems.models import Checker
 from problems.views.generics import ProblemObjectEditView, RevisionObjectView, ProblemObjectAddView, \
     ProblemObjectDeleteView, ProblemObjectShowSourceView
@@ -70,7 +71,7 @@ class CheckerShowSourceView(ProblemObjectShowSourceView):
 
 class CheckerEditView(ProblemObjectEditView):
     template_name = "problems/edit_checker.html"
-    model_form = CheckerEditForm
+    model_form = SourceFileEditForm
     permissions_required = ["edit_checker"]
 
     def get_success_url(self, request, problem_id, revision_slug, obj):

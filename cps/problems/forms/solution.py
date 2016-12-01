@@ -12,6 +12,8 @@ class SolutionEditForm(ProblemObjectModelForm):
 
     file = forms.FileField(label=_("Solution"), required=False)
 
+    field_order = ["file", "language",  "name", "verdict", ]
+
     class Meta:
         model = Solution
         fields = ["name", "language", "verdict"]
@@ -19,6 +21,7 @@ class SolutionEditForm(ProblemObjectModelForm):
     def __init__(self, *args, **kwargs):
         super(SolutionEditForm, self).__init__(*args, **kwargs)
         self.fields["language"] = forms.ChoiceField(choices=[(a, a) for a in self.revision.get_judge().get_supported_languages()], required=True, )
+        self.fields["name"].help_text = _("Optional")
 
 
     def save(self, commit=True):

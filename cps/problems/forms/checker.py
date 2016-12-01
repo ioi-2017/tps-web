@@ -17,8 +17,3 @@ class CheckerAddForm(SourceFileAddForm):
             problem_data.checker = self.instance
             problem_data.save()
         return ret
-
-class CheckerEditForm(SourceFileEditForm):
-    class Meta:
-        model = Checker
-        fields = ["name", "source_language"]

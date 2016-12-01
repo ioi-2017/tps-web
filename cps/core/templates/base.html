@@ -14,7 +14,7 @@
             {% endblock %}
         </title>
         {% block css %}
-            {% if debug and False   %}
+            {% if debug or True  %}
                 <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
                 <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.css' %}" />
             {% else %}

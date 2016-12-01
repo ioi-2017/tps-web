@@ -8,14 +8,18 @@ from django.utils.translation import ugettext as _
 
 class SourceFileEditForm(ProblemObjectModelForm):
 
-    file = forms.FileField(label=_("Source file"), required=False)
+    file = forms.FileField(label=_("Source file"), required=False,
+                           help_text=_("Leave this empty to keep current file"))
+
+    field_order = ['file', 'source_language', 'name']
 
     class Meta:
         model = SourceFile
-        fields = ['name', 'source_language']
+        fields = ['source_language']
 
     def __init__(self, *args, **kwargs):
         super(SourceFileEditForm, self).__init__(*args, **kwargs)
+        self.fields["name"].help_text = _("Optional")
 
     def save(self, commit=True):
         super(SourceFileEditForm, self).save(commit=False)
@@ -28,7 +32,7 @@ class SourceFileEditForm(ProblemObjectModelForm):
         return self.instance
 
 class SourceFileAddForm(SourceFileEditForm):
-    file = forms.FileField(label=_("Source file"), required=True)
+    file = forms.FileField(label=_("Source file"), required=True, help_text="")
 
 
 

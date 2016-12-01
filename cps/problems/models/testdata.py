@@ -59,23 +59,30 @@ class Script(RevisionObject):
             line = line.strip()
             if not line or len(line) == 0:
                 continue
-            line_split = shlex.split(line)
-            generator_name = line_split[0]
-            generator_parameters = shlex.quote(line_split[1:])
-            additional_data = {}
-            if len(line) >= 3 and line[-2] == ">":
-                additional_data["name"] = line[-1]
+            data = self.create_from_script_line(line)
             testcases.append(
                 TestCase(
                     problem=self.problem,
                     _input_static=False,
                     _output_static=False,
-                    _input_generator_name=generator_name,
-                    _input_generation_parameters=generator_parameters,
-                    **additional_data
+                    **data
                 )
             )
         TestCase.objects.bulk_create(testcases)
+
+    @classmethod
+    def get_generation_parameters_from_script_line(cls, line):
+        line_split = shlex.split(line)
+        data = dict()
+        data["_input_generator_name"] = line_split[0]
+
+        if len(line_split) >= 3 and line_split[-2] == ">":
+            data["name"] = line_split[-1]
+            line_split = line_split[:-1]
+
+        data["_input_generation_parameters"] = shlex.quote(line_split[1:])
+
+        return data
 
     def save(self, *args, **kwargs):
         super(Script, self).save(*args, **kwargs)
@@ -148,9 +155,9 @@ class TestCase(RevisionObject):
         return self.judge_code
 
     def clean(self):
-        if self._input_uploaded_file is None and self._input_generator is None:
+        if self._input_uploaded_file is None and self._input_generator_name is None:
             raise ValidationError("Either a static input or a generator must be set")
-        if self._input_uploaded_file is not None and self._input_generator is not None:
+        if self._input_uploaded_file is not None and self._input_generator_name is not None:
             raise ValidationError("Only one of generator and static input file must be present.")
 
     def save(self, *args, **kwargs):
@@ -160,7 +167,7 @@ class TestCase(RevisionObject):
 
         if self._input_uploaded_file is not None:
             self._input_static = True
-        elif self._input_generator is not None:
+        elif self._input_generator_name is not None:
             self._input_static = False
         else:
             # Since a model must be cleaned before saving and this is checked in the validation method,
@@ -276,7 +283,7 @@ class TestCase(RevisionObject):
         else:
             solution = self.problem.problem_data.model_solution
             if solution is None:
-                self.log = "Generation failed. No model solution specified."
+                self._output_generation_log = "Generation failed. No model solution specified."
                 self._output_generation_successful = False
             else:
                 problem_code = self.problem.get_judge_code()

@@ -3,35 +3,6 @@
 {% load bootstrap3 %}
 {% load problems_tags %}
 {% load staticfiles %}
-{%  block header %}
-
-    {% comment %}
-    <nav class="navbar navbar-inverse">
-        <div class="navbar-header">
-            <a href="{% problem_url "problems:overview" %}" class="navbar-brand"> {{ revision.problem_data.title }} </a>
-
-        </div>
-        <ul class="nav navbar-nav">
-            <li><a href="{% problem_url "problems:overview" %}" >{% trans 'Overview' %}</a></li>
-            <li><a href="{% problem_url "problems:files" %}" >{% trans 'Files' %}</a></li>
-            <li><a href="{% problem_url "problems:testcases" %}" >{% trans 'Testcases' %}</a></li>
-            <li><a href="{% problem_url "problems:solutions" %}" >{% trans 'Solutions' %}</a></li>
-            <li><a href="{% problem_url "problems:invocations" %}" >{% trans 'Invocations' %}</a></li>
-            <li><a href="{% problem_url "problems:checker" %}" >{% trans 'Checker' %}</a></li>
-            <li><a href="{% problem_url "problems:validators" %}" >{% trans 'Validators' %}</a></li>
-            <li><a href="{% problem_url "problems:discussions" %}" >{% trans 'Discussions' %}</a></li>
-            <li><a href="{% problem_url "problems:history" %}" >{% trans 'History' %}</a></li>
-
-        </ul>
-        <ul class="nav navbar-nav pull-right flip">
-            <li {% if revision_slug == "master" %} class="active" {% endif %} ><a href="{% url "problems:overview" problem.id "master" %}">{% trans 'Master' %}</a></li>
-            <li {% if revision_slug == request.user.username %} class="active" {% endif %}><a href="{% url "problems:overview" problem.id request.user.username %}">{% trans 'My Fork' %}</a></li>
-        </ul>
-        {# <a href="{% url "problems:update_working_copy" problem.id request.user.username %}" class="navbar-link navbar-text">{% trans 'Update working copy' %}</a>  #}
-
-    </nav>
-    {% endcomment %}
-{% endblock %}
 {% block body_content %}
     <div class="full-wrapper">
         <div class="sidebar-wrapper ">
@@ -67,21 +38,28 @@
 
                         </li>
                     </ul>
-                    <ul class="list-inline text-center full-open-only">
+                    <ul class="fork-selection full-open-only">
                         <li {% if revision_slug == "master" %} class="active" {% endif %} >
-                            <a href="{% url "problems:overview" problem.id "master" %}" class="btn btn-primary">{% trans 'Master' %}</a>
-                        </li>
-                        <li {% if revision_slug == request.user.username %} class="active" {% endif %}>
-                            <a href="{% url "problems:overview" problem.id request.user.username %}" class="btn btn-primary">{% trans 'My Fork' %}</a>
+                            <a href="{% url "problems:overview" problem.id "master" %}" >{% trans 'Master' %}</a>
+                        </li><li {% if revision_slug == request.user.username %} class="active" {% endif %}>
+                            <a href="{% url "problems:overview" problem.id request.user.username %}" >{% trans 'My Fork' %}</a>
                         </li>
                     </ul>
                     <ul class="sidebar-menu">
 
-                         <li>
+                         <li class="active">
                              <a href="{% problem_url "problems:overview" %}" >
                                  <i class="fa fa-eye"></i>
                                 <span class="full-open-only">
                                     {% trans 'Overview' %}
+                                </span>
+                             </a>
+                         </li>
+                        <li>
+                             <a href="{% problem_url "problems:generators" %}" >
+                                 <i class="fa fa-gears "></i>
+                                <span class="full-open-only">
+                                    {% trans 'Generators' %}
                                 </span>
                              </a>
                          </li>

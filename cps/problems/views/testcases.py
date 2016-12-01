@@ -41,11 +41,11 @@ class TestCaseInputDownloadView(RevisionObjectView):
             "id": testcase_id
         })
         file = testcase.input_file
-        if file:
+        if testcase.input_file_generated():
             return FileResponse(file.file, content_type="txt")
         else:
-            return HttpResponse(content="Please wait while the input file is being generated. "
-                                        "Reload the page to check if generation has completed",
+            return HttpResponse(content="A problem occurred during input generation:\n{}".format(
+                                        testcase._input_generation_log),
                                 content_type="txt")
 
 
@@ -57,9 +57,13 @@ class TestCaseOutputDownloadView(RevisionObjectView):
             "id": testcase_id
         })
         file = testcase.output_file
-        if file:
+        if testcase.output_file_generated():
             return FileResponse(file.file, content_type="txt")
+        elif testcase.input_file_generated():
+            return HttpResponse(content="A problem occurred during output generation:\n{}".format(
+                testcase._output_generation_log),
+                content_type="txt")
         else:
-            return HttpResponse(content="Please wait while the output file is being generated. "
-                                        "Reload the page to check if generation has completed",
-                                content_type="txt")
+            return HttpResponse(content="A problem occurred during output generation:\n{}".format(
+                "Input generation failed"),
+                content_type="txt")

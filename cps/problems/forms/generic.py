@@ -3,6 +3,14 @@ from django.core.exceptions import ValidationError
 from django.forms.models import construct_instance, InlineForeignKeyField
 
 
+class ProblemObjectForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.problem = kwargs.pop("problem")
+        self.revision = kwargs.pop("revision")
+        self.owner = kwargs.pop("owner")
+        super(ProblemObjectForm, self).__init__(*args, **kwargs)
+
+
 class ProblemObjectModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.problem = kwargs.pop("problem")

@@ -35,6 +35,12 @@ problem_urls = ([
         url(r'^validator/(?P<validator_id>\d+)/source/$', ValidatorShowSourceView.as_view(), name="validator_source"),
         url(r'^validator/add/$', ValidatorAddView.as_view(), name="add_validator"),
 
+        url(r'^generators/$', GeneratorsListView.as_view(), name="generators"),
+        url(r'^generator/(?P<generator_id>\d+)/edit/$', GeneratorEditView.as_view(), name="edit_generator"),
+        url(r'^generator/(?P<generator_id>\d+)/delete/$', GeneratorDeleteView, name="delete_generator"),
+        url(r'^generator/(?P<generator_id>\d+)/source/$', GeneratorShowSourceView.as_view(), name="generator_source"),
+        url(r'^generator/add/$', GeneratorAddView.as_view(), name="add_generator"),
+
 
         url(r'^checkers/$', CheckerListView.as_view(), name="checkers"),
         url(r'^checker/add/$', CheckerAddView.as_view(), name="add_checker"),

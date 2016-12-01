@@ -11,12 +11,6 @@ class OverviewForm(ProblemObjectModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OverviewForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
-            'code_name',
-            'title',
-            'time_limit',
-            'memory_limit'
-        ]
 
     def save(self, commit=True):
         super(OverviewForm, self).save(commit=False)
