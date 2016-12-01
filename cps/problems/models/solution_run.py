@@ -3,7 +3,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from problems.models.solution import SolutionVerdict
+from problems.models.enums import SolutionVerdict
 from tasks.models import Task
 from file_repository.models import FileModel
 from judge import Judge
@@ -155,7 +155,7 @@ class SolutionRunResult(Task):
             return False
         if not strict and (self.verdict == JudgeVerdict.ok.name and self.score == 1):
             return True
-        if self.solution.verdict == SolutionVerdict.correct.name:
+        if self.solution.verdict in [SolutionVerdict.correct.name, SolutionVerdict.model_solution.name]:
             return self.verdict == JudgeVerdict.ok.name and self.score == 1
         elif self.solution.verdict == SolutionVerdict.incorrect.name:
             return self.verdict == JudgeVerdict.ok.name and self.score == 0

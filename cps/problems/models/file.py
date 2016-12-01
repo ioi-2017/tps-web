@@ -24,7 +24,7 @@ from tasks.models import Task
 import os
 
 
-__all__ = ["Attachment", "SourceFile"]
+__all__ = ["Resource", "SourceFile"]
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +51,11 @@ def get_valid_name(name):
     return valid_name
 
 
-class AttachmentBase(RevisionObject):
+class ResourceBase(RevisionObject):
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=256, verbose_name=_("name"), validators=[FileNameValidator])
-    file = models.ForeignKey(FileModel, verbose_name=_("file"))
+    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator], blank=True)
+    file = models.ForeignKey(FileModel, verbose_name=_("file"), related_name="+")
 
     @staticmethod
     def get_matching_fields():
@@ -66,17 +66,24 @@ class AttachmentBase(RevisionObject):
 
     class Meta:
         abstract = True
+        unique_together = ("problem", "name")
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if self.name == "":
+            self.name = get_valid_name(self.file.name)
+
+        super(ResourceBase, self).save(*args, **kwargs)
 
 
-class Attachment(AttachmentBase):
+class Resource(ResourceBase):
     pass
 
 
 # TODO: Source file can have multiple files (e.g. testlib.h)
-class SourceFile(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator], blank=True)
-    source_file = models.ForeignKey(FileModel, verbose_name=_("source file"), related_name="+")
+class SourceFile(ResourceBase):
     source_language = models.CharField(
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
         max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
@@ -89,16 +96,15 @@ class SourceFile(RevisionObject):
 
     last_compile_log = models.TextField(verbose_name=_("last compile log"))
 
-    class Meta:
+    class Meta(ResourceBase.Meta):
         abstract = True
-        unique_together = ("problem", "name")
 
-    @staticmethod
-    def get_matching_fields():
-        return ["name"]
 
-    def diverged_from(self, other_object):
-        return self.source_file != other_object.source_file
+    @property
+    def source_file(self):
+        # Backward compatibility
+        return self.file
+
 
     def compile(self):
         # TODO: Handling of simulataneous compilation of a single source file
@@ -107,9 +113,11 @@ class SourceFile(RevisionObject):
         compiled_file_name = self.name + ".out"
         compile_commands = get_compilation_commands(self.source_language, code_name,
                                                     compiled_file_name)
+        files = [(resource.name, resource.file) for resource in self.problem.resource_set.all()]
+        files.append((code_name, self.source_file))
         action = ActionDescription(
             commands=compile_commands,
-            files=[(code_name, self.source_file)],
+            files=files,
             output_files=[compiled_file_name],
             time_limit=settings.DEFAULT_COMPILATION_TIME_LIMIT,
             memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
@@ -139,14 +147,6 @@ class SourceFile(RevisionObject):
     def is_compiled(self):
         return self._compiled_file is not None
 
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        if self.name == "":
-            self.name = get_valid_name(self.source_file.name)
-
-        super(SourceFile, self).save(*args, **kwargs)
 
 
 class CompileJob(Task):

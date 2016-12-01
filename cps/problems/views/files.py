@@ -2,31 +2,23 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 
-from problems.forms.files import SourceFileAddForm, AttachmentAddForm
-from problems.models import SourceFile, Attachment
-from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
+from problems.forms.files import SourceFileAddForm, ResourceAddForm, ResourceEditForm
+from problems.models import SourceFile, Resource
+from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView
 
-__all__ = ["FilesListView", "AttachmentAddView", "AttachmentDeleteView"]
+__all__ = ["ResourceAddView", "ResourceDeleteView", "ResourceEditView"]
 
 
-class FilesListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
-        attachments = self.revision.attachment_set.all()
-        return render(request, "problems/files_list.html", context={
-
-            'attachments': attachments
-        })
-
-class AttachmentAddView(ProblemObjectAddView):
-    template_name = "problems/add_attachment.html"
-    model_form = AttachmentAddForm
+class ResourceAddView(ProblemObjectAddView):
+    template_name = "problems/add_resource.html"
+    model_form = ResourceAddForm
     required_permissions = ["add_files"]
 
     def get_success_url(self, request, problem_id, revision_slug, obj):
-        return reverse("problems:files", kwargs={
+        return request.POST.get("next", request.GET.get("next", reverse("problems:overview", kwargs={
             "problem_id": problem_id,
             "revision_slug": revision_slug
-        })
+        })))
 
 
 class SourceFileCompileView(RevisionObjectView):
@@ -42,8 +34,32 @@ class SourceFileCompileView(RevisionObjectView):
             "revision_slug": revision_slug
         }))
 
-AttachmentDeleteView = ProblemObjectDeleteView.as_view(
-    object_type=Attachment,
-    permissions_required="delete_files",
-    redirect_to="problems:files"
-)
+class ResourceDeleteView(ProblemObjectDeleteView):
+
+    object_type = Resource
+    permissions_required = "delete_files",
+    redirect_to = "problems:overview"
+
+    def delete(self, request, problem_id, revision_slug, *args, **kwargs):
+        super(ResourceDeleteView, self).delete(request, problem_id, revision_slug, *args, **kwargs)
+        return HttpResponseRedirect(
+            request.POST.get("next",
+                             request.GET.get("next",
+                                             reverse("problems:overview", kwargs={
+                                                 "problem_id": problem_id,
+                                                 "revision_slug": revision_slug
+                                             }))))
+
+class ResourceEditView(ProblemObjectEditView):
+    template_name = "problems/edit_resource.html"
+    model_form = ResourceEditForm
+    permissions_required = ["edit_resource"]
+
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return request.POST.get("next", request.GET.get("next", reverse("problems:overview", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
+        })))
+
+    def get_instance(self, request, *args, **kwargs):
+        return self.revision.resource_set.get(pk=kwargs.get("resource_id"))

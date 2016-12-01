@@ -121,29 +121,40 @@
                          </li>
                         {% if revision_editable %}
                              <li>
-                                 <a href="{% problem_url "problems:history" %}" >
+                                 <a href="{% problem_url "problems:commit" %}" >
                                      <i class="fa fa-save "></i>
                                     <span class="full-open-only">
                                         {% trans 'Review & Commit' %}
                                     </span>
                                  </a>
                              </li>
+                        {% elif fork %}
                             <li>
-                                 <a href="{% problem_url "problems:history" %}" >
-                                     <i class="fa fa-upload "></i>
+                                 <a data-method="post" href="{% problem_url "problems:create_working_copy" %}" >
+                                     <i class="fa fa-folder-open "></i>
                                     <span class="full-open-only">
-                                        {% trans 'Push to master' %}
+                                        {% trans 'Create working copy' %}
                                     </span>
                                  </a>
                              </li>
-                            <li>
-                                 <a href="{% problem_url "problems:history" %}" >
-                                     <i class="fa fa-refresh "></i>
-                                    <span class="full-open-only">
-                                        {% trans 'Update from master' %}
-                                    </span>
-                                 </a>
-                             </li>
+                            {% if fork.head != problem.get_upstream_fork.head %}
+                                <li>
+                                     <a href="{% problem_url "problems:apply_fork" %}" >
+                                         <i class="fa fa-upload "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Push to master' %}
+                                        </span>
+                                     </a>
+                                 </li>
+                                <li>
+                                     <a href="{% problem_url "problems:update_fork" %}" >
+                                         <i class="fa fa-refresh "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Update from master' %}
+                                        </span>
+                                     </a>
+                                 </li>
+                            {% endif %}
                         {% endif %}
 
                         <li>

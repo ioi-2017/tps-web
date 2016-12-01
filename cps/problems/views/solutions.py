@@ -1,13 +1,18 @@
+from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import View
+from django.utils.translation import ugettext as _
 from problems.forms.solution import SolutionAddForm, SolutionEditForm
 from problems.models import Solution
+from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
     ProblemObjectShowSourceView
 
 __all__ = ["SolutionAddView", "SolutionDeleteView",
-           "SolutionEditView", "SolutionsListView", "SolutionShowSourceView"]
+           "SolutionEditView", "SolutionsListView", "SolutionShowSourceView",
+           ]
 
 
 class SolutionsListView(RevisionObjectView):

@@ -7,6 +7,8 @@ import problems
 from problems.models import SourceFile, ProblemData, ProblemRevision, TestCase, Solution, InputGenerator
 import mock as mock
 from django.test import TestCase as UnitTestCase
+
+from problems.models.enums import SolutionVerdict
 from .utils import get_resource_as_file_model, create_mommy_valid_testcase
 
 from file_repository.models import FileModel
@@ -20,17 +22,17 @@ class TestCaseTests(UnitTestCase):
             problem=problem,
             code=get_resource_as_file_model("codes", "print_bye_world.cpp"),
             language="c++",
+            verdict=SolutionVerdict.model_solution.name
         )
         ProblemData.objects.create(
             problem=problem,
             time_limit=2,
             memory_limit=64,
             task_type="Batch",
-            model_solution=solution
         )
         generator = InputGenerator.objects.create(
             problem=problem,
-            source_file=get_resource_as_file_model("codes", "print_arguments.cpp"),
+            file=get_resource_as_file_model("codes", "print_arguments.cpp"),
             source_language="c++",
         )
         self.testcase = create_mommy_valid_testcase(
@@ -46,6 +48,7 @@ class TestCaseTests(UnitTestCase):
         self.assertEqual(input.readline().decode().strip(), "Hello World")
 
     def test_output_generation(self):
-        output = self.testcase.output_file.file
-        self.assertIsNotNone(output)
-        self.assertEqual(output.readline().decode().strip(), "Bye World")
+
+        output = self.testcase.output_file
+        self.assertIsNotNone(output, self.testcase._output_generation_log)
+        self.assertEqual(output.file.readline().decode().strip(), "Bye World")

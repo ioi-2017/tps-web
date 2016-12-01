@@ -74,7 +74,7 @@ class ValidatorTests(TestCase):
             name="assert_hello_world.cpp",
             problem=problem,
             global_validator=True,
-            source_file=get_resource_as_file_model("codes", "assert_hello_world.cpp"),
+            file=get_resource_as_file_model("codes", "assert_hello_world.cpp"),
             source_language="c++",
         )
         validator.save()

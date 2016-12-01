@@ -6,16 +6,15 @@
 
 {% block problem_content %}
     <div class="row">
-        <div class="col-sm-3"></div>
+        <div class="col-sm-4"></div>
         <div class="col-sm-6">
-            <h1>{% trans 'Upload an attachment' %}</h1>
-            <form class="form-horizontal" method="post" action="{% problem_url "problems:add_attachment" %}" enctype="multipart/form-data">
+            <h1>{% trans 'Edit resource file' %}</h1>
+            <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% bootstrap_field form.name %}
-                {% bootstrap_field form.uploaded_file %}
+                {% bootstrap_form form %}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
-                        {% trans 'Upload' %}
+                        {% trans 'Submit' %}
                     </button>
                 </div>
             </form>

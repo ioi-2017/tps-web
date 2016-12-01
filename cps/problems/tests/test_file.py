@@ -22,7 +22,7 @@ class SourceFileTests(TestCase):
         source_file = mommy.make(Checker,
                                  name="print_hello_world.cpp",
                                  source_language="c++",
-                                 source_file=get_resource_as_file_model("codes", "print_hello_world.cpp"))
+                                 file=get_resource_as_file_model("codes", "print_hello_world.cpp"))
         source_file.compile()
         self.assertIsNotNone(source_file._compiled_file)
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -37,7 +37,7 @@ class SourceFileTests(TestCase):
         source_file = mommy.make(Checker,
                                  name="print_hello_world.cpp",
                                  source_language="c++",
-                                 source_file=get_resource_as_file_model("codes", "compilation_error.cpp"))
+                                 file=get_resource_as_file_model("codes", "compilation_error.cpp"))
         source_file.compile()
         self.assertIsNone(source_file._compiled_file)
 
@@ -48,7 +48,7 @@ class SourceFileTests(TestCase):
         source_file = mommy.make(Checker,
                                  name="",
                                  source_language="c++",
-                                 source_file=file_model)
+                                 file=file_model)
         self.assertEqual(source_file.name, "print_hello_world.cpp")
 
     def test_auto_naming_with_no_good_characters(self):
@@ -58,5 +58,5 @@ class SourceFileTests(TestCase):
         source_file = mommy.make(Checker,
                                  name="",
                                  source_language="c++",
-                                 source_file=file_model)
+                                 file=file_model)
         self.assertEqual(source_file.name, hashlib.md5("%%%".encode()).hexdigest())

@@ -9,14 +9,15 @@ problem_urls = ([
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),
         url(r'^discussion/add/$', DiscussionAddView.as_view(), name="add_discussion"),
         url(r'^discussion/(?P<discussion_id>\d+)/comments$', CommentListView.as_view(), name="comments"),
-        url(r'^files/$', FilesListView.as_view(), name="files"),
+
         url(r'^invocations/$', InvocationsListView.as_view(), name="invocations"),
         url(r'^invocation/add/$', InvocationAddView.as_view(), name="add_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/run/$', InvocationRunView.as_view(), name="run_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationDetailsView.as_view(), name="view_invocation"),
 
-        url(r'^attachment/add/$', AttachmentAddView.as_view(), name="add_attachment"),
-        url(r'^attachment/(?P<object_id>\d+)/delete/$', AttachmentDeleteView, name="delete_attachment"),
+        url(r'^resource/add/$', ResourceAddView.as_view(), name="add_resource"),
+        url(r'^resource/(?P<resource_id>\d+)/edit/$', ResourceEditView.as_view(), name="edit_resource"),
+        url(r'^resource/(?P<object_id>\d+)/delete/$', ResourceDeleteView.as_view(), name="delete_resource"),
 
         url(r'^solutions/$', SolutionsListView.as_view(), name="solutions"),
         url(r'^solution/add/$', SolutionAddView.as_view(), name="add_solution"),

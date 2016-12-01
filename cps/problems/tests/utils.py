@@ -4,7 +4,7 @@ from model_mommy import mommy
 from problems.models import *
 import os
 from file_repository.models import FileModel
-from problems.models.solution import SolutionVerdict
+from problems.models.enums import SolutionVerdict
 
 __all__ = ["get_resource_as_file_model", "create_mommy_valid_testcase"]
 

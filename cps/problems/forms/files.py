@@ -2,7 +2,7 @@ from django import forms
 
 from file_repository.models import FileModel
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import SourceFile, Attachment
+from problems.models import SourceFile, Resource
 from django.utils.translation import ugettext as _
 
 
@@ -24,7 +24,7 @@ class SourceFileEditForm(ProblemObjectModelForm):
     def save(self, commit=True):
         super(SourceFileEditForm, self).save(commit=False)
         if "file" in self.cleaned_data and self.cleaned_data["file"] is not None:
-            self.instance.source_file = \
+            self.instance.file = \
                 FileModel.objects.create(file=self.cleaned_data["file"])
         if commit:
             self.instance.save()
@@ -32,26 +32,33 @@ class SourceFileEditForm(ProblemObjectModelForm):
         return self.instance
 
 class SourceFileAddForm(SourceFileEditForm):
-    file = forms.FileField(label=_("Source file"), required=True, help_text="")
+    file = forms.FileField(label=_("Source file"), required=True)
 
 
+class ResourceEditForm(ProblemObjectModelForm):
 
-class AttachmentAddForm(ProblemObjectModelForm):
+    file = forms.FileField(label=_("File"), required=False,
+                                    help_text=_("Leave this empty to keep the current file"))
 
-    uploaded_file = forms.FileField(label=_("Attachment file"))
+    field_order = ['file', 'name']
 
     class Meta:
-        model = Attachment
+        model = Resource
         fields = ["name"]
 
     def __init__(self, *args, **kwargs):
-        super(AttachmentAddForm, self).__init__(*args, **kwargs)
+        super(ResourceEditForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
-        super(AttachmentAddForm, self).save(commit=False)
-        self.instance.file = \
-            FileModel.objects.create(file=self.cleaned_data["uploaded_file"])
+        super(ResourceEditForm, self).save(commit=False)
+        if "file" in self.cleaned_data and self.cleaned_data["file"] is not None:
+            self.instance.file = \
+                FileModel.objects.create(file=self.cleaned_data["file"])
         if commit:
             self.instance.save()
             self.save_m2m()
         return self.instance
+
+
+class ResourceAddForm(ResourceEditForm):
+    file = forms.FileField(label=_("File"), required=True)

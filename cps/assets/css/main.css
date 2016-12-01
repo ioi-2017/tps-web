@@ -348,3 +348,7 @@ pre.source-code {
     margin-left: 0 !important;
     margin-right: 0 !important;
 }
+
+tr.active-row {
+    background-color: palegreen !important;
+}

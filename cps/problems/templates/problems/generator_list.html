@@ -59,7 +59,7 @@
             </h4>
         {% endif %}
     </div>
-    {% csrf_token %}
+    {% include "problems/resources_list.html" %}
 {% endblock %}
 {% block foot_js %}
     {{ block.super }}

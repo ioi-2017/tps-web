@@ -35,7 +35,7 @@
                 <tbody>
             {% for checker in checkers %}
 
-                    <tr {% if checker == revision.problem_data.checker %} style="background-color: palegreen;" {% endif %}>
+                    <tr {% if checker == revision.problem_data.checker %} class="active-row" {% endif %}>
                         <td>
                             <a href="{% problem_url "problems:checker_source" checker.pk %}"> {{ checker }} </a>
                         </td>
@@ -68,5 +68,5 @@
             </h4>
         {% endif %}
     </div>
-    {% csrf_token %}
+    {% include "problems/resources_list.html" %}
 {% endblock %}

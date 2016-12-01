@@ -106,7 +106,7 @@ class SolutionRunFunctionalTests(UnitTestCase):
 
         self.checker = Checker.objects.create(
             problem=self.problem,
-            source_file=get_resource_as_file_model("codes", "checker_first_line_equal.cpp"),
+            file=get_resource_as_file_model("codes", "checker_first_line_equal.cpp"),
             source_language="c++",
         )
 

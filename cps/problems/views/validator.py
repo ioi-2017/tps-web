@@ -10,13 +10,16 @@ from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddVie
 __all__ = ["ValidatorsListView", "ValidatorEditView", "ValidatorAddView",
            "ValidatorDeleteView", "ValidatorShowSourceView"]
 
+
 class ValidatorsListView(RevisionObjectView):
 
     def get(self, request, problem_id, revision_slug):
         validators = self.revision.validator_set.all()
+        resources = self.revision.resource_set.all()
 
         return render(request, "problems/validator_list.html", context={
-            "validators": validators
+            "validators": validators,
+            "resources": resources
         })
 
 

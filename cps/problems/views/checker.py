@@ -17,9 +17,11 @@ __all__ = ["CheckerListView", "CheckerActivateView",
 class CheckerListView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug):
         checkers = self.revision.checker_set.all()
+        resources = self.revision.resource_set.all()
 
         return render(request, "problems/checkers_list.html", context={
-            "checkers": checkers
+            "checkers": checkers,
+            "resources": resources
         })
 
 

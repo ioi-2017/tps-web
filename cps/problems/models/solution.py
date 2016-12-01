@@ -1,29 +1,16 @@
 # Amir Keivan Mohtashami
-from enum import Enum
-from urllib.parse import _noop
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
-from judge.results import JudgeVerdict
 from problems.models import RevisionObject
+from problems.models.enums import SolutionVerdict
 from problems.models.file import FileNameValidator, get_valid_name
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase, Subtask
-from multiselectfield import MultiSelectField
 
 __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore"]
-
-
-class SolutionVerdict(Enum):
-    correct = _noop("Correct")
-    time_limit = _noop("Time limit")
-    memory_limit = _noop("Memory limit")
-    incorrect = _noop("Incorrect")
-    runtime_error = _noop("Runtime error")
-    failed = _noop("Failed")
-    time_limit_and_runtime_error = _noop("Time limit / Runtime error")
 
 
 class Solution(RevisionObject):
@@ -61,8 +48,6 @@ class Solution(RevisionObject):
             self.name = get_valid_name(self.code.name)
 
         super(Solution, self).save(*args, **kwargs)
-
-
 
 
 class SolutionSubtaskExpectedScore(RevisionObject):

@@ -14,9 +14,11 @@ class GeneratorsListView(RevisionObjectView):
 
     def get(self, request, problem_id, revision_slug):
         generators = self.revision.inputgenerator_set.all()
+        resources = self.revision.resource_set.all()
 
         return render(request, "problems/generator_list.html", context={
-            "generators": generators
+            "generators": generators,
+            "resources": resources
         })
 
 

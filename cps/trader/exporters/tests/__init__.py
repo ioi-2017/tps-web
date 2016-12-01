@@ -5,7 +5,7 @@ from django.test import TestCase
 from model_mommy import mommy
 
 from problems.models import ProblemRevision, Solution, InputGenerator, Checker, ProblemData
-from problems.models.solution import SolutionVerdict
+from problems.models.enums import SolutionVerdict
 from problems.tests.utils import get_resource_as_file_model, create_mommy_valid_testcase
 import shutil
 
@@ -36,7 +36,7 @@ class ExporterBaseTestCase(object):
 
         generator = InputGenerator.objects.create(
             problem=self.problem,
-            source_file=get_resource_as_file_model("codes", "print_arguments.cpp"),
+            file=get_resource_as_file_model("codes", "print_arguments.cpp"),
             source_language="c++",
         )
         testcase = create_mommy_valid_testcase(
@@ -49,7 +49,7 @@ class ExporterBaseTestCase(object):
         checker = Checker.objects.create(
             problem=self.problem,
             name="my_tester.cpp",
-            source_file=get_resource_as_file_model("codes", "checker_first_line_equal.cpp"),
+            file=get_resource_as_file_model("codes", "checker_first_line_equal.cpp"),
             source_language="c++",
         )
 

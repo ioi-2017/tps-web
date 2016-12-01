@@ -14,6 +14,7 @@ from problems.models import RevisionObject, Conflict, Merge
 
 import logging
 
+from problems.models.enums import SolutionVerdict
 from tasks.models import Task
 from trader import get_exporter
 from trader.exporters import AVAILABLE_EXPORTERS
@@ -227,7 +228,7 @@ class ProblemRevision(models.Model):
     def find_matching_pairs(self, another_revision):
         attributes = {
             "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
-            "attachment_set", "solutionrun_set", "subtasks"
+            "resource_set", "solutionrun_set", "subtasks"
         }
         res = [(self.problem_data, another_revision.problem_data)]
         for attr in attributes:
@@ -321,11 +322,12 @@ class ProblemData(RevisionObject):
 
     checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
 
-    model_solution = models.ForeignKey(
-        "Solution",
-        verbose_name=_("model solution"),
-        on_delete=models.SET_NULL, null=True, blank=True
-    )
+    @property
+    def model_solution(self):
+        try:
+            return self.problem.solution_set.filter(verdict=SolutionVerdict.model_solution.name)[0]
+        except Exception as e:
+            return None
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

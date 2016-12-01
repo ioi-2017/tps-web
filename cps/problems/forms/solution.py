@@ -5,7 +5,7 @@ from problems.forms.generic import ProblemObjectModelForm
 from problems.models import SourceFile, Solution
 from django.utils.translation import ugettext as _
 
-from problems.models.solution import SolutionVerdict
+from problems.models.enums import SolutionVerdict
 
 
 class SolutionEditForm(ProblemObjectModelForm):
