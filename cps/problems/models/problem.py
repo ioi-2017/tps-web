@@ -78,6 +78,7 @@ class ProblemFork(models.Model):
         if not self.has_working_copy():
             self.working_copy = self.head.clone()
             self.working_copy.author = user
+            self.working_copy.save()
             self.save()
         return self.working_copy
 
