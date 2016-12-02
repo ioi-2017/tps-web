@@ -4,21 +4,21 @@
 
 
 {% block problem_content %}
-    <div>
-        {% for problem_revision in object_list %}
-            {% if problem_revision.committed %}
-            <div class="history-box">
+    <h1> {% trans 'History' %} </h1>
+    {% for problem_revision in object_list %}
+        {% if problem_revision.committed %}
+        <div class="panel panel-primary panel-body">
+            {{ problem_revision.author }} {% trans 'committed' %} (
+            <a href="{% url "problems:overview" problem_revision.problem.id problem_revision.revision_id %}" > {% trans "View" %} </a>
+            )
+            <br />
+            <pre>{{ problem_revision.commit_message }}</pre>
 
-                <li> {%  trans "Revision id is : " %} {{ problem_revision.id }}</li>
-                <li> {% trans "Revision Depth is : " %} {{ problem_revision.depth }}</li>
-                <li> {% trans "With commit message = " %} {{ problem_revision.commit_message }}</li>
-                <li> {% trans "Judge Code: " %}{{ problem_revision.judge_code }}</li>
-                <li> <a href="{% url "problems:overview" problem_revision.problem.id problem_revision.revision_id %}" > {% trans "Click Here For Visiting The Revision" %} </a> </li>
-
-            </div>
-             {% endif %}
-        {% empty %}
-            <li> {% trans "No Revision yet." %}</li>
-        {% endfor %}
-    </div>
+        </div>
+         {% endif %}
+    {% empty %}
+         <h4 class="text-muted">
+            {% trans 'No commits yet' %}
+        </h4>
+    {% endfor %}
 {% endblock %}
