@@ -121,12 +121,23 @@
                          </li>
                         {% if revision_editable %}
                              <li>
-                                 <a href="{% problem_url "problems:commit" %}" >
-                                     <i class="fa fa-save "></i>
-                                    <span class="full-open-only">
-                                        {% trans 'Review & Commit' %}
-                                    </span>
-                                 </a>
+                                {% if revision.has_unresolved_conflicts %}
+                                      <a href="{% problem_url "problems:conflicts" %}">
+                                        <strong class="text-danger">
+                                             <i class="fa fa-wrench "></i>
+                                            <span class="full-open-only">
+                                                {% trans 'Resolve conflicts' %}
+                                            </span>
+                                        </strong>
+                                     </a>
+                                {% else %}
+                                     <a href="{% problem_url "problems:commit" %}" >
+                                         <i class="fa fa-save "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Review & Commit' %}
+                                        </span>
+                                     </a>
+                                 {% endif %}
                              </li>
                         {% elif fork %}
                             <li>
@@ -137,17 +148,19 @@
                                     </span>
                                  </a>
                              </li>
-                            {% if fork.head != problem.get_upstream_fork.head %}
+                            {% if can_be_merged_with_master %}
                                 <li>
-                                     <a href="{% problem_url "problems:apply_fork" %}" >
+                                     <a data-method="post" href="{% problem_url "problems:apply_fork" %}" >
                                          <i class="fa fa-upload "></i>
                                         <span class="full-open-only">
                                             {% trans 'Push to master' %}
                                         </span>
                                      </a>
                                  </li>
+                            {% endif %}
+                            {% if should_be_updated_from_master %}
                                 <li>
-                                     <a href="{% problem_url "problems:update_fork" %}" >
+                                     <a data-method="post" href="{% problem_url "problems:update_fork" %}" >
                                          <i class="fa fa-refresh "></i>
                                         <span class="full-open-only">
                                             {% trans 'Update from master' %}

@@ -118,6 +118,11 @@ class ProblemRevision(models.Model):
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
+    USER_REVISION_OBJECTS = {
+        "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
+        "resource_set", "solutionrun_set", "subtasks"
+    }
+
     def get_judge(self):
         # TODO: Determine how handle judges
         return Judge.get_judge()
@@ -226,12 +231,8 @@ class ProblemRevision(models.Model):
         return None
 
     def find_matching_pairs(self, another_revision):
-        attributes = {
-            "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
-            "resource_set", "solutionrun_set", "subtasks"
-        }
         res = [(self.problem_data, another_revision.problem_data)]
-        for attr in attributes:
+        for attr in self.USER_REVISION_OBJECTS:
             res = res + getattr(self, attr).find_matches(getattr(another_revision, attr))
         return res
 
@@ -309,6 +310,30 @@ class ProblemRevision(models.Model):
             return new_revision
 
 
+class RevisionObjectQuerySet(models.QuerySet):
+
+    def find_matches(self, second_queryset, matching_fields=None):
+
+        if isinstance(second_queryset, models.Manager):
+            second_queryset = second_queryset.all()
+
+        if len(second_queryset) == 0:
+            other = None
+        else:
+            other = second_queryset[0]
+
+        if len(self.all()) == 0:
+            my = None
+        else:
+            my = self.all()[0]
+
+        return [(my, other)]
+
+
+class ProblemDataObjectManager(models.Manager):
+    use_for_related_fields = True
+
+
 class ProblemData(RevisionObject):
     problem = models.ForeignKey(ProblemRevision)
     code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
@@ -328,6 +353,13 @@ class ProblemData(RevisionObject):
             return self.problem.solution_set.filter(verdict=SolutionVerdict.model_solution.name)[0]
         except Exception as e:
             return None
+
+    @staticmethod
+    def get_matching_fields():
+        return []
+
+    def __str__(self):
+        return self.title
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

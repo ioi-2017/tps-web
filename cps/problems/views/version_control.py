@@ -7,7 +7,7 @@ from django.views.generic import View
 from django.utils.translation import ugettext as _
 
 from problems.forms.version_control import CommitForm
-from problems.models import Conflict, ProblemRevision
+from problems.models import Conflict, ProblemRevision, ProblemData
 from problems.views.generics import RevisionObjectView
 from problems.views.utils import extract_revision_data
 
@@ -105,8 +105,34 @@ class CommitWorkingCopy(View):
             }))
         commit_form = CommitForm(instance=fork.working_copy)
 
+        # TODO: Optimize the process of calculating changes
+
+        matching_pairs = revision.find_matching_pairs(fork.head)
+        changes = []
+        for current, prev in matching_pairs:
+            if current is None:
+                instance = prev
+            else:
+                instance = current
+            if instance.differ(current, prev):
+                if current is None:
+                    tag = _("Removed")
+                elif prev is None:
+                    tag = _("Added")
+                else:
+                    tag = _("Changed")
+                if isinstance(instance, ProblemData):
+                    changes.append(_("Updated problem general details"))
+                else:
+                    changes.append("{tag} {type} {instance}".format(
+                        tag=tag,
+                        type=instance._meta.verbose_name,
+                        instance=instance
+                    ))
+
         return render(request, "problems/confirm_commit.html", context={
-            "commit_form":commit_form
+            "changes": changes,
+            "commit_form": commit_form
         })
 
 

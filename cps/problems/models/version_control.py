@@ -2,6 +2,9 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.core import serializers
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django.utils.translation import ugettext_lazy as _
 
 import json
 
@@ -30,6 +33,9 @@ class RevisionObjectQuerySet(models.QuerySet):
         other_map = {}
         for obj in second_queryset.all():
             other_map[obj.pk] = obj
+
+        # TODO: Use a benchmark to check if
+        # it's faster to handle matching in Python
 
         from django.db import connection
         with connection.cursor() as c:
@@ -108,6 +114,16 @@ class RevisionObject(models.Model):
             self.get_json_representation(),
             other_object.get_json_representation()
         )
+
+    def get_match(self, other_revision):
+        matching_data = {
+            field: getattr(self, field) for field in self.get_matching_fields()
+        }
+        matching_data["problem"] = other_revision
+        try:
+            return type(self).objects.get(**matching_data)
+        except self.DoesNotExist:
+            return None
 
     @staticmethod
     def get_matching_fields():
