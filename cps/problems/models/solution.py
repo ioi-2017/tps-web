@@ -17,7 +17,8 @@ class Solution(RevisionObject):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255, blank=True)
+    name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
+                            blank=True, db_index=True)
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
@@ -31,6 +32,10 @@ class Solution(RevisionObject):
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def get_matching_fields():
+        return ["name"]
 
 
     def get_language_representation(self):

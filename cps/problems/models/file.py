@@ -54,7 +54,8 @@ def get_valid_name(name):
 class ResourceBase(RevisionObject):
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator], blank=True)
+    name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator],
+                            blank=True, db_index=True)
     file = models.ForeignKey(FileModel, verbose_name=_("file"), related_name="+")
 
     @staticmethod

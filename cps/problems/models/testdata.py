@@ -39,16 +39,24 @@ class TestCaseGeneration(Task):
 
 class Subtask(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
-    name = models.CharField(max_length=100, verbose_name=_("name"))
+    name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
+
+    @staticmethod
+    def get_matching_fields():
+        return ["name"]
 
 
 class Script(RevisionObject):
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    title = models.CharField(verbose_name=_("title"), max_length=256)
+    title = models.CharField(verbose_name=_("title"), max_length=256, db_index=True)
     script = models.TextField(verbose_name=_("script"))  # TODO: Validate the script using validators
     disabled = models.BooleanField(verbose_name=_("disabled"), default=False)
+
+    @staticmethod
+    def get_matching_fields():
+        return ["title"]
 
     def create_tests(self):
         # TODO: Handle subtasks
@@ -94,7 +102,7 @@ class Script(RevisionObject):
 
 class TestCase(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False)
+    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
 
     _input_static = models.BooleanField(
@@ -153,6 +161,10 @@ class TestCase(RevisionObject):
         )
         self.save()
         return self.judge_code
+
+    @staticmethod
+    def get_matching_fields():
+        return ["name"]
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator_name is None:

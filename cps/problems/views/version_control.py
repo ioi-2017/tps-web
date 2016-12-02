@@ -7,7 +7,7 @@ from django.views.generic import View
 from django.utils.translation import ugettext as _
 
 from problems.forms.version_control import CommitForm
-from problems.models import Conflict, ProblemRevision, ProblemData
+from problems.models import Conflict, ProblemRevision, ProblemData, SolutionRun
 from problems.views.generics import RevisionObjectView
 from problems.views.utils import extract_revision_data
 
@@ -114,6 +114,8 @@ class CommitWorkingCopy(View):
                 instance = prev
             else:
                 instance = current
+            if isinstance(current, SolutionRun):
+                continue
             if instance.differ(current, prev):
                 if current is None:
                     tag = _("Removed")

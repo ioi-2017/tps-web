@@ -87,6 +87,8 @@ class RevisionObject(models.Model):
         :param excluded_fields: List[str] or None
         :return str
         """
+        if excluded_fields is None:
+            excluded_fields = ["problem"]
         full_dump = json.loads(serializers.serialize('json', [self]))[0]
         limited_dump = {}
         for field_name in full_dump['fields']:

@@ -19,8 +19,8 @@ __all__ = ["SolutionRun", "SolutionRunResult"]
 
 class SolutionRun(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem revision"))
-    solutions = models.ManyToManyField(Solution, verbose_name=_("solution"))
-    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"))
+    solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
+    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
 
     def run(self):
@@ -30,6 +30,10 @@ class SolutionRun(RevisionObject):
                 result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
                 result.save()
                 result.apply_async()
+
+    @staticmethod
+    def get_matching_fields():
+        return ["pk"]
 
     def validate(self):
         is_valid = True
