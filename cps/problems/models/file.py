@@ -120,8 +120,8 @@ class SourceFile(ResourceBase):
             commands=compile_commands,
             files=files,
             output_files=[compiled_file_name],
-            time_limit=settings.DEFAULT_COMPILATION_TIME_LIMIT,
-            memory_limit=settings.DEFAULT_COMPILATION_MEMORY_LIMIT
+            time_limit=settings.FAILSAFE_TIME_LIMIT,
+            memory_limit=settings.FAILSAFE_MEMORY_LIMIT
         )
 
         success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)

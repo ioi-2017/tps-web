@@ -242,8 +242,8 @@ class TestCase(RevisionObject):
                 executables=[("generator", generator_compiled)],
                 stdout_redirect=stdout_redirect,
                 output_files=[stdout_redirect],
-                time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
-                memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT
+                time_limit=settings.FAILSAFE_TIME_LIMIT,
+                memory_limit=settings.FAILSAFE_MEMORY_LIMIT
             )
             success, execution_success, outputs, sandbox_datas = execute_with_input(action)
             if not success:

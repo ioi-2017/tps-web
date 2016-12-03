@@ -175,23 +175,11 @@ MEDIA_URL = "/storage/"
 
 # project settings
 
-# default time limit in seconds (float)
-DEFAULT_TIME_LIMIT = 1
+# fail-safe time limit in seconds (float)
+FAILSAFE_TIME_LIMIT = 30
 
-# default memory limit in KB (int)
-DEFAULT_MEMORY_LIMIT = 128 * 1024
-
-# default compilation time limit
-DEFAULT_COMPILATION_TIME_LIMIT = 10
-
-# default compilation memory limit
-DEFAULT_COMPILATION_MEMORY_LIMIT = DEFAULT_MEMORY_LIMIT
-
-# default compilation time limit
-DEFAULT_GENERATOR_TIME_LIMIT = 30
-
-# default compilation memory limit
-DEFAULT_GENERATOR_MEMORY_LIMIT = DEFAULT_MEMORY_LIMIT
+# fail-safe memory limit in MB (int)
+FAILSAFE_MEMORY_LIMIT = 512
 
 SANDBOX_TEMP_DIR = "/tmp"
 # SANDBOX_TEMP_DIR = os.path.join(BASE_DIR, "tmp")

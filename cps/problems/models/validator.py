@@ -89,8 +89,8 @@ class ValidatorResult(Task):
             commands=[validation_command],
             files=[("input.txt", self.testcase.input_file)],
             executables=[("validator", self.validator.compiled_file())],
-            time_limit=settings.DEFAULT_GENERATOR_TIME_LIMIT,
-            memory_limit=settings.DEFAULT_GENERATOR_MEMORY_LIMIT,
+            time_limit=settings.FAILSAFE_TIME_LIMIT,
+            memory_limit=settings.FAILSAFE_MEMORY_LIMIT,
             stderr_redirect="stderr.txt",
             output_files=["stderr.txt"]
         )
