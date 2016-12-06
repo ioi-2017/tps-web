@@ -1,5 +1,5 @@
 # Amir Keivan Mohtashami
-
+from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -22,6 +22,7 @@ class SolutionRun(RevisionObject):
     solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
 
     def run(self):
         self.results.all().delete()
@@ -174,3 +175,25 @@ class SolutionRunResult(Task):
         elif self.solution.verdict == SolutionVerdict.time_limit_and_runtime_error.name:
             return self.verdict == JudgeVerdict.runtime_error.name or self.verdict == JudgeVerdict.time_limit_exceeded.name
         return False
+
+    def get_short_name_for_verdict(self):
+        if self.verdict == JudgeVerdict.ok.name:
+            if self.checker_execution_success is None:
+                return "N / A"
+            elif self.checker_execution_success:
+                if self.score == 1:
+                    return "AC"
+                elif self.score == 0:
+                    return "WA"
+                else:
+                    return self.score
+            else:
+                return "Failed"
+        elif self.verdict is None:
+            return "N / A"
+        elif self.verdict == JudgeVerdict.memory_limit_exceeded.name:
+            return "ML"
+        elif self.verdict == JudgeVerdict.time_limit_exceeded.name:
+            return "TL"
+        else:
+            return "RE"

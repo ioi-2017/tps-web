@@ -119,7 +119,8 @@ class TestCase(RevisionObject):
     _input_generation_parameters = models.TextField(
         verbose_name=_("input generation command"),
         max_length=100,
-        blank=True
+        blank=True,
+        null=True
     )
     _input_generator_name = models.CharField(verbose_name=_("generator"), null=True, blank=True, max_length=256)
     _input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)

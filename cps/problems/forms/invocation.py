@@ -17,6 +17,7 @@ class InvocationAddForm(ProblemObjectModelForm):
 
     def save(self, commit=True):
         super(InvocationAddForm, self).save(commit=False)
+        self.instance.creator = self.owner
         if commit:
             self.instance.save()
             self.save_m2m()

@@ -30,31 +30,9 @@
                             {% else %}
                                 <td>
                             {% endif %}
-                            {% if result.verdict == judge_result.ok.name %}
-                                {% if result.checker_execution_success == None %}
-                                    N/A
-                                {% elif result.checker_execution_success == True %}
-                                    {% if result.score == 1 %}
-                                        AC
-                                    {% elif result.score == 0 %}
-                                        WA
-                                    {% else %}
-                                        {{ result.score }}
-                                    {% endif %}
-                                {% else %}
-                                    Checker Failed
-                                {% endif %}
-                            {% elif result.verdict == None %}
-                                N/A
-                            {% elif result.verdict == judge_result.memory_limit_exceeded.name %}
-                                ML
-                            {% elif result.verdict == judge_result.time_limit_exceeded.name %}
-                                TL
-                            {% elif result.verdict == judge_result.compilation_failed.name %}
-                                CE
-                            {% else %}
-                                RE
-                            {% endif %}
+                            <a href="{% problem_url "problems:view_invocation_result" invocation.id result.id %}">
+                                {{ result.get_short_name_for_verdict }}
+                            </a>
                             </td>
                         {% endfor %}
                     </tr>

@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import View
@@ -6,11 +7,11 @@ from django.views.generic import View
 from judge.results import JudgeVerdict
 from problems.forms.invocation import InvocationAddForm
 from problems.forms.solution import SolutionAddForm
-from problems.models import Solution, SolutionRun
+from problems.models import Solution, SolutionRun, SolutionRunResult
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
-
 __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView"]
+
 
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug):
@@ -65,7 +66,7 @@ class InvocationDetailsView(RevisionObjectView):
             current_results = []
             for solution in solutions:
                 current_results.append(dic[testcase][solution])
-            results.append((testcase,current_results))
+            results.append((testcase, current_results))
 
         validations = []
         for solution in solutions:
@@ -74,6 +75,76 @@ class InvocationDetailsView(RevisionObjectView):
         return render(request, "problems/invocation_view.html", context={
             "invocation": obj,
             "results": results,
-            "validations": validations,
-            "judge_result": JudgeVerdict.__members__
+            "validations": validations
         })
+
+
+class InvocationResultView(RevisionObjectView):
+    def get(self, request, problem_id, revesion_slug, invocation_id, result_id):
+        obj = get_object_or_404(SolutionRunResult, **{
+            "id": result_id
+        })
+
+        def get_content_of_file(file):
+            content = file.read(255)
+            if len(content) > 254:
+                content += bytes("...", 'utf-8')
+            return content
+
+        if obj.testcase.output_file_generated():
+            answer = get_content_of_file(obj.testcase.output_file.file)
+        else:
+            answer = ""
+        if obj.testcase.input_file_generated():
+            input = get_content_of_file(obj.testcase.input_file.file)
+        else:
+            input = ""
+        if obj.solution_output is None:
+            output = ""
+        else:
+            output = get_content_of_file(obj.solution_output.file)
+        return render(request, "problems/invocation_result_view.html", context={
+            "input": input,
+            "output": output,
+            "answer": answer,
+            "result": obj
+        })
+
+
+class InvocationOutputDownloadView(RevisionObjectView):
+    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+        obj = get_object_or_404(SolutionRunResult, **{
+            "id": result_id
+        })
+        response = HttpResponse(obj.solution_output.file, content_type='application/file')
+        name = "attachment; filename=" + str(obj.solution_output)
+        response['Content-Disposition'] = name
+        return response
+
+
+class InvocationInputDownloadView(RevisionObjectView):
+    # FIXME: This view is equivalent to the testcase input download view
+    # however we probably want to cache the input for the results. but in case
+    # we decide not to, this should be removed
+    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+        obj = get_object_or_404(SolutionRunResult, **{
+            "id": result_id
+        })
+        response = HttpResponse(obj.testcase.input_file.file, content_type='application/file')
+        name = "attachment; filename=" + str(obj.testcase.input_file)
+        response['Content-Disposition'] = name
+        return response
+
+
+class InvocationAnswerDownloadView(RevisionObjectView):
+    # FIXME: This view is equivalent to the testcase output download view
+    # however we probably want to cache the input for the results. but in case
+    # we decide not to, this should be removed
+    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+        obj = get_object_or_404(SolutionRunResult, **{
+            "id": result_id
+        })
+        response = HttpResponse(obj.testcase.output_file.file, content_type='application/file')
+        name = "attachment; filename=" + str(obj.testcase.output_file)
+        response['Content-Disposition'] = name
+        return response

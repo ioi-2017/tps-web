@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
-
+from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
+        InvocationAnswerDownloadView
 from .views import *
 
 problem_urls = ([
@@ -14,6 +15,10 @@ problem_urls = ([
         url(r'^invocation/add/$', InvocationAddView.as_view(), name="add_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/run/$', InvocationRunView.as_view(), name="run_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationDetailsView.as_view(), name="view_invocation"),
+        url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/$', InvocationResultView.as_view(), name="view_invocation_result"),
+        url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/download/output/$', InvocationOutputDownloadView.as_view(), name="download_output"),
+        url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/download/input/$', InvocationInputDownloadView.as_view(), name="download_input"),
+        url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/download/answer/$', InvocationAnswerDownloadView.as_view(), name="download_answer"),
 
         url(r'^resource/add/$', ResourceAddView.as_view(), name="add_resource"),
         url(r'^resource/(?P<resource_id>\d+)/edit/$', ResourceEditView.as_view(), name="edit_resource"),
@@ -56,6 +61,7 @@ problem_urls = ([
         url(r'^conflicts/', ConflictsListView.as_view(), name="conflicts"),
         url(r'^conflict/(?P<conflict_id>\d+)/', ResolveConflictView.as_view(), name="resolve_conflict"),
         url(r'^apply/', ApplyForkToMaster.as_view(), name="apply_fork"),
+
 
     ], None, None)
 

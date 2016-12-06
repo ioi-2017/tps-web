@@ -1,0 +1,75 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2>{% trans 'Invocation result details' %}</h2>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-bordered table-responsive table-striped">
+            <tbody>
+                <tr>
+                    <td>{% trans 'Creator' %}</td>
+                    <td>{{ result.solution_run.creator }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Source name' %}</td>
+                    <td>{{ result.solution.name }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Tag' %}</td>
+                    <td>{{ result.solution.verdict }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Test' %}</td>
+                    <td>{{ result.testcase }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Verdict' %}</td>
+                    <td>{{ result.get_short_name_for_verdict }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Time' %}</td>
+                    <td>{{ result.solution_execution_time }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Memory' %}</td>
+                    <td>{{ result.solution_memory_usage }}</td>
+                </tr>
+                <tr>
+                    <td>
+                        {% trans 'Input' %}
+                        <br/>
+                        {% if input != "" %}
+                            <a href="{% problem_url "problems:download_input" result.solution_run.id result.id %}">{% trans Download %}</a>
+                        {% endif %}
+                    </td>
+                    <td><pre>{{ input }}</pre></td>
+                </tr>
+                <tr>
+                    <td>
+                        {% trans 'Contestant Output' %}
+                        <br/>
+                        {% if output != "" %}
+                            <a href="{% problem_url "problems:download_output" result.solution_run.id result.id %}">{% trans Download %}</a>
+                        {% endif %}
+                    </td>
+                    <td><pre>{{ output }}</pre></td>
+                </tr>
+                <tr>
+                    <td>
+                        {% trans 'Testcase Output' %}
+                        <br/>
+                        {% if answer != "" %}
+                            <a href="{% problem_url "problems:download_answer" result.solution_run.id result.id %}">{% trans Download %}</a>
+                        {% endif %}
+                    </td>
+                    <td><pre>{{ answer }}</pre></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
