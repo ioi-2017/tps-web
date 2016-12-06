@@ -21,6 +21,10 @@ def revision_data(request):
         "fork": fork,
         "revision_slug": revision_slug,
         "revision_editable": revision_editable,
+        "fork_editable": fork is not None and (
+            request.user.is_superuser or
+            fork.owner == request.user
+        ),
         "can_be_merged_with_master": can_be_merged_with_master,
         "should_be_updated_from_master": should_be_updated_from_master
     }

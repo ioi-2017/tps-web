@@ -140,14 +140,16 @@
                                  {% endif %}
                              </li>
                         {% elif fork %}
-                            <li>
-                                 <a data-method="post" href="{% problem_url "problems:create_working_copy" %}" >
-                                     <i class="fa fa-folder-open "></i>
-                                    <span class="full-open-only">
-                                        {% trans 'Create working copy' %}
-                                    </span>
-                                 </a>
-                             </li>
+                            {% if fork_editable %}
+                                <li>
+                                     <a data-method="post" href="{% problem_url "problems:create_working_copy" %}" >
+                                         <i class="fa fa-folder-open "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Create working copy' %}
+                                        </span>
+                                     </a>
+                                 </li>
+                            {% endif %}
                             {% if can_be_merged_with_master %}
                                 <li>
                                      <a data-method="post" href="{% problem_url "problems:apply_fork" %}" >
