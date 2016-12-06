@@ -44,7 +44,7 @@
                         {% trans 'Input' %}
                         <br/>
                         {% if input != "" %}
-                            <a href="{% problem_url "problems:download_input" result.solution_run.id result.id %}">{% trans Download %}</a>
+                            <a href="{% problem_url "problems:download_input" result.solution_run.id result.id %}">{% trans 'Download' %}</a>
                         {% endif %}
                     </td>
                     <td><pre>{{ input }}</pre></td>
@@ -54,7 +54,7 @@
                         {% trans 'Contestant Output' %}
                         <br/>
                         {% if output != "" %}
-                            <a href="{% problem_url "problems:download_output" result.solution_run.id result.id %}">{% trans Download %}</a>
+                            <a href="{% problem_url "problems:download_output" result.solution_run.id result.id %}">{% trans 'Download' %}</a>
                         {% endif %}
                     </td>
                     <td><pre>{{ output }}</pre></td>
@@ -64,7 +64,7 @@
                         {% trans 'Testcase Output' %}
                         <br/>
                         {% if answer != "" %}
-                            <a href="{% problem_url "problems:download_answer" result.solution_run.id result.id %}">{% trans Download %}</a>
+                            <a href="{% problem_url "problems:download_answer" result.solution_run.id result.id %}">{% trans 'Download' %}</a>
                         {% endif %}
                     </td>
                     <td><pre>{{ answer }}</pre></td>

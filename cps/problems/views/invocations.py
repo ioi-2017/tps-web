@@ -117,7 +117,7 @@ class InvocationOutputDownloadView(RevisionObjectView):
             "id": result_id
         })
         response = HttpResponse(obj.solution_output.file, content_type='application/file')
-        name = "attachment; filename=" + str(obj.solution_output)
+        name = "attachment; filename=solution.out"
         response['Content-Disposition'] = name
         return response
 
@@ -131,7 +131,7 @@ class InvocationInputDownloadView(RevisionObjectView):
             "id": result_id
         })
         response = HttpResponse(obj.testcase.input_file.file, content_type='application/file')
-        name = "attachment; filename=" + str(obj.testcase.input_file)
+        name = "attachment; filename={}.in".format(str(obj.testcase))
         response['Content-Disposition'] = name
         return response
 
@@ -145,6 +145,6 @@ class InvocationAnswerDownloadView(RevisionObjectView):
             "id": result_id
         })
         response = HttpResponse(obj.testcase.output_file.file, content_type='application/file')
-        name = "attachment; filename=" + str(obj.testcase.output_file)
+        name = "attachment; filename={}.ans".format(str(obj.testcase))
         response['Content-Disposition'] = name
         return response
