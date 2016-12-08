@@ -7,6 +7,9 @@
     <div class="row">
         <h2> {% trans 'Validators' %} </h2>
     </div>
+    <div class="row">
+
+    </div>
     {% if revision_editable %}
         <div class="row">
             <a href="{% problem_url "problems:add_validator" %}" class="btn btn-success">
@@ -54,7 +57,7 @@
                 </tbody>
             </table>
         {% else %}
-            <h4 class="text-muted">
+            <h4 class="alert alert-danger">
                 {% trans 'No validator exists' %}
             </h4>
         {% endif %}

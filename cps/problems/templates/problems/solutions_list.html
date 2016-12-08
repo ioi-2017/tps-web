@@ -17,6 +17,11 @@
     <br />
     <div class="row">
         {% if solutions %}
+            {% if errors.solution > 0 %}
+                <h4 class="alert alert-danger">
+                    {% trans 'No model solution specified' %}
+                </h4>
+            {% endif %}
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
@@ -55,7 +60,7 @@
                 </tbody>
             </table>
         {% else %}
-            <h4 class="text-muted">
+            <h4 class="alert alert-danger">
                 {% trans 'No solution exists' %}
             </h4>
         {% endif %}

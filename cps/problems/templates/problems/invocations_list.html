@@ -32,7 +32,11 @@
                 </thead>
                 <tbody>
             {% for invocation in invocations %}
-                    <tr>
+                    {% if invocation.validate %}
+                        <tr>
+                    {% else %}
+                        <tr class="alert alert-danger force-bgcolor">
+                    {% endif %}
                         <td> {{ forloop.counter }} </td>
                         <td>
                             {% for solution in invocation.solutions.all %}

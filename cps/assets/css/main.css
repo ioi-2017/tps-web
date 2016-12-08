@@ -352,3 +352,7 @@ pre.source-code {
 tr.active-row {
     background-color: palegreen !important;
 }
+
+.alert.alert-danger.force-bgcolor {
+    background-color: #f2dede !important;
+}
