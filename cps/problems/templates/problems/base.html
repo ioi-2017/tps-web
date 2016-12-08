@@ -69,6 +69,10 @@
                                 <span class="full-open-only">
                                     {% trans 'Testcases' %}
                                 </span>
+                                 <p class="label label-info error">
+                                     {{ errors.testcase }}
+                                     <span class="full-open-only">{% trans 'Testcase(s)' %}</span>
+                                 </p>
                              </a>
                          </li>
                          <li>
@@ -77,6 +81,10 @@
                                 <span class="full-open-only">
                                     {% trans 'Solutions' %}
                                 </span>
+                                 {% if errors.solution > 0 %}
+                                    <p class="label label-danger full-close-only error">{{ errors.solution }}</p>
+                                    <p class="label label-danger full-open-only error">{% trans 'No Model Solution' %}</p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>
@@ -85,6 +93,12 @@
                                 <span class="full-open-only">
                                     {% trans 'Invocations' %}
                                 </span>
+                                 {% if errors.invocation > 0 %}
+                                    <p class="label label-danger error">
+                                         {{ errors.invocation }}
+                                        <span class="full-open-only">{% trans 'Failed' %}</span>
+                                    </p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>
@@ -93,6 +107,10 @@
                                 <span class="full-open-only">
                                     {% trans 'Checker' %}
                                 </span>
+                                 {% if errors.checker > 0 %}
+                                    <p class="label label-danger full-close-only error">{{ errors.checker }}</p>
+                                    <p class="label label-danger full-open-only error">{% trans 'No Active Checker' %}</p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>
@@ -101,6 +119,10 @@
                                 <span class="full-open-only">
                                     {% trans 'Validators' %}
                                 </span>
+                                 {% if errors.validator > 0 %}
+                                    <p class="label label-danger full-close-only error">{{ errors.validator }}</p>
+                                    <p class="label label-danger full-open-only error">{% trans 'No Validator' %}</p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>
@@ -109,6 +131,12 @@
                                 <span class="full-open-only">
                                     {% trans 'Discussions' %}
                                 </span>
+                                 {% if errors.discussion > 0 %}
+                                    <p class="label label-danger error">
+                                        {{ errors.discussion }}
+                                         <span class="full-open-only">{% trans 'Open' %}</span>
+                                    </p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>

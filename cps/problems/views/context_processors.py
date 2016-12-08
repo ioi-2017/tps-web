@@ -1,3 +1,4 @@
+from problems.models.enums import SolutionVerdict
 from .utils import extract_revision_data
 
 
@@ -15,6 +16,28 @@ def revision_data(request):
     else:
         can_be_merged_with_master = False
         should_be_updated_from_master = False
+
+    errors = {}
+    errors["testcase"] = revision.testcase_set.all().count()
+    if revision.solution_set.filter(verdict=SolutionVerdict.model_solution.name).exists():
+        errors["solution"] = 0
+    else:
+        errors["solution"] = 1
+    invocations = revision.solutionrun_set.all()
+    failed_invocations = 0
+    for invocation in invocations:
+        if not invocation.validate():
+            failed_invocations += 1
+    errors["invocation"] = failed_invocations
+    if revision.problem_data.checker is None:
+        errors["checker"] = 1
+    else:
+        errors["checker"] = 0
+    if not revision.validator_set.all().exists():
+        errors["validator"] = 1
+    else:
+        errors["validator"] = 0
+    errors["discussion"] = problem.discussions.filter(closed=False).count()
     return {
         "problem": problem,
         "revision": revision,
@@ -26,5 +49,6 @@ def revision_data(request):
             fork.owner == request.user
         ),
         "can_be_merged_with_master": can_be_merged_with_master,
-        "should_be_updated_from_master": should_be_updated_from_master
+        "should_be_updated_from_master": should_be_updated_from_master,
+        "errors": errors
     }
