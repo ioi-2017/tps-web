@@ -21,3 +21,16 @@ class FileModel(models.Model):
 
     def __str__(self):
         return self.name
+
+    def khar(self):
+        content = self.file.read(2).decode()
+        print(content)
+
+    def get_truncated_content(self, len=255):
+        content = self.file.read(len)
+        content = content.decode(errors='replace')
+        remained = bool(self.file.read(1))
+        self.file.close()
+        if remained:
+            content += "..."
+        return content

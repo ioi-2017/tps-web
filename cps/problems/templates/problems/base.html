@@ -69,10 +69,9 @@
                                 <span class="full-open-only">
                                     {% trans 'Testcases' %}
                                 </span>
-                                 <p class="label label-info error">
-                                     {{ errors.testcase }}
-                                     <span class="full-open-only">{% trans 'Testcase(s)' %}</span>
-                                 </p>
+                                 <span class="label label-info error full-open-only">
+                                     {{ errors.testcase }} {% trans 'Testcase(s)' %}
+                                 </span>
                              </a>
                          </li>
                          <li>
@@ -82,7 +81,7 @@
                                     {% trans 'Solutions' %}
                                 </span>
                                  {% if errors.solution > 0 %}
-                                    <p class="label label-danger full-close-only error">{{ errors.solution }}</p>
+                                    <p class="label label-danger collapsed-only error">{{ errors.solution }}</p>
                                     <p class="label label-danger full-open-only error">{% trans 'No Model Solution' %}</p>
                                  {% endif %}
                              </a>
@@ -108,7 +107,7 @@
                                     {% trans 'Checker' %}
                                 </span>
                                  {% if errors.checker > 0 %}
-                                    <p class="label label-danger full-close-only error">{{ errors.checker }}</p>
+                                    <p class="label label-danger collapsed-only error">{{ errors.checker }}</p>
                                     <p class="label label-danger full-open-only error">{% trans 'No Active Checker' %}</p>
                                  {% endif %}
                              </a>
@@ -120,7 +119,7 @@
                                     {% trans 'Validators' %}
                                 </span>
                                  {% if errors.validator > 0 %}
-                                    <p class="label label-danger full-close-only error">{{ errors.validator }}</p>
+                                    <p class="label label-danger collapsed-only error">{{ errors.validator }}</p>
                                     <p class="label label-danger full-open-only error">{% trans 'No Validator' %}</p>
                                  {% endif %}
                              </a>

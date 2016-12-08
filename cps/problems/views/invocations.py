@@ -83,27 +83,22 @@ class InvocationDetailsView(RevisionObjectView):
 class InvocationResultView(RevisionObjectView):
     def get(self, request, problem_id, revesion_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
-            "id": result_id
+            "id": result_id,
+            "solution_run__problem": self.revision,
         })
 
-        def get_content_of_file(file):
-            content = file.read(255)
-            if len(content) > 254:
-                content += bytes("...", 'utf-8')
-            return content
-
         if obj.testcase.output_file_generated():
-            answer = get_content_of_file(obj.testcase.output_file.file)
+            answer = obj.testcase.output_file.get_truncated_content()
         else:
             answer = ""
         if obj.testcase.input_file_generated():
-            input = get_content_of_file(obj.testcase.input_file.file)
+            input = obj.testcase.input_file.get_truncated_content()
         else:
             input = ""
         if obj.solution_output is None:
             output = ""
         else:
-            output = get_content_of_file(obj.solution_output.file)
+            output = obj.solution_output.get_truncated_content()
         return render(request, "problems/invocation_result_view.html", context={
             "input": input,
             "output": output,
@@ -115,7 +110,8 @@ class InvocationResultView(RevisionObjectView):
 class InvocationOutputDownloadView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
-            "id": result_id
+            "id": result_id,
+            "solution_run__problem": self.revision,
         })
         if not obj.checker_execution_success:
             raise Http404()
@@ -131,7 +127,8 @@ class InvocationInputDownloadView(RevisionObjectView):
     # we decide not to, this should be removed
     def get(self, request, problem_id, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
-            "id": result_id
+            "id": result_id,
+            "solution_run__problem": self.revision,
         })
         if not obj.testcase.input_file_generated():
             raise Http404()
@@ -147,7 +144,8 @@ class InvocationAnswerDownloadView(RevisionObjectView):
     # we decide not to, this should be removed
     def get(self, request, problem_id, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
-            "id": result_id
+            "id": result_id,
+            "solution_run__problem": self.revision,
         })
         if not obj.testcase.output_file_generated():
             raise Http404()

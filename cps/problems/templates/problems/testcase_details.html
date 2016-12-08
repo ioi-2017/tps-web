@@ -1,0 +1,162 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2>{% trans 'Testcase details' %}</h2>
+
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-bordered table-responsive bg-white">
+            <tbody>
+                <tr>
+                    <td>#</td>
+                    <td colspan="2">{{ testcase.testcase_number }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Name' %}</td>
+                    <td colspan="2">{{ testcase.name }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans 'Script' %}</td>
+                    <td colspan="2">
+                        {% if testcase.script %}
+                            {{ testcase.script }}
+                        {% else %}
+                            {% trans 'Manual' %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if testcase.input_static %}
+                    <tr>
+                        <td> {% trans 'Input' %} </td>
+                        <td colspan="2">
+                            <pre>{{ testcase.input_file.get_truncated_content }}</pre>
+                            <br />
+                            <a href="{% problem_url "problems:testcase_input" testcase.pk %}">
+                                    {% trans 'Download' %}
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        {% if testcase.input_generation_successful %}
+                            <td rowspan="3">
+                        {% else %}
+                            <td rowspan="2">
+                        {% endif %}
+                        <td> {% trans 'Generation command' %} </td>
+                        <td><pre>{{ testcase.input_generation_command }} </pre></td>
+                    </tr>
+                    <tr>
+                        <td> {% trans 'Generation log' %} </td>
+                        {% if testcase.input_generation_successful != None %}
+                            <td> <pre>{{ testcase.input_generation_log }} </pre></td>
+                        {% else %}
+                            <td>
+                                {% trans 'Not generated' %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% if testcase.input_generation_successful %}
+                    <tr>
+                        <td colspan="2">
+                            <pre> {{ testcase.input_file.get_truncated_content }} </pre>
+                            <br />
+                            <a href="{% problem_url "problems:testcase_input" testcase.pk %}">
+                                    {% trans 'Download' %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endif %}
+                {% if testcase.output_static %}
+                    <tr>
+                        <td> {% trans 'Output' %} </td>
+                        <td colspan="2">
+                            <pre>{{ testcase.output_file.get_truncated_content }}</pre>
+                            <br />
+                            <a href="{% problem_url "problems:testcase_output" testcase.pk %}">
+                                    {% trans 'Download' %}
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        {% if testcase.output_generation_successful %}
+                            <td rowspan="3">
+                        {% else %}
+                            <td rowspan="2">
+                        {% endif %}
+                            {% trans 'Output' %}
+                        </td>
+                        <td> {% trans 'Solution' %} </td>
+                        <td>
+                            {% if testcase.solution %}
+                                {{ testcase.solution }}
+                            {% else %}
+                                <span class="text-danger"> {% trans 'No solution specified' %} </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> {% trans 'Generation log' %} </td>
+                        {% if testcase.output_generation_successful != None %}
+                            <td><pre> {{ testcase.output_generation_log }} </pre></td>
+                        {% else %}
+                            <td>
+                                {% trans 'Not generated' %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% if testcase.output_generation_successful %}
+                    <tr>
+                        <td colspan="2">
+                            <pre> {{ testcase.output_file.get_truncated_content }} </pre>
+                            <br />
+                            <a href="{% problem_url "problems:testcase_output" testcase.pk %}">
+                                    {% trans 'Download' %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row">
+         <div class="btn-group col-xs-12">
+                <a href="{% problem_url 'problems:testcases' %}" class="btn btn-primary col-xs-3">
+                    {% trans 'Back' %}
+                </a>
+                <a href="{% problem_url 'problems:edit_testcase' testcase.pk %}" class="btn  btn-default col-xs-3">
+                    <i class="fa fa-pencil"></i>
+                    {% trans 'Edit' %}
+                </a>
+                {% if testcase.testcase_generation_completed %}
+                    <a class="btn btn-warning col-xs-3" disabled="disabled">
+                        {% trans 'Generated' %}
+                    </a>
+                {% elif testcase.being_generated %}
+                    <a class="btn btn-warning col-xs-3" disabled="disabled">
+                        <i class="fa fa-spinner"></i>
+                        {% trans 'Generating' %}...
+                    </a>
+                {% else %}
+                    <a data-method="post" href="{% problem_url 'problems:generate_testcase' testcase.pk %}"
+                       class="btn btn-warning col-xs-3">
+                        <i class="fa fa-gear"></i>
+                        {% trans 'Generate' %}
+                    </a>
+                {% endif %}
+                <a data-method="post" data-confirm='{% trans 'Are you sure you want to delete this testcase?' %}' href="{% problem_url 'problems:delete_testcase' testcase.pk %}" class="btn btn-danger col-xs-3">
+                    <i class="fa fa-trash"></i>
+                    {% trans 'Delete' %}
+                </a>
+        </div>
+    </div>
+{% endblock %}

@@ -20,8 +20,8 @@ class Solution(RevisionObject):
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
                             blank=True, db_index=True)
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
-    tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore")
-    subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore")
+    tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore", related_name="+")
+    subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore", related_name="+")
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
     verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
@@ -46,7 +46,11 @@ class Solution(RevisionObject):
         return "Not supported"
 
     def get_verdict_representation(self):
-        return SolutionVerdict.__members__.get(self.verdict, None).value
+        verdict = SolutionVerdict.__members__.get(self.verdict, None)
+        if verdict:
+            return verdict.value
+        else:
+            return None
 
     def save(self, *args, **kwargs):
         if self.name == "":

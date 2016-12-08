@@ -7,7 +7,7 @@
 
 {% block problem_content %}
     <div class="row">
-    <h1>{% trans 'Add a testcase' %}</h1>
+    <h1>{% trans 'Edit testcase' %}</h1>
     </div>
     <div class="row">
     {% bootstrap_form_errors form %}
@@ -15,7 +15,7 @@
     <div class="row">
         <h3> {% trans 'Input' %} </h3>
     </div>
-    <form class="form-horizontal" method="post" action="{% problem_url "problems:add_testcase" %}" enctype="multipart/form-data">
+    <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
         <div class="row">
             <div class="col-sm-12">
 
@@ -25,6 +25,9 @@
                         <label for="id_input_uploaded_file" class="control-label"> {% trans 'Upload a file' %}:</label>
                     </span>
                     <span class="col-sm-10">{% bootstrap_field form.input_uploaded_file layout="inline" %}</span>
+                </div>
+                <div class="row">
+                    <span class="col-sm-10 col-sm-offset-2 text-muted">{{  form.input_uploaded_file.help_text }}</span>
                 </div>
                 <div class="strike">
                     <span>{% trans 'OR' %}</span>
@@ -46,27 +49,58 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
+                {% if not instance.output_static %}
                 <p>
                     {% trans 'Usually the output is generated using the model solution. Alternatively, you can' %}
                     <a href="#" data-toggle="collapse" data-target="#output-upload">
                         {% trans 'provide a file as the output' %}
                     </a>.
                 </p>
-                <div class="row collapse" id="output-upload">
+                <div class="collapse" id="output-upload">
+                <div class="row">
+                {% else %}
+                <p>
+                    {% trans 'Currently this testcase uses a static file previously uploaded by one of collaborators. You can upload another file using the form below.' %}
+                </p>
+                <div class="row">
+                {% endif %}
                     <span class="col-sm-2">
                         <label for="id_input_uploaded_file" class="control-label"> {% trans 'Upload a file' %}:</label>
                     </span>
                     <span class="col-sm-10">{% bootstrap_field form.output_uploaded_file layout="inline" %}</span>
+
                 </div>
+                <div class="row">
+                    <span class="col-sm-10 col-sm-offset-2 text-muted">{{  form.output_uploaded_file.help_text }}</span>
+                </div>
+                </div>
+                {% if instance.output_static %}
+                <div class="row">
+                    <div class="col-sm-12">
+                    <input class="" id="id_remove_output_uploaded_file" name="remove_output_uploaded_file" title="" type="checkbox" />
+                    &nbsp;
+                        <label for="id_remove_output_uploaded_file" class="control-label">
+                            {% trans 'Alternatively, you can choose to generate the solution using the model solution by checking this box' %}
+                        </label>
+                    </div>
+
+
+                </div>
+                {% endif %}
+
 
                 {# {% bootstrap_field form|privileged_get:"_solution" %} #}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
-                        {% trans 'Submit' %}
+                        {% trans 'Save' %}
                     </button>
                 </div>
 
             </div>
         </div>
     </form>
+{% endblock %}
+
+{% block foot_js %}
+    {{ block.super }}
 {% endblock %}

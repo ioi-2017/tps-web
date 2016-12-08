@@ -36,7 +36,7 @@ class Task(models.Model):
         self.save()
         # TODO: Handle the case where run might fail with an exception
         self.run(*args, **kwargs)
-        self.state = State.finished.value
+        self.state = State.finished.name
         self.save()
 
     def apply_async(self, *args, **kwargs):
@@ -44,10 +44,10 @@ class Task(models.Model):
         result = sig.freeze()
         with transaction.atomic():
             self.queue_reference_key = result.id
-            self.state = State.queued.value
+            self.state = State.queued.name
             self.save()
             result = sig.apply() # FIXME: Make this async
-            result.wait(propagate = True)
+            result.wait(propagate=True)
 
     def abort(self):
         """

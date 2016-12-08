@@ -15,7 +15,7 @@ class ExportPackage(models.Model):
         ("zip", "zip"),
         ("tar", "tar"),
     )
-
+    models.AutoField
     problem = models.ForeignKey("Problem")
     revision = models.ForeignKey("ProblemRevision", related_name='+')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
@@ -34,7 +34,7 @@ class ExportPackage(models.Model):
             )
 
     def being_created(self):
-        return self.export_tasks.exclude(state=State.finished.value).count() > 0
+        return self.export_tasks.exclude(state=State.finished.name).exclude(state__isnull=True).exists()
 
 
 class ExportPackageCreationTask(Task):

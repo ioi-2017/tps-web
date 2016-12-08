@@ -32,8 +32,13 @@ problem_urls = ([
 
         url(r'^testcases/$', TestCasesListView.as_view(), name="testcases"),
         url(r'^testcase/add/$', TestCaseAddView.as_view(), name="add_testcase"),
-        url(r'^testcase/(?P<testcase_id>\d+)/input/$', TestCaseInputDownloadView.as_view(), name="download_testcase_input"),
-        url(r'^testcase/(?P<testcase_id>\d+)/output/$', TestCaseOutputDownloadView.as_view(), name="download_testcase_output"),
+        url(r'^testcase/(?P<testcase_id>\d+)/edit/$', TestCaseEditView.as_view(), name="edit_testcase"),
+        url(r'^testcase/(?P<testcase_id>\d+)/delete/$', TestCaseDeleteView, name="delete_testcase"),
+        url(r'^testcase/(?P<testcase_id>\d+)/input/$', TestCaseInputDownloadView.as_view(), name="testcase_input"),
+        url(r'^testcase/(?P<testcase_id>\d+)/output/$', TestCaseOutputDownloadView.as_view(), name="testcase_output"),
+        url(r'^testcase/(?P<testcase_id>\d+)/generate/$', TestCaseGenerateView.as_view(), name="generate_testcase"),
+        url(r'^testcase/generate/all/$', TestCaseGenerateView.as_view(), name="generate_testcase"),
+        url(r'^testcase/(?P<testcase_id>\d+)/details/$', TestCaseDetailsView.as_view(), name="testcase_details"),
 
         url(r'^validators/$', ValidatorsListView.as_view(), name="validators"),
         url(r'^validator/(?P<validator_id>\d+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),

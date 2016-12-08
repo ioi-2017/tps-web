@@ -54,7 +54,7 @@ CheckerDeleteView = ProblemObjectDeleteView.as_view(
     object_type=Checker,
     permissions_required="delete_checkers",
     url_slug="checker_id",
-    redirect_to="problems:checker"
+    redirect_to="problems:checkers"
 )
 
 

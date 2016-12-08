@@ -93,6 +93,7 @@ body {
     overflow-y: auto;
     overflow-x: auto;
     background-color: ghostwhite;
+    z-index: 10;
 
 
 }
@@ -115,6 +116,7 @@ body {
     height: 100%;
     padding-left: 40px;
     padding-right: 40px;
+    margin-bottom: 20px;
 
 
 }
@@ -162,8 +164,8 @@ body {
     padding: 0;
     margin: 0;
     white-space: nowrap;
-
 }
+
 
 .sidebar-menu > li {
   position: relative;
@@ -176,6 +178,7 @@ body {
   position: relative;
   display: block;
   padding: 10px 20px;
+  line-height: 100%;
 
 }
 
@@ -214,6 +217,7 @@ pre.source-code {
     left:0;
     z-index: 1;
 }
+
 
 .collapsed-sidebar .full-open-only {
     display: none;
@@ -355,4 +359,23 @@ tr.active-row {
 
 .alert.alert-danger.force-bgcolor {
     background-color: #f2dede !important;
+}
+
+
+.sidebar-menu .error {
+    position: absolute;
+    right: 10px;
+
+}
+
+.collapsed-sidebar .error {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    border-radius: 10px;
+}
+
+.bg-white {
+    background-color: white;
+
 }

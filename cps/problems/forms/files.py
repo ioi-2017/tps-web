@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 class SourceFileEditForm(ProblemObjectModelForm):
 
     file = forms.FileField(label=_("Source file"), required=False,
-                           help_text=_("Leave this empty to keep current file"))
+                           help_text=_("Leave this empty to keep the current file"))
 
     field_order = ['file', 'source_language', 'name']
 
@@ -38,7 +38,7 @@ class SourceFileAddForm(SourceFileEditForm):
 class ResourceEditForm(ProblemObjectModelForm):
 
     file = forms.FileField(label=_("File"), required=False,
-                                    help_text=_("Leave this empty to keep the current file"))
+                           help_text=_("Leave this empty to keep the current file"))
 
     field_order = ['file', 'name']
 

@@ -8,42 +8,89 @@
     <div class="row">
         <h2> {% trans 'Testcases' %} </h2>
     </div>
+    <div class="row">
     {% if revision_editable  %}
-        <div class="row">
-            <a href="{% problem_url "problems:add_testcase" %}" class="btn btn-success">
-                <i class="fa fa-plus"></i> {% trans 'Add a testcase' %}
-            </a>
-        </div>
+        <a href="{% problem_url "problems:add_testcase" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a testcase' %}
+        </a>
     {% endif %}
+        <a data-method="post" href="{% problem_url "problems:generate_testcase" %}" class="btn btn-warning">
+            <i class="fa fa-gear"></i>
+            {% trans 'Generate all testcases' %}
+        </a>
+    </div>
     <br />
     <div class="row">
         {% if testcases %}
-            <table class="table table-bordered table-responsive table-striped">
-                <thead>
+        <table class="table table-bordered table-responsive">
+            <thead>
+                <tr>
+                    <th class="col-md-1"> # </th>
+                    <th class="col-md-2"> {% trans 'Name' %} </th>
+                    <th class="col-md-4"> {% trans 'Input' %} </th>
+                    <th class="col-md-2"> {% trans 'Script' %} </th>
+                    <th class="col-md-2"> {% trans 'Status' %} </th>
+                    <th class="col-md-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for testcase in testcases %}
+                {% if testcase.generation_completed and testcase.has_errors %}
+                    <tr class="bg-danger">
+                {% else %}
                     <tr>
-                        <th> Name </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for testcase in testcases %}
-                    <tr>
-                        <td>{{ testcase.name }}</td>
-                        <td>
-                            <a href="{% problem_url "problems:download_testcase_input" testcase.id %}" class="btn btn-primary">
-                                <i class="fa fa-download"></i>
-                                {% trans 'Input' %}
+                {% endif %}
+                    <td>{{ testcase.testcase_number }}</td>
+                    <td>{{ testcase.name }}</td>
+                    <td>
+
+                        {% if testcase.input_static %}
+                            <pre>{{ testcase.input_file.get_truncated_content | truncatechars:25 }}</pre>
+                        {% else %}
+                            <pre>{{ testcase.input_generation_command }}</pre>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not testcase.script %}
+                            {% trans 'Manual' %}
+                        {% else %}
+                            {{ testcase.script }}
+                        {% endif %}
+                    </td>
+                    <td class="text-center fa-lg">
+                        {% if testcase.being_created %}
+                            <span class="fa fa-spinner"></span>
+                            {% trans 'Generating' %}...
+                        {% elif testcase.testcase_generation_completed %}
+                            {% if testcase.has_errors %}
+                                <i class="fa fa-close text-danger"></i>
+                            {% else %}
+                                <i class="fa fa-check text-success"></i>
+                            {% endif %}
+                        {% else %}
+                            <a data-method="post" href="{% problem_url "problems:generate_testcase" testcase.id %}" class="btn btn-warning">
+                                <i class="fa fa-gear"></i>
+                                {% trans 'Generate' %}
                             </a>
-                            <a href="{% problem_url "problems:download_testcase_output" testcase.id %}" class="btn btn-primary">
-                                <i class="fa fa-download"></i>
-                                {% trans 'Output' %}
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                        {%  endif %}
+                    </td>
+                    <td>
+                        <a href="{% problem_url "problems:testcase_details" testcase.pk %}" class="text-primary" title="{% trans 'Details' %}">
+                            <i class="fa fa-search-plus"></i>
+                        </a>
+                        <a href="{% problem_url "problems:edit_testcase" testcase.pk %}" class="text-warning" title="{% trans 'Edit' %}">
+                            <i class="fa fa-pencil"></i>
+                        </a>
+                        <a href="{% problem_url 'problems:delete_testcase' testcase.pk %}" class="text-danger" title="{% trans 'Delete' %}" data-method="post" data-confirm='{% trans 'Are you sure you want to delete this testcase?' %}'>
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
         {% else %}
+
             <h4 class="text-muted">
                 {% trans 'No testcases exists' %}
             </h4>

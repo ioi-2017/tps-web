@@ -4,74 +4,34 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from file_repository.models import FileModel
-from problems.models import RevisionObject
 from problems.models.file import SourceFile
-from problems.models.problem import ProblemRevision
-from problems.models.testdata import Subtask, TestCase
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from runner.sandbox.utils import get_exit_status_human_translation
-from tasks.decorators import allow_async_method
-from tasks.models import Task
+
 
 __all__ = ["Validator", "ValidatorResult"]
 
-class Validator(SourceFile):
 
-    _subtasks = models.ManyToManyField(Subtask, verbose_name=_("subtasks"))
-    global_validator = models.BooleanField(
-        verbose_name=_("all subtasks"),
-        help_text=_("if marked, it validates all subtasks")
-    )
-
-    @property
-    def subtasks(self):
-        if self.global_validator:
-            return self.problem.subtasks.all()
-        else:
-            return self._subtasks
-
-    def validate(self):
-        """
-        This method is used to validate the testcases in the given subtasks.
-        If subtasks is None, it is replaced by self.subtasks
-        """
-        if self.global_validator:
-            testcases = self.problem.testcase_set.all()
-        else:
-            testcases = self.problem.testcase_set.filter(subtasks__in=self._subtasks.all()).all()
-
-        for testcase in testcases:
-            self.validate_testcase(testcase)
-
-
-    def validate_testcase(self, testcase):
-        """
-        This method is used to validate one testcase.
-        """
-        try:
-            old_validator_result = ValidatorResult.objects.get(testcase=testcase, validator=self)
-            old_validator_result.delete()
-        except:
-            pass
-        validator_result = ValidatorResult(testcase=testcase, validator=self)
-        validator_result.save()
-        validator_result.apply_async()
-
-
-class ValidatorResult(Task):
+class ValidatorResult(models.Model):
     exit_status = models.CharField(max_length=200, verbose_name=_("exit status"), null=True)
-    valid = models.NullBooleanField(verbose_name=_("valid"))
+    valid = models.NullBooleanField(verbose_name=_("valid"), default=None)
     executed = models.BooleanField(verbose_name=_("executed"), default=False)
     validation_message = models.TextField(verbose_name=_("validation message"))
 
-    testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
-    validator = models.ForeignKey(Validator, verbose_name=_("validator"))
+    testcase = models.ForeignKey("TestCase", verbose_name=_("testcase"), related_name="validation_results")
+    validator = models.ForeignKey("Validator", verbose_name=_("validator"), related_name="results")
 
     class Meta:
         unique_together = ("testcase", "validator")
+
+    @classmethod
+    def get_or_create(cls, validator, testcase):
+        try:
+            return cls.objects.get(validator=validator, testcase=testcase)
+        except cls.DoesNotExist:
+            return cls.objects.create(validator=validator, testcase=testcase)
 
     def run(self):
         validation_command = get_execution_command(self.validator.source_language, "validator")
@@ -111,3 +71,56 @@ class ValidatorResult(Task):
             self.exit_status = "System Error"
         self.executed = True
         self.save()
+
+
+class Validator(SourceFile):
+
+    _subtasks = models.ManyToManyField("Subtask", verbose_name=_("subtasks"))
+    global_validator = models.BooleanField(
+        verbose_name=_("all subtasks"),
+        help_text=_("if marked, it validates all subtasks")
+    )
+
+    @property
+    def subtasks(self):
+        if self.global_validator:
+            return self.problem.subtasks.all()
+        else:
+            return self._subtasks
+
+    @property
+    def testcases(self):
+        if self.global_validator:
+            testcases = self.problem.testcase_set.all()
+        else:
+            testcases = self.problem.testcase_set.filter(subtasks__in=self._subtasks.all()).all()
+        return testcases
+
+    def validate(self):
+        """
+        This method is used to validate the testcases in the given subtasks.
+        If subtasks is None, it is replaced by self.subtasks
+        """
+        for testcase in self.testcases:
+            self.validate_testcase(testcase)
+
+    def validate_testcase(self, testcase, force_recreate=False):
+        """
+        This method is used to validate one testcase.
+        """
+        if force_recreate:
+            try:
+                self.results.get(testcase=testcase).delete()
+            except ValidatorResult.DoesNotExist:
+                pass
+        validator_result = self.get_or_create_testcase_result(testcase)
+        validator_result.run()
+
+    def get_or_create_testcase_result(self, testcase):
+        return ValidatorResult.get_or_create(
+                testcase=testcase,
+                validator=self
+        )
+
+    def invalidate(self):
+        self.results.all().delete()

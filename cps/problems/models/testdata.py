@@ -5,7 +5,7 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
@@ -17,7 +17,7 @@ from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from tasks.decorators import allow_async_method
-from tasks.models import Task
+from tasks.models import Task, State
 import shlex
 
 logger = logging.getLogger(__name__)
@@ -30,11 +30,36 @@ class InputGenerator(SourceFile):
     pass
 
 
+class TestCaseValidation(Task):
+    testcase = models.ForeignKey("TestCase")
+    validator = models.ForeignKey("Validator")
+
+    def run(self):
+        self.validator.validate_testcase(self.testcase)
+
+    @classmethod
+    def create_and_run_all_for_testcase(cls, testcase):
+        for validator in testcase.validators:
+            cls.objects.create(
+                    testcase=testcase,
+                    validator=validator
+            ).apply_async()
+
+    @classmethod
+    def create_and_run_all_for_validator(cls, validator):
+        for testcase in validator.testcases:
+            cls.objects.create(
+                    testcase=testcase,
+                    validator=validator
+            ).apply_async()
+
+
 class TestCaseGeneration(Task):
     testcase = models.ForeignKey("TestCase")
 
     def run(self):
         self.testcase.generate()
+        TestCaseValidation.create_and_run_all_for_testcase(self.testcase)
 
 
 class Subtask(RevisionObject):
@@ -88,7 +113,7 @@ class Script(RevisionObject):
             data["name"] = line_split[-1]
             line_split = line_split[:-1]
 
-        data["_input_generation_parameters"] = shlex.quote(line_split[1:])
+        data["_input_generation_parameters"] = " ".join(shlex.quote(line) for line in line_split[1:])
 
         return data
 
@@ -105,10 +130,10 @@ class TestCase(RevisionObject):
     name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
 
-    _input_static = models.BooleanField(
+    input_static = models.BooleanField(
         editable=False,
     )
-    _output_static = models.BooleanField(
+    output_static = models.BooleanField(
         editable=False,
     )
 
@@ -124,15 +149,15 @@ class TestCase(RevisionObject):
     )
     _input_generator_name = models.CharField(verbose_name=_("generator"), null=True, blank=True, max_length=256)
     _input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
-    _input_generation_log = models.TextField(verbose_name=_("input generation log"))
-    _input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
+    input_generation_log = models.TextField(verbose_name=_("input generation log"), null=True)
+    input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
 
     # Output-related fields
     _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True, related_name='+', blank=True)
 
     _output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
-    _output_generation_log = models.TextField(verbose_name=_("output generation log"))
-    _output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
+    output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
+    output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
 
     # TODO: Add output_verified: each output must be verified either automatically
     # (e.g. by running checker on the test) or manually.
@@ -163,6 +188,10 @@ class TestCase(RevisionObject):
         self.save()
         return self.judge_code
 
+    @property
+    def input_generation_command(self):
+        return "{} {}".format(self._input_generator_name, self._input_generation_parameters)
+
     @staticmethod
     def get_matching_fields():
         return ["name"]
@@ -179,18 +208,18 @@ class TestCase(RevisionObject):
         """
 
         if self._input_uploaded_file is not None:
-            self._input_static = True
+            self.input_static = True
         elif self._input_generator_name is not None:
-            self._input_static = False
+            self.input_static = False
         else:
             # Since a model must be cleaned before saving and this is checked in the validation method,
             # we simply ignore it here in order to avoid problems with django-clone
             pass
 
         if self._output_uploaded_file is not None:
-            self._output_static = True
+            self.output_static = True
         else:
-            self._output_static = False
+            self.output_static = False
 
         if getattr(self, "testcase_number", None) is None:
             current_number = self.problem.testcase_set.all().aggregate(Max('testcase_number'))["testcase_number__max"]
@@ -199,7 +228,7 @@ class TestCase(RevisionObject):
             self.testcase_number = current_number + 1
 
         if not self.name or len(self.name) == 0:
-            self.name = "auto_{}".format(str(self.testcase_number))
+            self.name = "test_{0:3d}".format(self.testcase_number)
 
         super(TestCase, self).save(*args, **kwargs)
 
@@ -214,18 +243,18 @@ class TestCase(RevisionObject):
         """
         In case the input is not static, generates the input using the generation command
         """
-        if self._input_static or self.input_file_generated():
+        if self.input_static:
             return
 
         if self._input_generator_name is None:
             logger.error("A testcase has neither a generator nor a static input")
-            self._input_generation_log = "Generation failed. No generator specified."
-            self._input_generation_successful = False
+            self.input_generation_log = "Generation failed. No generator specified."
+            self.input_generation_successful = False
         elif self._input_generator is None:
-            self._input_generation_log = "Generation failed. Generator {} not found".format(
+            self.input_generation_log = "Generation failed. Generator {} not found".format(
                 self._input_generator_name,
             )
-            self._input_generation_successful = False
+            self.input_generation_successful = False
         else:
             generation_command = get_execution_command(self._input_generator.source_language, "generator")
             generation_command.extend(shlex.split(self._input_generation_parameters))
@@ -234,7 +263,7 @@ class TestCase(RevisionObject):
             try:
                 generator_compiled = self._input_generator.compiled_file()
             except:
-                self._input_generation_log = "Generation failed. Generator didn't compile"
+                self.input_generation_log = "Generation failed. Generator didn't compile"
                 self.save()
                 return
 
@@ -252,20 +281,21 @@ class TestCase(RevisionObject):
                     str(self),
                     str(sandbox_datas[0]))
                 )
-                self._input_generation_log = "System failed to generate the input. Check the logs for more details. " \
-                                       "This issue must be resolved by a system administrator"
-                self._input_generation_successful = False
+                self.input_generation_log = \
+                    "System failed to generate the input. " \
+                    "Check the logs for more details. " \
+                    "This issue must be resolved by a system administrator"
+                self.input_generation_successful = False
             elif not execution_success:
-                self._input_generation_log = "Generation failed. Generator exited with exit code {}.".format(
+                self.input_generation_log = "Generation failed. Generator exited with exit code {}.".format(
                     sandbox_datas["exit_code"]
                 )
-                self._input_generation_successful = False
+                self.input_generation_successful = False
             else:
                 self._input_generated_file = outputs[stdout_redirect]
-                self._input_generation_log = "Generation successful."
-                self._input_generation_successful = True
+                self.input_generation_log = "Generation successful."
+                self.input_generation_successful = True
         self.save()
-
 
     @property
     def input_file(self):
@@ -274,38 +304,62 @@ class TestCase(RevisionObject):
         If the latter is the case, then it automatically starts the generation of input file.
         """
 
-        if self._input_static is False:
-            if not self._input_generation_successful:
-                self.generate()
+        if self.input_static is False:
+            if not self.input_file_generated():
+                self._generate_input_file()
             return self._input_generated_file
         else:
             return self._input_uploaded_file
+
+    @property
+    def validators(self):
+        global_validators = Q(global_validator=True)
+        validators_for_subtasks = Q(_subtasks__in=self.subtasks.all())
+        return self.problem.validator_set.filter(
+                global_validators | validators_for_subtasks
+        ).all()
+
+    def validate_input_file(self):
+        for validator in self.validators:
+            validator.validate_testcase(self)
+
+    def input_file_validated(self):
+        for validator in self.validators:
+            if not validator.get_or_create_testcase_result(self).valid:
+                return False
+
+        return True
+
+    @property
+    def solution(self):
+        return self.problem.problem_data.model_solution
 
     def _generate_output_file(self):
         """
         In case the output is not static, generates the output using the generation command
         """
 
-        if self._output_static or self.output_file_generated():
+        if self.output_static:
             return
 
         if not self.input_file_generated():
-            logger.warning("Tried generating output before a successful generation of input")
-            self._output_generation_log = "Generation failed. Input hasn't been generated yet"
-            self._output_generation_successful = False
+            self._generate_input_file()
+        if not self.input_file_generated():
+            self.output_generation_log = "Generation failed. Input couldn't be generated"
+            self.output_generation_successful = False
         else:
-            solution = self.problem.problem_data.model_solution
+            solution = self.solution
             if solution is None:
-                self._output_generation_log = "Generation failed. No model solution specified."
-                self._output_generation_successful = False
+                self.output_generation_log = "Generation failed. No model solution specified."
+                self.output_generation_successful = False
             else:
                 problem_code = self.problem.get_judge_code()
                 testcase_code = self.get_judge_code()
                 judge = Judge.get_judge()
                 if solution.language not in judge.get_supported_languages():
-                    self._output_generation_log = \
+                    self.output_generation_log = \
                         "Generation failed. Solution language is not supported by the judge"
-                    self._output_generation_successful = False
+                    self.output_generation_successful = False
                 else:
                     evaluation_result = judge.generate_output(
                         problem_code,
@@ -314,26 +368,25 @@ class TestCase(RevisionObject):
                         testcase_code
                     )
                     if not evaluation_result.success:
-                        self._output_generation_log = \
+                        self.output_generation_log = \
                             "Generation failed. Judge couldn't execute the solution."
-                        self._output_generation_successful = False
+                        self.output_generation_successful = False
                     elif evaluation_result.verdict != JudgeVerdict.ok:
-                        self._output_generation_log = \
+                        self.output_generation_log = \
                             "Generation failed. Solution exited with verdict {} on the judge".format(
                                 str(evaluation_result.verdict.name)
                             )
-                        self._output_generation_successful = False
+                        self.output_generation_successful = False
                     else:
-                        self._output_generation_log = "Generation successful"
-                        self._output_generation_successful = True
+                        self.output_generation_log = "Generation successful"
+                        self.output_generation_successful = True
                         self._output_generated_file = evaluation_result.output_file
         self.save()
 
     def generate(self):
         # TODO: Only generate if a generation process hasn't started yet
         self._generate_input_file()
-        if self.input_file_generated():
-            self._generate_output_file()
+        self._generate_output_file()
 
     @property
     def output_file(self):
@@ -341,24 +394,78 @@ class TestCase(RevisionObject):
         returns a File instance for the input file or None if the input hasn't been generated yet.
         If the latter is the case, then it automatically starts the generation of input file.
         """
-        if self._output_static is False:
-            if not self._output_generation_successful:
+        if self.output_static is False:
+            if not self.output_generation_successful:
                 self.generate()
             return self._output_generated_file
         else:
             return self._output_uploaded_file
 
     def output_file_generated(self):
-        if self._output_static is True:
+        if self.output_static is True:
             return True
         else:
-            return self._output_generation_successful
+            return self.output_generation_successful
 
     def input_file_generated(self):
-        if self._input_static is True:
+        if self.input_static is True:
             return True
         else:
-            return self._input_generation_successful
+            return self.input_generation_successful
+
+    def _invalidate_output(self, commit=True):
+        self.output_generation_log = None
+        self._output_generated_file = None
+        self.output_generation_successful = None
+        if commit:
+            self.save()
+
+    def _invalidate_input(self, commit=True):
+        self.input_generation_log = None
+        self._input_generated_file = None
+        self.input_generation_successful = None
+        if commit:
+            self.save()
+
+    def _invalidate_validation(self):
+        self.validation_results.all().delete()
+
+    def invalidate(self):
+        self._invalidate_output(commit=False)
+        self._invalidate_validation()
+        self._invalidate_input(commit=False)
+        self.save()
+
+    def has_errors(self):
+        input_generation_failed = not self.input_file_generated()
+        output_generation_failed = not self.output_file_generated()
+        input_validation_failed = not self.input_file_validated()
+
+        failed = \
+            input_generation_failed or \
+            output_generation_failed or \
+            input_validation_failed
+
+        return failed
+
+    def input_generation_completed(self):
+        return self.input_generation_successful is not None or self.input_static
+
+    def output_generation_completed(self):
+        return self.output_generation_successful is not None or self.output_static
+
+    def testcase_generation_completed(self):
+        input_validation_tried =  \
+            self.validation_results.filter(valid__isnull=False).count() == len(self.validators)
+
+        return self.input_generation_completed() and \
+            self.output_generation_completed() and \
+            input_validation_tried
+
+    def being_generated(self):
+        return self.testcasegeneration_set.exclude(
+                state=State.finished.name
+        ).exclude(state__isnull=True).exists()
 
     def __str__(self):
         return self.name
