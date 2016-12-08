@@ -311,7 +311,7 @@ class ProblemRevision(models.Model):
             return new_revision
 
 
-class RevisionObjectQuerySet(models.QuerySet):
+class ProblemDataQuerySet(models.QuerySet):
 
     def find_matches(self, second_queryset, matching_fields=None):
 
@@ -331,7 +331,7 @@ class RevisionObjectQuerySet(models.QuerySet):
         return [(my, other)]
 
 
-class ProblemDataObjectManager(models.Manager):
+class ProblemDataManager(models.Manager):
     use_for_related_fields = True
 
 
@@ -347,6 +347,8 @@ class ProblemData(RevisionObject):
     score_type_parameters = models.TextField(verbose_name=_("score type parameters"), null=True)
 
     checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
+
+    objects = ProblemDataManager.from_queryset(ProblemDataQuerySet)()
 
     @property
     def model_solution(self):
