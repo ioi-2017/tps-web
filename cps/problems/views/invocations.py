@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -116,6 +117,8 @@ class InvocationOutputDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id
         })
+        if not obj.checker_execution_success:
+            raise Http404()
         response = HttpResponse(obj.solution_output.file, content_type='application/file')
         name = "attachment; filename=solution.out"
         response['Content-Disposition'] = name
@@ -130,6 +133,8 @@ class InvocationInputDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id
         })
+        if not obj.testcase.input_file_generated():
+            raise Http404()
         response = HttpResponse(obj.testcase.input_file.file, content_type='application/file')
         name = "attachment; filename={}.in".format(str(obj.testcase))
         response['Content-Disposition'] = name
@@ -144,6 +149,8 @@ class InvocationAnswerDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id
         })
+        if not obj.testcase.output_file_generated():
+            raise Http404()
         response = HttpResponse(obj.testcase.output_file.file, content_type='application/file')
         name = "attachment; filename={}.ans".format(str(obj.testcase))
         response['Content-Disposition'] = name
