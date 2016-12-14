@@ -4,9 +4,12 @@ from django.db import models
 from file_repository.models import FileModel
 from tasks.models import Task, State
 from trader import get_exporter
-from trader.exporters import AVAILABLE_EXPORTERS
 
 from django.utils.translation import ugettext_lazy as _
+
+from trader.exporters import AVAILABLE_EXPORTERS
+
+EXPORTER_CHOICES = [(name, name) for loader, name in AVAILABLE_EXPORTERS]
 
 
 class ExportPackage(models.Model):
@@ -16,11 +19,11 @@ class ExportPackage(models.Model):
         ("tar", "tar"),
     )
     models.AutoField
-    problem = models.ForeignKey("Problem")
+    problem = models.ForeignKey("Problem", related_name='exports')
     revision = models.ForeignKey("ProblemRevision", related_name='+')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(auto_now_add=True)
-    exporter = models.CharField(max_length=20, choices=AVAILABLE_EXPORTERS, verbose_name=_("exporter"))
+    exporter = models.CharField(max_length=20, choices=EXPORTER_CHOICES, verbose_name=_("exporter"))
     export_format = models.CharField(max_length=20, choices=EXPORT_FORMAT_CHOICES, verbose_name=_("export format"), default="zip")
     archive = models.ForeignKey(FileModel, verbose_name=_("archive"), null=True, editable=False)
 
@@ -32,7 +35,13 @@ class ExportPackage(models.Model):
                 self.revision.problem_data.code_name,
                 format=self.export_format
             )
+            self.save()
 
+    @property
+    def is_ready(self):
+        return self.archive is not None
+
+    @property
     def being_created(self):
         return self.export_tasks.exclude(state=State.finished.name).exclude(state__isnull=True).exists()
 

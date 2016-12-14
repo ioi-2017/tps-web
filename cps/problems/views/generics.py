@@ -39,6 +39,7 @@ class RevisionObjectView(View):
             self.request = request
             self.args = args
             self.kwargs = kwargs
+            self.revision_slug = revision_slug
 
             self.problem, self.fork, self.revision = \
                 extract_revision_data(problem_id, revision_slug)

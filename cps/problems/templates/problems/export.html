@@ -1,0 +1,85 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% load bootstrap3 %}
+
+{% block problem_content %}
+    <div class="row">
+        <div class="row">
+            <h2> {% trans 'Exports' %} </h2>
+        </div>
+
+        <div class="row">
+            {% if exports %}
+                <table class="table table-bordered table-responsive">
+                    <thead>
+                    <tr>
+                        <th class="col-md-1"> {% trans 'Export id' %} </th>
+                        <th class="col-md-2"> {% trans 'Revision' %} </th>
+                        <th class="col-md-3"> {% trans 'Creation date' %} </th>
+                        <th class="col-md-2"> {% trans 'Exporter' %} </th>
+                        <th class="col-md-2"> {% trans 'Export Format' %} </th>
+                        <th class="col-md-2"> {% trans 'Download' %} </th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for exp in exports %}
+                        <tr>
+                            <td>
+                                {{ exp.id }}
+                            </td>
+                            <td>
+                                {{ exp.revision }}
+                            </td>
+                            <td>
+                                {{ exp.creation_date }}
+                            </td>
+                            <td>
+                                {{ exp.exporter }}
+                            </td>
+                            <td>
+                                {{ exp.export_format }}
+                            </td>
+                            {% if exp.is_ready %}
+                                <td>
+                                    <a href="{% problem_url "problems:export_download" exp.pk %}" class="btn btn-success"> {% trans "Download" %}</a>
+                                </td>
+                            {% elif exp.being_created %}
+                                <td> {% trans "Please Wait" %} <br> {% trans "Generating" %}</td>
+                            {% else %}
+                                <td>
+                                    <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Start" %}</a>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h4 class="text-muted">
+                    {% trans 'No exports exists' %}
+                </h4>
+            {% endif %}
+        </div>
+
+
+        <div class="row">
+            <div class="row">
+                <h2> {% trans 'Create Export Package' %} </h2>
+            </div>
+            {% if is_master %}
+                <div>
+                    {% trans "You can only create export package in Master!" %}
+                </div>
+            {% else %}
+                <div class="col-md-4">
+                    <form method="POST" class="">
+                        {% bootstrap_form form %}
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">{% trans "Create" %}</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+{% endblock %}

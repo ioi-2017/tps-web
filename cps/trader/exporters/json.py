@@ -93,7 +93,7 @@ class JSONExporter(BaseExporter):
         # Exporting model solutions data
         model_solutions = {
             "default": problem_data.model_solution.name,
-        }
+        } if problem_data.model_solution is not None else {}
         # TODO: Handle model solutions subtasks here
 
         self.write_to_file(
@@ -105,7 +105,8 @@ class JSONExporter(BaseExporter):
 
         # Exporting checker( We only extract main checker)
         checker = problem_data.checker
-        self.extract_from_storage_to_path(checker.source_file, "checker_{}".format(checker.name))
+        if checker is not None:
+            self.extract_from_storage_to_path(checker.source_file, "checker_{}".format(checker.name))
 
         # Exporting validators
         self.create_directory(self.VALIDATOR_DIR_NAME)

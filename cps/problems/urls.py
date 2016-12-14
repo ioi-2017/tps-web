@@ -1,10 +1,15 @@
 from django.conf.urls import url
 
+from problems.views.export import ExportView, ExportDownloadView, ExportPackageStarterView
 from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
         InvocationAnswerDownloadView
 from .views import *
 
 problem_urls = ([
+        url(r'^export/$', ExportView.as_view(), name="export"),
+        url(r'export/(?P<export_id>\d+)/download/$', ExportDownloadView.as_view(), name="export_download"),
+        url(r'export/(?P<export_id>\d+)/start/$', ExportPackageStarterView.as_view(), name="export_start"),
+
         url(r'^history/$', HistoryView.as_view(), name="history"),
         url(r'^$', Overview.as_view(), name="overview"),
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),
