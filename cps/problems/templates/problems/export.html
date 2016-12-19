@@ -49,7 +49,7 @@
                                 <td> {% trans "Please Wait" %} <br> {% trans "Generating" %}</td>
                             {% else %}
                                 <td>
-                                    <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Start" %}</a>
+                                    <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Generate" %}</a>
                                 </td>
                             {% endif %}
                         </tr>

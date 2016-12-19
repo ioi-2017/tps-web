@@ -14,15 +14,15 @@
             <tbody>
                 <tr>
                     <td>#</td>
-                    <td colspan="2">{{ testcase.testcase_number }}</td>
+                    <td colspan="3">{{ testcase.testcase_number }}</td>
                 </tr>
                 <tr>
                     <td>{% trans 'Name' %}</td>
-                    <td colspan="2">{{ testcase.name }}</td>
+                    <td colspan="3">{{ testcase.name }}</td>
                 </tr>
                 <tr>
                     <td>{% trans 'Script' %}</td>
-                    <td colspan="2">
+                    <td colspan="3">
                         {% if testcase.script %}
                             {{ testcase.script }}
                         {% else %}
@@ -32,8 +32,38 @@
                 </tr>
                 {% if testcase.input_static %}
                     <tr>
-                        <td> {% trans 'Input' %} </td>
-                        <td colspan="2">
+                        <td rowspan="{{ validation_results|length|add:"1" }}"> {% trans 'Input' %} </td>
+                        {% for result in validation_results %}
+                                {% if forloop.first %}
+                                    <td rowspan="{{ validation_results|length }}"> {% trans 'Validation' %} </td>
+                                {% endif %}
+                                <td>{{ result.validator }}</td>
+                                {% if result.executed %}
+                                    {% if result.valid %}
+                                        <td>
+                                            <i class="fa fa-check text-success"></i>
+                                            {% trans 'Successful' %}
+                                        </td>
+                                    {% else %}
+                                        <td class="alert alert-danger">
+                                            <i class="fa fa-remove text-danger"></i>
+                                            {% trans 'Failed' %}
+                                            <br />
+                                            <pre>{{ result.validation_message }}</pre>
+                                        </td>
+                                    {% endif %}
+                                {% else %}
+                                    <td>
+                                        <i class="fa fa-question-circle text-muted"></i>
+                                        {% trans 'Not evaulated' %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                            {% if forloop.last %}
+                                <tr>
+                            {% endif %}
+                        {% endfor %}
+                        <td colspan="3">
                             <pre>{{ testcase.input_file.get_truncated_content }}</pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_input" testcase.pk %}">
@@ -44,9 +74,9 @@
                 {% else %}
                     <tr>
                         {% if testcase.input_generation_successful %}
-                            <td rowspan="3">
+                            <td rowspan="{{ validation_results|length|add:"3" }}">
                         {% else %}
-                            <td rowspan="2">
+                            <td rowspan="3">
                         {% endif %}
                         <td> {% trans 'Generation command' %} </td>
                         <td><pre>{{ testcase.input_generation_command }} </pre></td>
@@ -62,8 +92,36 @@
                         {% endif %}
                     </tr>
                     {% if testcase.input_generation_successful %}
+                        {% for result in validation_results %}
+                            <tr>
+                                {% if forloop.first %}
+                                    <td rowspan="{{ validation_results|length }}"> {% trans 'Validation' %} </td>
+                                {% endif %}
+                                <td>{{ result.validator }}</td>
+                                {% if result.executed %}
+                                    {% if result.valid %}
+                                        <td>
+                                            <i class="fa fa-check text-success"></i>
+                                            {% trans 'Successful' %}
+                                        </td>
+                                    {% else %}
+                                        <td class="alert alert-danger">
+                                            <i class="fa fa-remove text-danger"></i>
+                                            {% trans 'Failed' %}
+                                            <br />
+                                            <pre>{{ result.validation_message }}</pre>
+                                        </td>
+                                    {% endif %}
+                                {% else %}
+                                    <td>
+                                        <i class="fa fa-question-circle text-muted"></i>
+                                        {% trans 'Not evaulated' %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
                     <tr>
-                        <td colspan="2">
+                        <td colspan="3">
                             <pre> {{ testcase.input_file.get_truncated_content }} </pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_input" testcase.pk %}">
@@ -76,7 +134,7 @@
                 {% if testcase.output_static %}
                     <tr>
                         <td> {% trans 'Output' %} </td>
-                        <td colspan="2">
+                        <td colspan="3">
                             <pre>{{ testcase.output_file.get_truncated_content }}</pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_output" testcase.pk %}">
@@ -87,9 +145,9 @@
                 {% else %}
                     <tr>
                         {% if testcase.output_generation_successful %}
-                            <td rowspan="3">
+                            <td rowspan="4">
                         {% else %}
-                            <td rowspan="2">
+                            <td rowspan="3">
                         {% endif %}
                             {% trans 'Output' %}
                         </td>
@@ -114,7 +172,7 @@
                     </tr>
                     {% if testcase.output_generation_successful %}
                     <tr>
-                        <td colspan="2">
+                        <td colspan="3">
                             <pre> {{ testcase.output_file.get_truncated_content }} </pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_output" testcase.pk %}">

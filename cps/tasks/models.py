@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 
 from django.db import models
@@ -13,6 +14,8 @@ class State(Enum):
     running = "running",
     finished = "finished"
 
+
+logger = logging.getLogger(__name__)
 
 class Task(models.Model):
     STATES = (
@@ -35,9 +38,13 @@ class Task(models.Model):
         self.state = State.running.value
         self.save()
         # TODO: Handle the case where run might fail with an exception
-        self.run(*args, **kwargs)
-        self.state = State.finished.name
-        self.save()
+        try:
+            self.run(*args, **kwargs)
+        except Exception as e:
+            logger.error(repr(e))
+        finally:
+            self.state = State.finished.name
+            self.save()
 
     def apply_async(self, *args, **kwargs):
         sig = self.apply.s(*args, **kwargs)

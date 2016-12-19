@@ -69,8 +69,14 @@ class TestCaseDetailsView(RevisionObjectView):
             "problem": self.revision,
             "pk": testcase_id,
         })
+        validation_results = []
+        for validator in testcase.validators:
+            validation_results.append(validator.get_or_create_testcase_result(testcase))
+
+
         return render(request, "problems/testcase_details.html", context={
-            "testcase": testcase
+            "testcase": testcase,
+            "validation_results": validation_results
         })
 
 
