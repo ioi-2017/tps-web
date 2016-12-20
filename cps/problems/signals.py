@@ -1,10 +1,11 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from problems.models import Solution, Validator, InputGenerator
 
 
 @receiver(post_save, sender=Solution, dispatch_uid="invalidate_testcase_solution")
+@receiver(pre_delete, sender=Solution, dispatch_uid="invalidate_testcase_solution_delete")
 def invalidate_testcase_on_solution_change(sender, instance, **kwargs):
     problem = instance.problem
     testcases = problem.testcase_set.all()
@@ -22,9 +23,8 @@ def invalidate_testcase_on_validator_change(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=InputGenerator, dispatch_uid="invalidate_testcase_generator")
+@receiver(pre_delete, sender=InputGenerator, dispatch_uid="invalidate_testcase_generator_delete")
 def invalidate_testcase_on_generator_change(sender, instance, **kwargs):
-    if not isinstance(instance, InputGenerator):
-        return
 
     testcases = instance.problem.testcase_set.filter(
             _input_generator_name=instance.name

@@ -464,7 +464,9 @@ class TestCase(RevisionObject):
 
     def being_generated(self):
         return self.testcasegeneration_set.exclude(
-                state=State.finished.name
+            state=State.finished.name
+        ).exclude(state__isnull=True).exists() or self.testcasevalidation_set.exclude(
+            state=State.finished.name
         ).exclude(state__isnull=True).exists()
 
     def __str__(self):
