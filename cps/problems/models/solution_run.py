@@ -54,6 +54,9 @@ class SolutionRun(RevisionObject):
                 only_dont_care_happend = False
         return verdict_happend and only_dont_care_happend
 
+    def started(self):
+        return self.results.all().count() == self.solutions.all().count() * self.testcases.all().count()
+
     @classmethod
     def create(cls, solutions, testcases):
         assert len(solutions) != 0, "At least one solution must exist in solution run"
@@ -68,6 +71,7 @@ class SolutionRun(RevisionObject):
         solution_run.testcases = testcases
         solution_run.save()
         return solution_run
+
 
 
 class SolutionRunResult(Task):

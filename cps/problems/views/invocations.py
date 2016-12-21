@@ -17,7 +17,6 @@ __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "Inv
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug):
         invocations = self.revision.solutionrun_set.all()
-
         return render(request, "problems/invocations_list.html", context={
             "invocations": invocations
         })
@@ -50,11 +49,17 @@ class InvocationRunView(RevisionObjectView):
 
 
 class InvocationDetailsView(RevisionObjectView):
-    def get(self, request, problem_id, revesion_slug, invocation_id):
+    def get(self, request, problem_id, revision_slug, invocation_id):
         obj = get_object_or_404(SolutionRun, **{
             "problem_id": self.revision.id,
             "id": invocation_id
         })
+        if not obj.started():
+            return HttpResponseRedirect(reverse("problems:invocations", kwargs={
+                "problem_id": problem_id,
+                "revision_slug": revision_slug
+            }))
+
         invocation_results = obj.results.all()
         dic = {}
         for testcase in obj.testcases.all():

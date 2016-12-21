@@ -46,11 +46,15 @@
                         {% if revision_editable %}
                         <td>
                             <a data-method="post" href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
-                            <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% if invocation.started %}
+                                <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% endif %}
                         </td>
                         {% else %}
                         <td>
-                            <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% if invocation.started %}
+                                <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% endif %}
                         </td>
                         {% endif %}
                     </tr>
