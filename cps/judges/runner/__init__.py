@@ -2,7 +2,7 @@ from judge import Judge
 from judge.results import EvaluationResult, JudgeVerdict
 from runner.sandbox.sandbox import SandboxBase
 from .batch import Batch
-from problems.models import ProblemRevision
+from problems.models import ProblemRevision, TestCase
 from runner import get_source_file_name, get_compilation_commands, get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
@@ -45,6 +45,12 @@ class Runner(Judge):
 
         if len(solution_files) != 1:
             raise ValueError("This judge only supports single file solutions")
+        if language not in self.get_supported_languages():
+            return EvaluationResult(
+                success=False,
+                verdict=JudgeVerdict.invalid_submission,
+                message="Language not supported"
+            )
         name, file = solution_files[0]
         code_name = get_source_file_name(language)
         compiled_file_name = "code.out"
@@ -67,7 +73,7 @@ class Runner(Judge):
         # TODO: When changed to test case specific limits, this must be changed
         time_limit = revision.problem_data.time_limit
         memory_limit = revision.problem_data.memory_limit
-        testcase = revision.testcase_set.get(pk=testcase_code)
+        testcase = TestCase.objects.get(pk=testcase_code)
 
         success, compilation_success, outputs, stdout, stderr, compilation_sandbox_data = compile_source(action)
         if not success or not compilation_success:

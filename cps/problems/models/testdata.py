@@ -175,9 +175,13 @@ class TestCase(RevisionObject):
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
-    def get_judge_code(self, judge=None):
-        if judge is None:
-            judge = Judge.get_judge()
+    def get_judge_code(self):
+        if self.judge_code:
+            return self.judge_code
+        judge = Judge.get_judge()
+        input_file = self.input_file
+        if not input_file:
+            return None
         self.judge_code = judge.add_testcase(
             problem_code=self.problem.get_judge_code(),
             testcase_id=self.pk,
@@ -386,7 +390,8 @@ class TestCase(RevisionObject):
     def generate(self):
         # TODO: Only generate if a generation process hasn't started yet
         self._generate_input_file()
-        self._generate_output_file()
+        if self.input_file_generated():
+            self._generate_output_file()
 
     @property
     def output_file(self):
@@ -434,6 +439,7 @@ class TestCase(RevisionObject):
         self._invalidate_output(commit=False)
         self._invalidate_validation()
         self._invalidate_input(commit=False)
+        self.judge_code = None
         self.save()
 
     def has_errors(self):
