@@ -21,15 +21,19 @@ class ProblemAddForm(forms.ModelForm):
     @transaction.atomic
     def save(self, commit=True):
         super(ProblemAddForm, self).save(commit=False)
+        problem = Problem.objects.get(pk=0)
+        problem_revision = problem.get_upstream_fork().head
         self.instance.creator = self.owner
         self.instance.save()
-        problem_revision = ProblemRevision.objects.create(author=self.owner, problem=self.instance)
+        problem_revision.author = self.owner
+        problem_revision.problem = self.instance
+        problem_revision.parent_revisions.clear()
         problem_revision.commit("Created problem")
+        problem_revision.problem_data.delete()
         problem_fork = ProblemFork.objects.create(problem=self.instance, head=problem_revision)
         problem_data = ProblemData.objects.create(problem=problem_revision,
                                                   title=self.cleaned_data["title"],
                                                   code_name=self.cleaned_data["code_name"])
-        self.instance.master_revision = problem_revision
 
         if commit:
             self.instance.save()
