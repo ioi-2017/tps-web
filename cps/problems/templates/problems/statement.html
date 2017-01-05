@@ -42,20 +42,23 @@
     <script src="{% static 'js/editor.js' %}"></script>
 
     <script>
-        {% if revision_editable %}
-            var editor = new SimpleMDE({
-                element: document.getElementById("id_statement"),
-                autofocus: true,
-                hideIcons: ["guide", "heading"],
-                placeholder: "Type the problem statement here..."
-            });
-        {% else %}
-            var editor_fixed = new SimpleMDE({
-                element: document.getElementById("id_statement"),
-                autofocus: true,
-                toolbar: false
-            });
-            SimpleMDE.togglePreview(editor_fixed);
-        {% endif %}
+        $(document).ready(function () {
+            {% if revision_editable %}
+                var editor = new SimpleMDE({
+                    element: document.getElementById("id_statement"),
+                    autofocus: true,
+                    hideIcons: ["guide", "heading"],
+                    placeholder: "Type the problem statement here..."
+                });
+            {% else %}
+                var editor_fixed = new SimpleMDE({
+                    element: document.getElementById("id_statement"),
+                    autofocus: true,
+                    toolbar: false
+                });
+                SimpleMDE.togglePreview(editor_fixed);
+            {% endif %}
+        });
+
     </script>
 {% endblock %}
