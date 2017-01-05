@@ -8,36 +8,37 @@
 
 {% block problem_content %}
     <div class="row">
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <div class="col-sm-3"></div>
-        <div class="col-sm-6">
-            <h1>{% trans 'Problem Statement' %}</h1>
-            {% if revision_editable %}
-                <form class="form-horizontal" method="post" action="{% problem_url "problems:statement" %}"
-                      enctype="multipart/form-data">
-                {% csrf_token %}
-            {% endif %}
-            {% if revision_editable %}
-                {% bootstrap_form form %}
-                {{ form.media }}
-            {% else %}
-                {% bootstrap_form form layout='readonly' %}
-            {% endif %}
-            {% if revision_editable %}
-                <div class="form-group">
-                    <button type="submit" class="form-control btn btn-success">
-                        {% trans 'Save' %}
-                    </button>
-                </div>
-                </form>
-            {% endif %}
-        </div>
+		<h1>{% trans 'Problem Statement' %}</h1>
+		{% if revision_editable %}
+			<form class="form-horizontal" method="post" action="{% problem_url "problems:statement" %}"
+				  enctype="multipart/form-data">
+			{% csrf_token %}
+		{% endif %}
+		{% if revision_editable %}
+			{% bootstrap_form form %}
+			{{ form.media }}
+		{% else %}
+			{% bootstrap_form form layout='readonly' %}
+		{% endif %}
+		{% if revision_editable %}
+			<div class="form-group">
+				<button type="submit" class="form-control btn btn-success">
+					{% trans 'Save' %}
+				</button>
+			</div>
+			</form>
+		{% endif %}
     </div>
+{% endblock %}
+
+{% block css %}
+	{{ block.super }}
+
+    <link rel="stylesheet" href="{% static 'css/editor.css' %}">
 {% endblock %}
 
 {% block foot_js %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/editor.css' %}">
     <script src="{% static 'js/editor.js' %}"></script>
 
     <script>

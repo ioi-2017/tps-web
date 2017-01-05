@@ -339,7 +339,7 @@ class ProblemData(RevisionObject):
     problem = models.ForeignKey(ProblemRevision)
     code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
-	statement = models.TextField(verbose_name=_("statement"), default="")
+    statement = models.TextField(verbose_name=_("statement"), default="", blank=True)
 
     task_type = models.CharField(verbose_name=_("task type"), max_length=150, null=True)
     task_type_parameters = models.TextField(verbose_name=_("task type parameters"), null=True)
