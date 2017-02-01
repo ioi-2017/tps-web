@@ -22,7 +22,7 @@ class ProblemAddForm(forms.ModelForm):
     def save(self, commit=True):
         super(ProblemAddForm, self).save(commit=False)
         problem = Problem.objects.get(pk=0)
-        problem_revision = problem.get_upstream_fork().head
+        problem_revision = problem.get_upstream_fork().head.clone()
         self.instance.creator = self.owner
         self.instance.save()
         problem_revision.author = self.owner
