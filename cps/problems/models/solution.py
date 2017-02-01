@@ -10,7 +10,7 @@ from problems.models.file import FileNameValidator, get_valid_name
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase, Subtask
 
-__all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore"]
+__all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore", "SolutionSubtaskExpectedVerdict"]
 
 
 class Solution(RevisionObject):
@@ -22,6 +22,8 @@ class Solution(RevisionObject):
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
     tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore", related_name="+")
     subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore", related_name="+")
+    subtask_verdict = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedVerdict", related_name="+")
+
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
     verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
@@ -78,4 +80,16 @@ class SolutionTestExpectedScore(RevisionObject):
     class Meta:
         unique_together = (
             ("solution", "testcase")
+        )
+
+class SolutionSubtaskExpectedVerdict(RevisionObject):
+    _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
+
+    solution = models.ForeignKey(Solution, verbose_name=_("solution"))
+    subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
+    verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
+
+    class Meta:
+        unique_together = (
+            ("solution", "subtask")
         )

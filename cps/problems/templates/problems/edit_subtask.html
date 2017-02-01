@@ -3,24 +3,17 @@
 {% load bootstrap3 %}
 {% load i18n %}
 {% load problems_tags %}
-{% load privileged_get %}
-
 
 {% block problem_content %}
     <div class="row">
         <div class="col-sm-4"></div>
         <div class="col-sm-6">
-            <h1>{% trans 'Add a solution' %}</h1>
-            <form class="form-horizontal" method="post" action="{% problem_url "problems:add_solution" %}" enctype="multipart/form-data">
+            <h1>{% trans 'Edit a subtask' %}</h1>
+            <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% bootstrap_field form.file %}
-                {% bootstrap_field form.language %}
                 {% bootstrap_field form.name %}
-                {% bootstrap_field form.verdict %}
-                <h3>Subtasks verdict</h3>
-                {% for field_name in form.subtask_fields %}
-                    {% bootstrap_field form|privileged_get:field_name %}
-                {% endfor %}
+                {% bootstrap_field form.score %}
+                {% bootstrap_field form.testcases %}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
                         {% trans 'Submit' %}

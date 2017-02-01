@@ -4,6 +4,8 @@ from problems.views.export import ExportView, ExportDownloadView, ExportPackageS
 from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
         InvocationAnswerDownloadView
 from problems.views.statement import EditStatement
+from problems.views.subtasks import SubtasksListView, SubtaskAddView, SubtaskDetailsView, SubtaskDeleteView, \
+        SubtaskEditView
 from .views import *
 
 problem_urls = ([
@@ -47,6 +49,12 @@ problem_urls = ([
         url(r'^testcase/(?P<testcase_id>\d+)/generate/$', TestCaseGenerateView.as_view(), name="generate_testcase"),
         url(r'^testcase/generate/all/$', TestCaseGenerateView.as_view(), name="generate_testcase"),
         url(r'^testcase/(?P<testcase_id>\d+)/details/$', TestCaseDetailsView.as_view(), name="testcase_details"),
+
+        url(r'^subtasks/$', SubtasksListView.as_view(), name="subtasks"),
+        url(r'^subtask/add/$', SubtaskAddView.as_view(), name="add_subtask"),
+        url(r'^subtask/(?P<subtask_id>\d+)/details/$', SubtaskDetailsView.as_view(), name="subtask_details"),
+        url(r'^subtask/(?P<subtask_id>\d+)/delete/$', SubtaskDeleteView, name="delete_subtask"),
+        url(r'^subtask/(?P<subtask_id>\d+)/edit/$', SubtaskEditView.as_view(), name="edit_subtask"),
 
         url(r'^validators/$', ValidatorsListView.as_view(), name="validators"),
         url(r'^validator/(?P<validator_id>\d+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),

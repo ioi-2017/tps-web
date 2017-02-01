@@ -62,13 +62,14 @@ class InvocationDetailsView(RevisionObjectView):
 
         invocation_results = obj.results.all()
         dic = {}
-        for testcase in obj.testcases.all():
+        testcases = obj.testcases.all()
+        for testcase in testcases:
             dic[testcase] = {}
         for invocation_result in invocation_results:
             dic[invocation_result.testcase][invocation_result.solution] = invocation_result
         solutions = obj.solutions.all()
         results = []
-        for testcase in obj.testcases.all():
+        for testcase in testcases:
             current_results = []
             for solution in solutions:
                 current_results.append(dic[testcase][solution])
@@ -78,10 +79,28 @@ class InvocationDetailsView(RevisionObjectView):
         for solution in solutions:
             validations.append((solution, obj.validate_solution(solution)))
 
+        subtasks = self.revision.subtasks.all()
+
+        subtasks_results = []
+
+        for subtask in subtasks:
+            subtask_results = []
+            for solution in solutions:
+                subtask_solution_result = []
+                for testcase in subtask.testcases.all():
+                    if testcase in testcases:
+                        subtask_solution_result.append(dic[testcase][solution].get_short_name_for_verdict())
+                current_set = set(subtask_solution_result)
+                subtask_solution_result = list(current_set)
+                subtask_results.append(subtask_solution_result)
+            subtasks_results.append((subtask,subtask_results))
+
+
         return render(request, "problems/invocation_view.html", context={
             "invocation": obj,
             "results": results,
-            "validations": validations
+            "validations": validations,
+            "subtasks": subtasks_results
         })
 
 
@@ -104,6 +123,7 @@ class InvocationResultView(RevisionObjectView):
             output = ""
         else:
             output = obj.solution_output.get_truncated_content()
+
         return render(request, "problems/invocation_result_view.html", context={
             "input": input,
             "output": output,

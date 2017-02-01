@@ -1,0 +1,14 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+{% load object_list_generator %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {{ subtask }} </h2>
+    </div>
+    <div class="row">
+        {% include  'problems/blocks/testcases_table.html' %}
+    </div>
+{% endblock %}

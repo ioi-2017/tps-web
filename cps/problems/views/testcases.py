@@ -18,12 +18,13 @@ __all__ = ["TestCasesListView", "TestCaseAddView",
 
 
 class TestCasesListView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug):
+        testcases = self.revision.testcase_set.all()
+
         return render(request,
                       "problems/testcases_list.html",
                       context={
-                          "testcases": self.revision.testcase_set.all()
+                          "testcases": testcases
                       })
 
 
@@ -63,7 +64,6 @@ class TestCaseEditView(ProblemObjectEditView):
 
 
 class TestCaseDetailsView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug, testcase_id):
         testcase = get_object_or_404(TestCase, **{
             "problem": self.revision,
@@ -72,7 +72,6 @@ class TestCaseDetailsView(RevisionObjectView):
         validation_results = []
         for validator in testcase.validators:
             validation_results.append(validator.get_or_create_testcase_result(testcase))
-
 
         return render(request, "problems/testcase_details.html", context={
             "testcase": testcase,
@@ -116,10 +115,7 @@ class TestCaseGenerateView(RevisionObjectView):
             }))
 
 
-
-
 class TestCaseInputDownloadView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug, testcase_id):
         testcase = get_object_or_404(TestCase, **{
             "problem_id": self.revision.id,
@@ -130,12 +126,11 @@ class TestCaseInputDownloadView(RevisionObjectView):
             return FileResponse(file.file, content_type="txt")
         else:
             return HttpResponse(content="A problem occurred during input generation:\n{}".format(
-                                        testcase.input_generation_log),
-                                content_type="txt")
+                testcase.input_generation_log),
+                content_type="txt")
 
 
 class TestCaseOutputDownloadView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug, testcase_id):
         testcase = get_object_or_404(TestCase, **{
             "problem_id": self.revision.id,
@@ -152,3 +147,4 @@ class TestCaseOutputDownloadView(RevisionObjectView):
             return HttpResponse(content="A problem occurred during output generation:\n{}".format(
                 "Input generation failed"),
                 content_type="txt")
+

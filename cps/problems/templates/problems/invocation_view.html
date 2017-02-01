@@ -40,5 +40,37 @@
             </tbody>
         </table>
     </div>
+    <br />
+    <div class="row">
+        <h2> Invocation details on subtasks</h2>
+    </div>
+    <div class="row">
+        <table class="table table-bordered table-responsive table-striped">
+            <thead>
+                <td></td>
+                {% for solution,is_valid in validations %}
+                    {% if is_valid == False %}
+                        <td class="alert alert-danger force-bgcolor">{{ solution }}</td>
+                    {% else %}
+                        <td>{{ solution }}</td>
+                    {% endif %}
+                {% endfor %}
+            </thead>
+            <tbody>
+                {% for subtask,subtask_results in subtasks %}
+                    <tr>
+                        <td>{{ subtask }}</td>
+                        {% for subtask_solution_result in subtask_results %}
+                            <td>
+                            {% for result in subtask_solution_result %}
+                                {{ result }}
+                            {% endfor %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% csrf_token %}
 {% endblock %}

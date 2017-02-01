@@ -90,10 +90,16 @@ class Validator(SourceFile):
 
     @property
     def testcases(self):
+        testcases = []
         if self.global_validator:
             testcases = self.problem.testcase_set.all()
         else:
-            testcases = self.problem.testcase_set.filter(subtasks__in=self._subtasks.all()).all()
+            mark = set([])
+            for subtask in self._subtasks.all():
+                for testcase in subtask.testcases:
+                    if not testcase.pk in mark:
+                        testcases.append(testcase)
+                        mark.update([testcase.pk])
         return testcases
 
     def validate(self):

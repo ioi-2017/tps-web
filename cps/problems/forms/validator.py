@@ -9,15 +9,8 @@ class ValidatorAddForm(SourceFileAddForm):
     class Meta:
         model = Validator
         # TODO add global subtask for IOI
-        fields = ["name", "source_language"]
+        fields = ["name", "source_language", "_subtasks", "global_validator"]
 
-    def save(self, commit=True):
-        super(ValidatorAddForm, self).save(commit=False)
-        self.instance.global_validator = True
-        if commit:
-            self.instance.save()
-            self.save_m2m()
-        return self.instance
 
 
 class ValidatorEditForm(SourceFileEditForm):

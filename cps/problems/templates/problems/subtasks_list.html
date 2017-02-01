@@ -5,60 +5,58 @@
 
 {% block problem_content %}
     <div class="row">
-        <h2> {% trans 'Validators' %} </h2>
+        <h2> {% trans 'Subtasks' %} </h2>
     </div>
     <div class="row">
 
     </div>
     {% if revision_editable %}
         <div class="row">
-            <a href="{% problem_url "problems:add_validator" %}" class="btn btn-success">
-                <i class="fa fa-plus"></i> {% trans 'Add a validator' %}
+            <a href="{% problem_url "problems:add_subtask" %}" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans 'Add a subtask' %}
             </a>
         </div>
     {% endif %}
     <br />
     <div class="row">
-        {% if validators %}
+        {% if subtasks %}
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
                         {% if revision_editable %}
-                            <th class="col-md-10">{% trans 'Source Code' %}</th>
-                            <th class="col-md-2">{% trans 'Subtasks' %} </th>
-                            <th class="col-md-1">{% trans 'Language' %} </th>
+                            <th class="col-md-10">{% trans 'Name' %}</th>
+                            <th class="col-md-2">{% trans 'Validators' %} </th>
+                            <th class="col-md-1">{% trans 'score' %}</th>
                             <th class="col-md-1"></th>
                         {% else %}
-                            <th class="col-md-11">{% trans 'Source Code' %}</th>
-                            <th class="col-md-2">{% trans 'Subtasks' %} </th>
-                            <th class="col-md-1">{% trans 'Language' %} </th>
+                            <th class="col-md-11">{% trans 'Name' %}</th>
+                            <th class="col-md-2">{% trans 'Validators' %} </th>
+                            <th class="col-md-1">{% trans 'score' %}</th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-            {% for validator in validators %}
+            {% for subtask in subtasks %}
                     <tr>
                         <td>
-                            <a href="{% problem_url "problems:validator_source" validator.pk %}">
-                                {{ validator }}
+                            <a href="{% problem_url "problems:subtask_details" subtask.pk %}">
+                                {{ subtask }}
                             </a>
                         </td>
                         <td>
-                            {% for subtask in validator.subtasks.all %}
+                            {% for validator in subtask.validator_set.all %}
                                 {% if not forloop.first %}
                                     ,
                                 {% endif %}
-                                {{ subtask.name }}
+                                {{ validator.name }}
                             {% endfor %}
                         </td>
-                        <td>
-                            {{ validator.source_language }}
-                        </td>
+                        <td>{{ subtask.score }}</td>
                         {% if revision_editable %}
                             <td>
-                                <a class="text-primary" href='{% problem_url "problems:edit_validator" validator.id %}'>
+                                <a class="text-primary" href='{% problem_url "problems:edit_subtask" subtask.id %}'>
                                     <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
-                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this validator?' %}' href='{% problem_url "problems:delete_validator" validator.id %}'>
+                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this subtask?' %}' href='{% problem_url "problems:delete_subtask" subtask.id %}'>
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>
                         {% endif %}
@@ -68,11 +66,10 @@
             </table>
         {% else %}
             <h4 class="alert alert-danger">
-                {% trans 'No validator exists' %}
+                {% trans 'No subtask exists' %}
             </h4>
         {% endif %}
     </div>
-    {% include "problems/resources_list.html" %}
 {% endblock %}
 {% block foot_js %}
     {{ block.super }}

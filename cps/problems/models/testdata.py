@@ -61,17 +61,6 @@ class TestCaseGeneration(Task):
         self.testcase.generate()
         TestCaseValidation.create_and_run_all_for_testcase(self.testcase)
 
-
-class Subtask(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
-    name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
-    score = models.IntegerField(verbose_name=_("score"))
-
-    @staticmethod
-    def get_matching_fields():
-        return ["name"]
-
-
 class Script(RevisionObject):
 
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
@@ -170,8 +159,6 @@ class TestCase(RevisionObject):
     # which their validators accept it
 
     script = models.ForeignKey(Script, null=True)
-
-    subtasks = models.ManyToManyField(Subtask, related_name="testcases")
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
@@ -478,3 +465,17 @@ class TestCase(RevisionObject):
     def __str__(self):
         return self.name
 
+
+class Subtask(RevisionObject):
+    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
+    name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
+    score = models.IntegerField(verbose_name=_("score"))
+    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks")
+
+
+    @staticmethod
+    def get_matching_fields():
+        return ["name"]
+
+    def __str__(self):
+        return self.name

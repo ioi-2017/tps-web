@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from file_repository.models import FileModel
 from .generic import ProblemObjectModelForm
-from problems.models import TestCase, Solution, SourceFile, Script
+from problems.models import TestCase, Solution, SourceFile, Script, Subtask
 from django.utils.translation import ugettext as _
 
 
@@ -12,6 +12,8 @@ class TestCaseAddForm(ProblemObjectModelForm):
     input_uploaded_file = forms.FileField(label="Input uploaded file", required=False)
     output_uploaded_file = forms.FileField(label="Output uploaded file", required=False)
     generation_command = forms.CharField(label="Generation command", required=False)
+    subtasks = forms.MultipleChoiceField(label=_("Subtasks"), required=False)
+
 
     class Meta:
         automatically_filled_fields = [
@@ -23,8 +25,17 @@ class TestCaseAddForm(ProblemObjectModelForm):
         model = TestCase
         fields = automatically_filled_fields + []
 
+    def __init__(self, *args, **kwargs):
+        super(TestCaseAddForm, self).__init__(*args, **kwargs)
+        self.fields["subtasks"].choices = [(subtask.pk, str(subtask))for subtask in
+                                           Subtask.objects.filter(problem=self.revision)]
+
+
     def clean(self):
         cleaned_data = super(TestCaseAddForm, self).clean()
+
+        self.cleaned_data["subtasks"] = Subtask.objects.filter(pk__in=self.cleaned_data["subtasks"],
+                                                               problem=self.revision)
 
         for field_name in self.Meta.automatically_filled_fields:
             cleaned_data[field_name] = None
@@ -43,6 +54,17 @@ class TestCaseAddForm(ProblemObjectModelForm):
                 name=self.cleaned_data["output_uploaded_file"].name,
                 file=self.cleaned_data["output_uploaded_file"])
         return cleaned_data
+
+    def save(self, commit=True):
+        super(TestCaseAddForm, self).save(commit=False)
+        self.instance.save()
+        for subtask in self.cleaned_data["subtasks"]:
+            subtask.testcases.add(self.instance)
+            subtask.save()
+        if commit:
+            self.instance.save()
+            self.save_m2m()
+        return self.instance
 
 
 class TestCaseEditForm(ProblemObjectModelForm):
@@ -99,3 +121,4 @@ class TestCaseEditForm(ProblemObjectModelForm):
         ret = super(TestCaseEditForm, self).save(*args, **kwargs)
         self.instance.invalidate()
         return ret
+
