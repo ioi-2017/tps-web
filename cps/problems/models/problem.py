@@ -121,7 +121,7 @@ class ProblemRevision(models.Model):
 
     USER_REVISION_OBJECTS = {
         "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
-        "resource_set", "solutionrun_set", "subtasks"
+        "resource_set", "solutionrun_set", "subtasks", "grader_set",
     }
 
     def get_judge(self):
@@ -135,7 +135,7 @@ class ProblemRevision(models.Model):
                 problem_id=self.pk,
                 task_type=self.problem_data.task_type,
                 score_type=self.problem_data.score_type,
-                helpers=[],  # TODO: Add solution helpers
+                helpers=[self.problem.grader_set, ],  # TODO: Add solution helpers
                 problem_code=self.judge_code
             )
         self.save()

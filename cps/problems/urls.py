@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from problems.views.export import ExportView, ExportDownloadView, ExportPackageStarterView
 from problems.views.generators import GeneratorEnableView, GeneratorDisableView
+from problems.views.grader import GradersListView, GraderAddView, GraderShowSourceView, GraderDeleteView, GraderEditView
 from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
         InvocationAnswerDownloadView
 from problems.views.statement import EditStatement
@@ -40,6 +41,12 @@ problem_urls = ([
         url(r'^solution/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solution/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
         url(r'^solution/(?P<solution_id>\d+)/source/$', SolutionShowSourceView.as_view(), name="solution_source"),
+
+        url(r'^graders/$', GradersListView.as_view(), name="graders"),
+        url(r'^grader/add/$', GraderAddView.as_view(), name="add_grader"),
+        url(r'^grader/(?P<grader_id>\d+)/edit/$', GraderEditView.as_view(), name="edit_grader"),
+        url(r'^grader/(?P<grader_id>\d+)/delete/$', GraderDeleteView, name="delete_grader"),
+        url(r'^grader/(?P<grader_id>\d+)/source/$', GraderShowSourceView.as_view(), name="grader_source"),
 
         url(r'^testcases/$', TestCasesListView.as_view(), name="testcases"),
         url(r'^testcase/add/$', TestCaseAddView.as_view(), name="add_testcase"),

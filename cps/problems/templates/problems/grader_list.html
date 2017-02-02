@@ -1,0 +1,64 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'graders' %} </h2>
+    </div>
+    {% if revision_editable %}
+        <div class="row">
+            <a href="{% problem_url "problems:add_grader" %}" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans 'Add a grader' %}
+            </a>
+        </div>
+    {% endif %}
+    <br/>
+    <div class="row">
+        {% if graders %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                <tr>
+                    <th class="col-md-1">#</th>
+                    {% if revision_editable %}
+                        <th class="col-md-6">{% trans 'Source Code' %}</th>
+                        <th class="col-md-1">{% trans 'Language' %}</th>
+                        <th class="col-md-1"></th>
+                    {% else %}
+                        <th class="col-md-7">{% trans 'Source Code' %}</th>
+                        <th class="col-md-1">{% trans 'Language' %}</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for grader in graders %}
+                    <tr>
+                        <td> {{ forloop.counter }} </td>
+                        <td>
+                            <a href="{% problem_url "problems:grader_source" grader.pk %}"> {{ grader }} </a>
+                        </td>
+                        <td> {{ grader.get_language_representation }} </td>
+                        {% if revision_editable %}
+                            <td>
+
+                                <a class="text-primary" href='{% problem_url "problems:edit_grader" grader.id %}'>
+                                    <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
+                                <a class="text-danger" data-method='delete'
+                                   data-confirm='{% trans 'Are you sure you want to delete this solution?' %}'
+                                   href='{% problem_url "problems:delete_grader" grader.id %}'>
+                                    <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
+                            </td>
+                        {% endif %}
+
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="alert alert-danger">
+                {% trans 'No grader exists' %}
+            </h4>
+        {% endif %}
+    </div>
+{% endblock %}

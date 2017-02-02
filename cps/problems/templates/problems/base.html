@@ -55,7 +55,7 @@
                                 </span>
                              </a>
                          </li>
-						
+
                         <li>
                              <a href="{% problem_url "problems:statement" %}" >
                                  <i class="fa fa-text-width "></i>
@@ -65,7 +65,7 @@
                              </a>
                          </li>
 
-						 
+
                         <li>
                              <a href="{% problem_url "problems:generators" %}" >
                                  <i class="fa fa-gears "></i>
@@ -102,9 +102,18 @@
                                  {% if errors.solution > 0 %}
                                     <p class="label label-danger collapsed-only error">{{ errors.solution }}</p>
                                     <p class="label label-danger full-open-only error">{% trans 'No Model Solution' %}</p>
-                                 {% endif %}
-                             </a>
-                         </li>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% problem_url "problems:graders" %}">
+                                <i class="fa fa-trophy "></i>
+                                <span class="full-open-only">
+                                    {% trans 'Graders' %}
+                                </span>
+                            </a>
+                        </li>
                         <li>
                              <a href="{% problem_url "problems:invocations" %}" >
                                  <i class="fa fa-play-circle-o "></i>
