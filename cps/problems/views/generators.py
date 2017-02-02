@@ -1,9 +1,12 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 
 from problems.forms.files import SourceFileEditForm
 from problems.forms.generator import GeneratorAddForm
+from problems.forms.testcases import TestCaseAddForm
 from problems.models import InputGenerator
+from problems.models import TestCase
 from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, \
     ProblemObjectShowSourceView, ProblemObjectEditView
 
@@ -51,9 +54,9 @@ class GeneratorAddView(ProblemObjectAddView):
 
 GeneratorDeleteView = ProblemObjectDeleteView.as_view(
     object_type=InputGenerator,
-    permissions_required="delete_validator",
-    redirect_to="problems:validators",
-    url_slug="validator_id"
+    permissions_required="delete_generator",
+    redirect_to="problems:generators",
+    url_slug="generator_id"
 )
 
 
@@ -68,3 +71,25 @@ class GeneratorShowSourceView(ProblemObjectShowSourceView):
             "problem_id": problem_id,
             "revision_slug": revision_slug
         })
+
+
+class GeneratorEnableView(RevisionObjectView):
+
+    def post(self, request, *args, **kwargs):
+        generator = get_object_or_404(InputGenerator, pk=kwargs['generator_id'])
+        generator.enable()
+        return HttpResponseRedirect(reverse("problems:generators", kwargs={
+            "problem_id": self.problem.id,
+            "revision_slug": self.revision_slug
+        }))
+
+
+class GeneratorDisableView(RevisionObjectView):
+
+    def post(self, request, *args, **kwargs):
+        generator = get_object_or_404(InputGenerator, pk=kwargs['generator_id'])
+        generator.disable()
+        return HttpResponseRedirect(reverse("problems:generators", kwargs={
+            "problem_id": self.problem.id,
+            "revision_slug": self.revision_slug
+        }))

@@ -23,12 +23,68 @@ import shlex
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["TestCase", "Subtask", "Script", "InputGenerator"]
+__all__ = ["TestCase", "Subtask", "InputGenerator"]
 
 
 class InputGenerator(SourceFile):
-    pass
+    text_data = models.TextField(blank=True, null=False)
+    is_enabled = models.BooleanField(default=False)
 
+    @classmethod
+    def get_generation_parameters_from_script_line(cls, problem, line):
+        line_split = shlex.split(line)
+        data = dict()
+
+        test_name_separator_index = line.index(">")
+
+        data["name"] = line[test_name_separator_index + 1]
+
+        subtask_names = [
+            line[subtask_index] for subtask_index in
+            range(test_name_separator_index + 2, len(line), 2)
+        ]
+        data["subtasks"] = [
+            problem.subtasks.get(name=name)
+            for name in subtask_names
+        ]
+
+        data["_input_generation_parameters"] = " ".join(
+            shlex.quote(line) for line in line_split[1:test_name_separator_index]
+        )
+
+        return data
+
+    def _create_test(self, command):
+        data = self.get_generation_parameters_from_script_line(self.problem, command)
+        subtasks = data.pop("subtasks")
+
+        test_case = TestCase(
+                    problem=self.problem,
+                    generator=self,
+                    input_static=False,
+                    output_static=False,
+                    **data)
+
+        test_case.save()
+        test_case.subtasks.add(*subtasks)
+
+    def delete_testcases(self):
+        TestCase.objects.filter(generator=self).delete()
+
+    def generate_testcases(self):
+        self.delete_testcases()
+        for command in self.text_data.split("\n"):
+            self._create_test(command)
+
+    def enable(self):
+        self.generate_testcases()
+        self.is_enabled = True
+        self.save()
+
+    def disable(self):
+        self.delete_testcases()
+        self.is_enabled = False
+        self.save()
 
 class TestCaseValidation(Task):
     testcase = models.ForeignKey("TestCase")
@@ -61,63 +117,13 @@ class TestCaseGeneration(Task):
         self.testcase.generate()
         TestCaseValidation.create_and_run_all_for_testcase(self.testcase)
 
-class Script(RevisionObject):
-
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
-    title = models.CharField(verbose_name=_("title"), max_length=256, db_index=True)
-    script = models.TextField(verbose_name=_("script"))  # TODO: Validate the script using validators
-    disabled = models.BooleanField(verbose_name=_("disabled"), default=False)
-
-    @staticmethod
-    def get_matching_fields():
-        return ["title"]
-
-    def create_tests(self):
-        # TODO: Handle subtasks
-        self.testcase_set.all().delete()
-        lines = self.script.split("\n")
-        testcases = []
-        for line in lines:
-            line = line.strip()
-            if not line or len(line) == 0:
-                continue
-            data = self.create_from_script_line(line)
-            testcases.append(
-                TestCase(
-                    problem=self.problem,
-                    _input_static=False,
-                    _output_static=False,
-                    **data
-                )
-            )
-        TestCase.objects.bulk_create(testcases)
-
-    @classmethod
-    def get_generation_parameters_from_script_line(cls, line):
-        line_split = shlex.split(line)
-        data = dict()
-        data["_input_generator_name"] = line_split[0]
-
-        if len(line_split) >= 3 and line_split[-2] == ">":
-            data["name"] = line_split[-1]
-            line_split = line_split[:-1]
-
-        data["_input_generation_parameters"] = " ".join(shlex.quote(line) for line in line_split[1:])
-
-        return data
-
-    def save(self, *args, **kwargs):
-        super(Script, self).save(*args, **kwargs)
-        if self.disabled:
-            self.testcase_set.all().delete()
-        else:
-            self.create_tests()
-
 
 class TestCase(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
     name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
+    # FIXME: Better naming for this
+    generator = models.ForeignKey(InputGenerator, null=True, on_delete=models.CASCADE)
 
     input_static = models.BooleanField(
         editable=False,
@@ -157,8 +163,6 @@ class TestCase(RevisionObject):
 
     # TODO: Add ability to automatically put the test in all subtasks
     # which their validators accept it
-
-    script = models.ForeignKey(Script, null=True)
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 

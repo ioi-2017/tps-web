@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from problems.views.export import ExportView, ExportDownloadView, ExportPackageStarterView
+from problems.views.generators import GeneratorEnableView, GeneratorDisableView
 from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
         InvocationAnswerDownloadView
 from problems.views.statement import EditStatement
@@ -67,7 +68,10 @@ problem_urls = ([
         url(r'^generator/(?P<generator_id>\d+)/delete/$', GeneratorDeleteView, name="delete_generator"),
         url(r'^generator/(?P<generator_id>\d+)/source/$', GeneratorShowSourceView.as_view(), name="generator_source"),
         url(r'^generator/add/$', GeneratorAddView.as_view(), name="add_generator"),
-
+        url(r'^generator/(?P<generator_id>\d+)/generate-testcases/$', GeneratorEnableView.as_view(),
+            name="enable_generator"),
+        url(r'^generator/(?P<generator_id>\d+)/delete-testcases/$', GeneratorDisableView.as_view(),
+            name="disable_generator"),
 
         url(r'^checkers/$', CheckerListView.as_view(), name="checkers"),
         url(r'^checker/add/$', CheckerAddView.as_view(), name="add_checker"),

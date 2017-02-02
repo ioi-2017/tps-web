@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from file_repository.models import FileModel
 from .generic import ProblemObjectModelForm
-from problems.models import TestCase, Solution, SourceFile, Script, Subtask
+from problems.models import TestCase, Solution, SourceFile, InputGenerator, Subtask
 from django.utils.translation import ugettext as _
 
 
@@ -47,7 +47,7 @@ class TestCaseAddForm(ProblemObjectModelForm):
         elif cleaned_data["generation_command"] == "":
             raise ValidationError(_("You must either upload an input or use a generator"))
         else:
-            data = Script.get_generation_parameters_from_script_line(cleaned_data["generation_command"])
+            data = InputGenerator.get_generation_parameters_from_script_line(cleaned_data["generation_command"])
             cleaned_data.update(data)
         if cleaned_data.get("output_uploaded_file") is not None:
             cleaned_data["_output_uploaded_file"] = FileModel.objects.create(
@@ -107,7 +107,7 @@ class TestCaseEditForm(ProblemObjectModelForm):
             else:
                 cleaned_data.pop("_input_uploaded_file")
         else:
-            data = Script.get_generation_parameters_from_script_line(cleaned_data["generation_command"])
+            data = InputGenerator.get_generation_parameters_from_script_line(cleaned_data["generation_command"])
             cleaned_data.update(data)
         if cleaned_data.get("output_uploaded_file") is not None:
             cleaned_data["_output_uploaded_file"] = FileModel.objects.create(
@@ -121,4 +121,3 @@ class TestCaseEditForm(ProblemObjectModelForm):
         ret = super(TestCaseEditForm, self).save(*args, **kwargs)
         self.instance.invalidate()
         return ret
-

@@ -21,17 +21,22 @@
                 <thead>
                     <tr>
                         {% if revision_editable %}
-                            <th class="col-md-10">{% trans 'Source Code' %}</th>
+                            <th class="col-md-3">{% trans 'Source Code' %}</th>
+                            <th class="col-md-3"> {% trans 'Title' %}</th>
+                            <th class="col-md-4"> {% trans 'Script Data' %}</th>
+                            <th class="col-md-2">{% trans 'Generate Testcases' %} </th>
                             <th class="col-md-1">{% trans 'Language' %} </th>
                             <th class="col-md-1"></th>
                         {% else %}
-                            <th class="col-md-11">{% trans 'Source Code' %}</th>
+                            <th class="col-md-3">{% trans 'Source Code' %}</th>
+                            <th class="col-md-3"> {% trans 'Title' %}</th>
+                            <th class="col-md-4"> {% trans 'Script Data' %}</th>
                             <th class="col-md-1">{% trans 'Language' %} </th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-            {% for generator in generators %}
+                {% for generator in generators %}
                     <tr>
                         <td>
                             <a href="{% problem_url "problems:generator_source" generator.pk %}">
@@ -39,8 +44,39 @@
                             </a>
                         </td>
                         <td>
+                            {{ generator.title }}
+                        </td>
+                        <td>
+                            <button class="btn btn-primary hide_button{{ generator.id }}" style="display: none">
+                                Hide
+                            </button>
+                            <button class="btn btn-primary show_button{{ generator.id }}">
+                                Show
+                            </button>
+                            <pre class="script_data{{ generator.id }}" style="display: none">
+                                {{ generator.text_data }}
+                            </pre>
+                        </td>
+                        {% if revision_editable %}
+                            <td class="text-center fa-lg">
+                                {% if generator.is_enabled %}
+                                    <a data-method="post" href="{% problem_url "problems:disable_generator" generator.pk %}" class="btn btn-danger">
+                                        <i class="fa fa-gear"></i>
+                                        {% trans 'Disable' %}
+                                    </a>
+                                {% else %}
+                                    <a data-method="post" href="{% problem_url "problems:enable_generator" generator.pk %}" class="btn btn-warning">
+                                        <i class="fa fa-gear"></i>
+                                        {% trans 'Enable' %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+
+                        <td>
                             {{ generator.source_language }}
                         </td>
+
                         {% if revision_editable %}
                             <td>
                                 <a class="text-primary" href='{% problem_url "problems:edit_generator" generator.id %}'>
@@ -50,7 +86,7 @@
                             </td>
                         {% endif %}
                     </tr>
-            {% endfor %}
+                {% endfor %}
                 </tbody>
             </table>
         {% else %}
@@ -63,4 +99,16 @@
 {% endblock %}
 {% block foot_js %}
     {{ block.super }}
+    <script src="{% static 'js/generator.js' %}"></script>
+
+    <script>
+    $(document).ready(function() {
+        {% for generator in generators %}
+            set_click($(".show_button{{ generator.id }}"),
+                $(".hide_button{{ generator.id }}"),
+                $(".script_data{{ generator.id }}"));
+        {% endfor %}
+    });
+    </script>
+
 {% endblock %}
