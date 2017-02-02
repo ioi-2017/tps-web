@@ -31,17 +31,17 @@ class InputGenerator(SourceFile):
     is_enabled = models.BooleanField(default=False)
 
     @classmethod
-    def get_generation_parameters_from_script_line(cls, problem, line):
-        line_split = shlex.split(line)
+    def get_generation_parameters_from_script_line(cls, problem, input_line):
+        line_split = shlex.split(input_line)
         data = dict()
 
-        test_name_separator_index = line.index(">")
+        test_name_separator_index = line_split.index(">")
 
-        data["name"] = line[test_name_separator_index + 1]
+        data["name"] = line_split[test_name_separator_index + 1]
 
         subtask_names = [
-            line[subtask_index] for subtask_index in
-            range(test_name_separator_index + 2, len(line), 2)
+            line_split[subtask_index] for subtask_index in
+            range(test_name_separator_index + 3, len(line_split), 2)
         ]
         data["subtasks"] = [
             problem.subtasks.get(name=name)
@@ -61,6 +61,7 @@ class InputGenerator(SourceFile):
         test_case = TestCase(
                     problem=self.problem,
                     generator=self,
+                    _input_generator_name=self.name,
                     input_static=False,
                     output_static=False,
                     **data)
@@ -483,3 +484,7 @@ class Subtask(RevisionObject):
 
     def __str__(self):
         return self.name
+
+    @property
+    def validators(self):
+        return self.problem.validator_set.filter(Q(global_validator=True) | Q(_subtasks=self))

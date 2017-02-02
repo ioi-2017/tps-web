@@ -44,7 +44,7 @@
                             </a>
                         </td>
                         <td>
-                            {% for validator in subtask.validator_set.all %}
+                            {% for validator in subtask.validators.all %}
                                 {% if not forloop.first %}
                                     ,
                                 {% endif %}

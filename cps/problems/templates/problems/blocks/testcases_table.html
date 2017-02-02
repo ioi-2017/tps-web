@@ -9,7 +9,7 @@
                     <th class="col-md-1"> # </th>
                     <th class="col-md-2"> {% trans 'Name' %} </th>
                     <th class="col-md-4"> {% trans 'Input' %} </th>
-                    <th class="col-md-2"> {% trans 'Script' %} </th>
+                    <th class="col-md-2"> {% trans 'Generator' %} </th>
                     <th class="col-md-2"> {% trans 'Subtasks' %}</th>
                     <th class="col-md-2"> {% trans 'Status' %} </th>
                     <th class="col-md-1"></th>
@@ -33,10 +33,10 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if not testcase.script %}
+                        {% if not testcase.generator %}
                             {% trans 'Manual' %}
                         {% else %}
-                            {{ testcase.script }}
+                            {{ testcase.generator }}
                         {% endif %}
                     </td>
                     <td>

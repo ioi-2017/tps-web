@@ -75,7 +75,7 @@ class ValidatorResult(models.Model):
 
 class Validator(SourceFile):
 
-    _subtasks = models.ManyToManyField("Subtask", verbose_name=_("subtasks"))
+    _subtasks = models.ManyToManyField("Subtask", verbose_name=_("subtasks"), blank=True)
     global_validator = models.BooleanField(
         verbose_name=_("all subtasks"),
         help_text=_("if marked, it validates all subtasks")

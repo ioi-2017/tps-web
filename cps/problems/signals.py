@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
-from problems.models import Solution, Validator, InputGenerator
+from problems.models import Solution, Validator, InputGenerator, Resource
 
 
 @receiver(post_save, sender=Solution, dispatch_uid="invalidate_testcase_solution")
@@ -31,3 +31,12 @@ def invalidate_testcase_on_generator_change(sender, instance, **kwargs):
     )
     for testcase in testcases:
         testcase.invalidate()
+
+
+@receiver(post_save, sender=Resource, dispatch_uid="invalidate_file_compilation_resource")
+@receiver(pre_delete, sender=Resource, dispatch_uid="invalidate_file_compilation_resource")
+def invalidate_testcase_on_validator_change(sender, instance, **kwargs):
+    revision = instance.problem
+    revision.validator_set.update(_compiled_file=None)
+    revision.checker_set.update(_compiled_file=None)
+    revision.inputgenerator_set.update(_compiled_file=None)

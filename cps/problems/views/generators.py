@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 
 from problems.forms.files import SourceFileEditForm
-from problems.forms.generator import GeneratorAddForm
+from problems.forms.generator import GeneratorAddForm, GeneratorEditForm
 from problems.forms.testcases import TestCaseAddForm
 from problems.models import InputGenerator
 from problems.models import TestCase
@@ -27,7 +27,7 @@ class GeneratorsListView(RevisionObjectView):
 
 class GeneratorEditView(ProblemObjectEditView):
     template_name = "problems/edit_generator.html"
-    model_form = SourceFileEditForm
+    model_form = GeneratorEditForm
     permissions_required = ["edit_generator"]
 
     def get_success_url(self, request, problem_id, revision_slug, obj):
@@ -37,7 +37,7 @@ class GeneratorEditView(ProblemObjectEditView):
         })
 
     def get_instance(self, request, *args, **kwargs):
-        return self.revision.inputgenerator_set.get(pk=kwargs.get("generators_id"))
+        return self.revision.inputgenerator_set.get(pk=kwargs.get("generator_id"))
 
 
 class GeneratorAddView(ProblemObjectAddView):

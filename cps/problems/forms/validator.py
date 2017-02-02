@@ -17,4 +17,4 @@ class ValidatorEditForm(SourceFileEditForm):
     class Meta:
         model = Validator
         # TODO add global subtask for IOI
-        fields = ["name", "source_language"]
+        fields = ["name", "source_language", "_subtasks", "global_validator"]
