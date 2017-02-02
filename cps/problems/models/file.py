@@ -112,7 +112,7 @@ class SourceFile(ResourceBase):
 
         code_name = self.name
         compiled_file_name = self.name + ".out"
-        compile_commands = get_compilation_commands(self.source_language, code_name,
+        compile_commands = get_compilation_commands(self.source_language, [code_name],
                                                     compiled_file_name)
         files = [(resource.name, resource.file) for resource in self.problem.resource_set.all()]
         files.append((code_name, self.source_file))

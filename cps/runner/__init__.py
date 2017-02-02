@@ -8,14 +8,14 @@ def get_compilation_commands(language, source_filenames, executable_filename):
     """
     returns a command to be executed by runner
     :param language: RUNNER_SUPPORTED_LANGUAGES
-    :param source_filenames: string
+    :param source_filenames: list of strings
     :param executable_filename: string
     """
     if language not in RUNNER_SUPPORTED_LANGUAGES:
         logger.error("Language" + language + "not supported in runner")
     command_list = []
     if language == "c++":
-        command_list.append(["/usr/bin/g++",  "-x", "c++", source_filenames, "-O2", "-o", executable_filename])
+        command_list.append(["/usr/bin/g++",  "-x", "c++"] + source_filenames + ["-O2", "-o", executable_filename])
     return command_list
 
 

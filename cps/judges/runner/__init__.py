@@ -51,24 +51,28 @@ class Runner(Judge):
                 verdict=JudgeVerdict.invalid_submission,
                 message="Language not supported"
             )
+
+        revision = ProblemRevision.objects.get(pk=problem_code)
+        graders = [(grader.name, grader.code) for grader in revision.grader_set.filter(language=language)]
+
         name, file = solution_files[0]
         code_name = get_source_file_name(language)
         compiled_file_name = "code.out"
         compile_commands = get_compilation_commands(
             language,
-            code_name,
+            [code_name] + [name for name, file in graders],
             compiled_file_name
         )
 
         # TODO: Add managers for compiling
         action = ActionDescription(
             commands=compile_commands,
-            files=[(code_name, file)],
+            files=[(code_name, file)] + graders,
             output_files=[compiled_file_name],
             time_limit=self.compile_time_limit,
             memory_limit=self.compile_memory_limit,
         )
-        revision = ProblemRevision.objects.get(pk=problem_code)
+
 
         # TODO: When changed to test case specific limits, this must be changed
         time_limit = revision.problem_data.time_limit

@@ -135,7 +135,9 @@ class ProblemRevision(models.Model):
                 problem_id=self.pk,
                 task_type=self.problem_data.task_type,
                 score_type=self.problem_data.score_type,
-                helpers=[self.problem.grader_set, ],  # TODO: Add solution helpers
+                helpers=[
+                    (grader.name, grader.code, grader.language) for grader in self.grader_set.all()
+                ],  # TODO: Add solution helpers
                 problem_code=self.judge_code
             )
         self.save()

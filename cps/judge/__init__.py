@@ -64,8 +64,8 @@ class Judge(object):
          May be used to generate the problem code.
         task_type (TaskType): the task type used for this problem
         score_type (ScoreType): the score type used for this problem
-        helpers ([(str, FileModel)]): a list of files that must be compiled with all solutions.
-        Each element is a tuple of the form (name, file)
+        helpers ([(str, FileModel, str)]): a list of files that must be compiled with all solutions in that language.
+        Each element is a tuple of the form (name, file, language)
         problem_code (str): If given and the problem corresponding to this code exists
          it updates the existing problem rather than creating a new one.
         :return (str): a reference code for this problem. length of this code is at most 128.
