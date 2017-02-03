@@ -16,8 +16,6 @@ class SolutionEditForm(ProblemObjectModelForm):
 
     field_order = ["file", "language",  "name", "verdict", ]
 
-    subtask_fields = []
-
     class Meta:
         model = Solution
         fields = ["name", "language", "verdict"]
@@ -26,6 +24,7 @@ class SolutionEditForm(ProblemObjectModelForm):
         super(SolutionEditForm, self).__init__(*args, **kwargs)
         self.fields["language"] = forms.ChoiceField(choices=[(a, a) for a in self.revision.get_judge().get_supported_languages()], required=True, )
         self.fields["name"].help_text = _("Optional")
+        self.subtask_fields = []
         verdicts_defaults = {}
         if self.instance is not None:
             for verdict in self.instance.solutionsubtaskexpectedverdict_set.all():
