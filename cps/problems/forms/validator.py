@@ -2,7 +2,7 @@ from django import forms
 
 from problems.forms.files import SourceFileAddForm, SourceFileEditForm
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import SourceFile, Validator
+from problems.models import SourceFile, Validator, Subtask
 
 
 class ValidatorAddForm(SourceFileAddForm):
@@ -13,7 +13,7 @@ class ValidatorAddForm(SourceFileAddForm):
 
     def __init__(self, *args, **kwargs):
         super(ValidatorAddForm, self).__init__(*args, **kwargs)
-        self.fields["_subtasks"].queryset = Validator.objects.filter(problem=self.revision)
+        self.fields["_subtasks"].queryset = Subtask.objects.filter(problem=self.revision)
 
 
 
@@ -25,4 +25,4 @@ class ValidatorEditForm(SourceFileEditForm):
 
     def __init__(self, *args, **kwargs):
         super(ValidatorEditForm, self).__init__(*args, **kwargs)
-        self.fields["_subtasks"].queryset = Validator.objects.filter(problem=self.revision)
+        self.fields["_subtasks"].queryset = Subtask.objects.filter(problem=self.revision)
