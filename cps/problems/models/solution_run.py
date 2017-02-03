@@ -132,20 +132,20 @@ class SolutionRunResult(Task):
         problem_code = problem.get_judge_code()
         testcase_code = testcase.get_judge_code()
         if not testcase_code:
-            self.solution_verdict = SolutionRunVerdict.judge_failed
+            self.solution_verdict = SolutionRunVerdict.judge_failed.name
             self.solution_execution_message = _("Couldn't add testcase to the judge")
             self.save()
             return
         input_file = testcase.input_file
         if not input_file:
-            self.solution_verdict = SolutionRunVerdict.invalid_testcase
+            self.solution_verdict = SolutionRunVerdict.invalid_testcase.name
             self.solution_execution_message = _("Testcase couldn't be generated")
             self.save()
             return
         # TODO: Should we check if the testcase validates as well?
         output_file = testcase.output_file
         if not output_file:
-            self.solution_verdict = SolutionRunVerdict.invalid_testcase
+            self.solution_verdict = SolutionRunVerdict.invalid_testcase.name
             self.solution_execution_message = _("Testcase couldn't be generated")
             self.save()
             return

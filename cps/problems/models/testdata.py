@@ -49,7 +49,7 @@ class InputGenerator(SourceFile):
         ]
 
         data["_input_generation_parameters"] = " ".join(
-            shlex.quote(line) for line in line_split[1:test_name_separator_index]
+            shlex.quote(line) for line in line_split[0:test_name_separator_index]
         )
 
         return data
@@ -75,7 +75,9 @@ class InputGenerator(SourceFile):
     def generate_testcases(self):
         self.delete_testcases()
         for command in self.text_data.split("\n"):
-            self._create_test(command)
+            command = command.strip()
+            if command:
+                self._create_test(command)
 
     def enable(self):
         self.generate_testcases()
