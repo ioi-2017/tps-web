@@ -11,6 +11,10 @@ class ValidatorAddForm(SourceFileAddForm):
         # TODO add global subtask for IOI
         fields = ["name", "source_language", "_subtasks", "global_validator"]
 
+    def __init__(self, *args, **kwargs):
+        super(ValidatorAddForm, self).__init__(*args, **kwargs)
+        self.fields["_subtasks"].queryset = Validator.objects.filter(problem=self.revision)
+
 
 
 class ValidatorEditForm(SourceFileEditForm):
@@ -18,3 +22,7 @@ class ValidatorEditForm(SourceFileEditForm):
         model = Validator
         # TODO add global subtask for IOI
         fields = ["name", "source_language", "_subtasks", "global_validator"]
+
+    def __init__(self, *args, **kwargs):
+        super(ValidatorEditForm, self).__init__(*args, **kwargs)
+        self.fields["_subtasks"].queryset = Validator.objects.filter(problem=self.revision)
