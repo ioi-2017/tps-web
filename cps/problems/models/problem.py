@@ -176,8 +176,8 @@ class ProblemRevision(models.Model):
 
     @staticmethod
     def _get_cloner():
-        return Cloner(blocking_models=["file_repository.FileModel"],
-                      ignored_models=["file_repository.FileModel"],
+        return Cloner(blocking_models=["file_repository.FileModel", settings.AUTH_USER_MODEL],
+                      ignored_models=["file_repository.FileModel", settings.AUTH_USER_MODEL],
                       ignored_fields=[("problems.ProblemRevision", "parent_revisions"),
                                       ("problems.ProblemRevision", "problem"),
                                       ("problems.ProblemRevision", "author"),
