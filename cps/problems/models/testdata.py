@@ -315,7 +315,7 @@ class TestCase(RevisionObject):
         validators_for_subtasks = Q(_subtasks__in=self.subtasks.all())
         return self.problem.validator_set.filter(
                 global_validators | validators_for_subtasks
-        ).all()
+        ).distinct().all()
 
     def validate_input_file(self):
         for validator in self.validators:
