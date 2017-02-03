@@ -51,6 +51,7 @@ class ValidatorResult(models.Model):
             executables=[("validator", self.validator.compiled_file())],
             time_limit=settings.FAILSAFE_TIME_LIMIT,
             memory_limit=settings.FAILSAFE_MEMORY_LIMIT,
+            stdin_redirect="input.txt",
             stderr_redirect="stderr.txt",
             output_files=["stderr.txt"]
         )
