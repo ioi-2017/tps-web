@@ -477,7 +477,7 @@ class Subtask(RevisionObject):
     problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
-    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks")
+    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
 
 
     @staticmethod
