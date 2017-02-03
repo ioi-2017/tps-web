@@ -9,7 +9,7 @@ from problems.models.enums import SolutionVerdict
 
 
 class SolutionEditForm(ProblemObjectModelForm):
-    _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
+    _VERDICTS = [("N / A", None)] + [(x.name, x.value) for x in list(SolutionVerdict)]
 
 
     file = forms.FileField(label=_("Solution"), required=False)
@@ -26,8 +26,16 @@ class SolutionEditForm(ProblemObjectModelForm):
         super(SolutionEditForm, self).__init__(*args, **kwargs)
         self.fields["language"] = forms.ChoiceField(choices=[(a, a) for a in self.revision.get_judge().get_supported_languages()], required=True, )
         self.fields["name"].help_text = _("Optional")
+        verdicts_defaults = {}
+        if self.instance is not None:
+            for verdict in self.instance.solutionsubtaskexpectedverdict_set.all():
+                verdicts_defaults[verdict.subtask] = verdict.verdict
         for subtask in self.revision.subtasks.all():
-            self.fields[str(subtask)] = forms.ChoiceField(choices=self._VERDICTS, label=str(subtask), required=False)
+            self.fields[str(subtask)] = forms.ChoiceField(
+                choices=self._VERDICTS,
+                label=str(subtask),
+                initial=verdicts_defaults[subtask]
+            )
             self.subtask_fields.append(str(subtask))
 
 
@@ -37,10 +45,12 @@ class SolutionEditForm(ProblemObjectModelForm):
             self.instance.code = \
                 FileModel.objects.create(file=self.cleaned_data["file"])
         self.instance.save()
+        self.instance.solutionsubtaskexpectedverdict_set.all().delete()
         for subtask in self.revision.subtasks.all():
-            if not self.cleaned_data[str(subtask)] is None:
-                solution_subtask_verdict = SolutionSubtaskExpectedVerdict(solution=self.instance, subtask=subtask,
-                                                                  verdict=self.cleaned_data[str(subtask)])
+            if self.cleaned_data[str(subtask)] is not None:
+                solution_subtask_verdict = SolutionSubtaskExpectedVerdict(
+                    solution=self.instance, subtask=subtask,
+                    verdict=self.cleaned_data[str(subtask)])
                 solution_subtask_verdict.save()
 
         if commit:
