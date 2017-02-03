@@ -34,7 +34,7 @@ class SolutionEditForm(ProblemObjectModelForm):
             self.fields[str(subtask)] = forms.ChoiceField(
                 choices=self._VERDICTS,
                 label=str(subtask),
-                initial=verdicts_defaults[subtask]
+                initial=verdicts_defaults.get(subtask, None)
             )
             self.subtask_fields.append(str(subtask))
 
