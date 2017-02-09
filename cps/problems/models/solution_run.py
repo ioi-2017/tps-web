@@ -8,7 +8,7 @@ from tasks.models import Task
 from file_repository.models import FileModel
 from judge import Judge
 from judge.results import JudgeVerdict
-from problems.models import Solution, RevisionObject
+from problems.models import Solution, RevisionObject, SolutionSubtaskExpectedVerdict
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase
 from problems.utils import run_checker
@@ -198,28 +198,41 @@ class SolutionRunResult(Task):
 
         self.save()
 
-    def validate(self, strict=False):
+    def validate(self, subtasks=None, strict=False):
         if self.verdict is None:
             return True
         if self.verdict not in JudgeVerdict.__members__:
             return False
-        solution_verdict = SolutionVerdict.__members__.get(self.solution.verdict)
-        judge_verdict = JudgeVerdict.__members__.get(self.solution_verdict)
         if not strict and self.score == 1:
             return True
-        if solution_verdict in [SolutionVerdict.correct, SolutionVerdict.model_solution]:
+        solution_verdict = SolutionVerdict.__members__.get(self.solution.verdict)
+        flag = True
+        flag &= self.validate_for_verdict(solution_verdict)
+
+        if subtasks is None:
+            subtasks = self.testcase.subtasks.all()
+        for subtask in subtasks:
+            solution_subtask_expected_verdict = SolutionSubtaskExpectedVerdict.objects.get(subtask=subtask, solution=self.solution)
+            flag &= self.validate_for_verdict(solution_subtask_expected_verdict.verdict)
+
+        return flag
+
+
+    def validate_for_verdict(self, verdict):
+        judge_verdict = JudgeVerdict.__members__.get(self.solution_verdict)
+        if verdict in [SolutionVerdict.correct, SolutionVerdict.model_solution]:
             return self.score == 1
-        elif solution_verdict == SolutionVerdict.incorrect:
+        elif verdict == SolutionVerdict.incorrect:
             return self.score == 0
-        elif solution_verdict == SolutionVerdict.runtime_error:
+        elif verdict == SolutionVerdict.runtime_error:
             return judge_verdict == JudgeVerdict.runtime_error
-        elif solution_verdict == SolutionVerdict.memory_limit:
+        elif verdict == SolutionVerdict.memory_limit:
             return judge_verdict == JudgeVerdict.memory_limit_exceeded
-        elif solution_verdict == SolutionVerdict.time_limit:
+        elif verdict == SolutionVerdict.time_limit:
             return judge_verdict == JudgeVerdict.time_limit_exceeded
-        elif solution_verdict == SolutionVerdict.failed:
+        elif verdict == SolutionVerdict.failed:
             return judge_verdict != JudgeVerdict.ok or self.score != 1
-        elif solution_verdict == SolutionVerdict.time_limit_and_runtime_error:
+        elif verdict == SolutionVerdict.time_limit_and_runtime_error:
             return judge_verdict in [JudgeVerdict.runtime_error, JudgeVerdict.time_limit_exceeded]
         return False
 

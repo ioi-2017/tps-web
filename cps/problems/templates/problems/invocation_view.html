@@ -24,19 +24,29 @@
                 {% for testcase,testcase_results in results %}
                     <tr>
                         <td>{{ testcase }}</td>
-                        {% for result in testcase_results %}
+                        {% for result,failed_subtasks in testcase_results %}
                             {% if result.validate == False %}
-                                <td class="alert alert-danger force-bgcolor">
+                                <td class="alert alert-danger force-bgcolor" data-toggle="tooltip" title="{% for subtask,expected_verdict in failed_subtasks %}{{ subtask }}: Expected {{ expected_verdict }} got {{ result.get_short_name_for_verdict }}
+{% endfor %}">
                             {% else %}
                                 <td>
                             {% endif %}
                             <a href="{% problem_url "problems:view_invocation_result" invocation.id result.id %}">
                                 {{ result.get_short_name_for_verdict }}
                             </a>
+                            <small class="text-muted"> {{ result.solution_execution_time }}/{{ result.solution_memory_usage }} </small>
                             </td>
                         {% endfor %}
                     </tr>
                 {% endfor %}
+                <tr>
+                    <td>Max</td>
+                    {% for max_time,max_memory in max_time_and_memory %}
+                        <td>
+                            <small class="text-muted"> {{ max_time }} S/{{ max_memory}} KB </small>
+                        </td>
+                    {% endfor %}
+                </tr>
             </tbody>
         </table>
     </div>
@@ -60,8 +70,12 @@
                 {% for subtask,subtask_results in subtasks %}
                     <tr>
                         <td>{{ subtask }}</td>
-                        {% for subtask_solution_result in subtask_results %}
-                            <td>
+                        {% for subtask_solution_result,validation in subtask_results %}
+                            {% if validation %}
+                                <td>
+                            {% else %}
+                                <td class="alert alert-danger force-bgcolor">
+                            {% endif %}
                             {% for result in subtask_solution_result %}
                                 {{ result }}
                             {% endfor %}
@@ -73,4 +87,12 @@
         </table>
     </div>
     {% csrf_token %}
+{% endblock %}
+{% block foot_js %}
+{{ block.super }}
+    <script>
+        $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
 {% endblock %}

@@ -8,7 +8,8 @@ from django.views.generic import View
 from judge.results import JudgeVerdict
 from problems.forms.invocation import InvocationAddForm
 from problems.forms.solution import SolutionAddForm
-from problems.models import Solution, SolutionRun, SolutionRunResult
+from problems.models import Solution, SolutionRun, SolutionRunResult, SolutionSubtaskExpectedVerdict
+from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
 __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView"]
@@ -71,9 +72,30 @@ class InvocationDetailsView(RevisionObjectView):
         results = []
         for testcase in testcases:
             current_results = []
+            failed_subtasks = []
             for solution in solutions:
+                testcase_subtasks = []
                 current_results.append(dic[testcase][solution])
-            results.append((testcase, current_results))
+                for subtask in testcase.subtasks.all():
+                    if not dic[testcase][solution].validate(subtasks=[subtask]):
+                        subtask_verdict = SolutionSubtaskExpectedVerdict.objects.get(solution=solution, subtask=subtask)
+                        short_name = SolutionVerdict.__members__.get(subtask_verdict.verdict).short_name
+                        testcase_subtasks.append((subtask, short_name))
+                failed_subtasks.append(testcase_subtasks)
+            results.append((testcase, zip(current_results, failed_subtasks)))
+
+        solution_max_time = []
+        solution_max_memory = []
+        for solution in solutions:
+            max_time = 0
+            max_memory = 0
+            for testcase in testcases:
+                if not dic[testcase][solution].solution_execution_time is None:
+                    max_time = max(dic[testcase][solution].solution_execution_time, max_time)
+                if not dic[testcase][solution].solution_memory_usage is None:
+                    max_memory = max(dic[testcase][solution].solution_memory_usage, max_memory)
+            solution_max_time.append(max_time)
+            solution_max_memory.append(max_memory)
 
         validations = []
         for solution in solutions:
@@ -87,20 +109,23 @@ class InvocationDetailsView(RevisionObjectView):
             subtask_results = []
             for solution in solutions:
                 subtask_solution_result = []
+                validation = True
                 for testcase in subtask.testcases.all():
                     if testcase in testcases:
                         subtask_solution_result.append(dic[testcase][solution].get_short_name_for_verdict())
+                        validation &= dic[testcase][solution].validate(subtasks=[subtask])
                 current_set = set(subtask_solution_result)
                 subtask_solution_result = list(current_set)
-                subtask_results.append(subtask_solution_result)
-            subtasks_results.append((subtask,subtask_results))
-
+                subtask_results.append((subtask_solution_result, validation))
+            subtasks_results.append((subtask, subtask_results))
+        max_time_and_memory = zip(solution_max_time, solution_max_memory)
 
         return render(request, "problems/invocation_view.html", context={
             "invocation": obj,
             "results": results,
             "validations": validations,
-            "subtasks": subtasks_results
+            "subtasks": subtasks_results,
+            "max_time_and_memory": max_time_and_memory
         })
 
 
@@ -124,11 +149,18 @@ class InvocationResultView(RevisionObjectView):
         else:
             output = obj.solution_output.get_truncated_content()
 
+        subtasks = obj.testcase.subtasks.all()
+        new_subtasks_list = []
+
+        for subtask in subtasks:
+            new_subtasks_list.append((subtask, obj.validate(subtasks=[subtask])))
+
         return render(request, "problems/invocation_result_view.html", context={
             "input": input,
             "output": output,
             "answer": answer,
-            "result": obj
+            "result": obj,
+            "subtasks": new_subtasks_list
         })
 
 

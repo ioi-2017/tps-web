@@ -383,3 +383,7 @@ tr.active-row {
 	left: 20%;
 }
 
+.tooltip-inner {
+    white-space:pre-wrap;
+}
+

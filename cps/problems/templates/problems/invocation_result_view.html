@@ -69,6 +69,22 @@
                     </td>
                     <td><pre>{{ answer }}</pre></td>
                 </tr>
+                <tr>
+                    <td>{% trans 'Subtasks' %}</td>
+                    <td>
+                        {% for subtask,validation in subtasks %}
+                            {% if not forloop.first %}
+                                    ,
+                            {% endif %}
+                            {{ subtask }}
+                            {% if not validation %}
+                                 <i class="text-danger fa fa-remove fa-lg"></i>
+                            {% else %}
+                                 <i class="text-success fa fa-check fa-lg"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

@@ -3,15 +3,18 @@ from urllib.parse import _noop
 
 
 class SolutionVerdict(Enum):
-    model_solution = _noop("Model solution")
-    correct = _noop("Correct")
-    time_limit = _noop("Time limit")
-    memory_limit = _noop("Memory limit")
-    incorrect = _noop("Incorrect")
-    runtime_error = _noop("Runtime error")
-    failed = _noop("Failed")
-    time_limit_and_runtime_error = _noop("Time limit / Runtime error")
+    model_solution = (_noop("Model solution"), "AC")
+    correct = (_noop("Correct"), "AC")
+    time_limit = (_noop("Time limit"), "TL")
+    memory_limit = (_noop("Memory limit"), "ML")
+    incorrect = (_noop("Incorrect"), "WA")
+    runtime_error = (_noop("Runtime error"), "RE")
+    failed = (_noop("Failed"), "FL")
+    time_limit_and_runtime_error = (_noop("Time limit / Runtime error"), "TL/RE")
 
+    def __init__(self, full_name, short_name):
+        self.full_name = full_name
+        self.short_name = short_name
 
 class SolutionRunVerdict(Enum):
     invalid_submission = (_noop("Bad Submission"), "BS")
