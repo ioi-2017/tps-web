@@ -1,7 +1,7 @@
 # Mohammad Javad Naderi
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, resolve_url
@@ -10,13 +10,32 @@ from django.contrib.auth import logout as auth_logout
 from django.utils.http import is_safe_url
 from django.utils.translation import ugettext as _
 
+from accounts.models import User
 from cps import settings
 
 
 @login_required
-def profile(request):
+def change_password(request):
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("accounts:profile"))
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'accounts/change_password.html', {
+        'form': form
+    })
+
+
+@login_required
+def view_profile(request, user_id=None):
+    if user_id is None:
+        user = request.user
+    else:
+        user = User.objects.get(id=user_id)
     return render(request, 'accounts/profile.html', {
-        'user': request.user
+        'user': user
     })
 
 

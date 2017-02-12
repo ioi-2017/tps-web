@@ -12,3 +12,8 @@ admin.site.register(Grader)
 # admin.site.register(SourceFile)
 admin.site.register(ProblemFork)
 admin.site.register(TestCase)
+
+
+@admin.register(ProblemRole)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ['name']

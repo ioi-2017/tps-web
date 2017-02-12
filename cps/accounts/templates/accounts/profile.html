@@ -1,8 +1,13 @@
-<a href="{% url 'account_logout' %}">Log Out</a>
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% block content %}
+    <div class="text-center">
+        <div class="row"> <strong> {{ user.get_full_name }} </strong></div>
+        <div class="row">  {{ user.username }} </div>
+        {% if user.email  %}
+            <div class="row"> <i class="fa fa-envelope-o"></i> {{ user.email }} </div>
+        {% endif %}
 
-<h1>Your Profile</h1>
-<ul>
-    <li>Name: {{ user.get_full_name }}</li>
-    <li>E-mail: {{ user.email }}</li>
-</ul>
-
+    </div>
+{% endblock %}

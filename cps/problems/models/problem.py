@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 class Problem(models.Model):
 
-    users = models.ManyToManyField("accounts.User", through='accounts.UserProblem', related_name='problems')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
 

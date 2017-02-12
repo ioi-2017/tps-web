@@ -40,13 +40,14 @@
                         </a>
                     <h1 class="sr-only">{{ request.site.name }}</h1>
                 </div>
+                <ul class="nav navbar-nav">
+                    <li> <a href="{% url "problems:problems" %}"> {% trans 'Home' %} </a></li>
+                </ul>
                 <div class="navbar-right ">
                     <p class="navbar-text">
                         {% if user.is_authenticated %}
-                            {% blocktrans with user=user %}
-                                You are logged in as {{ user }}
-                            {% endblocktrans %}
-                            (<a href="{% url "accounts:logout" %}">{% trans 'Logout' %}</a>)
+                            {% trans 'You are logged in as' %} <a href="{% url "accounts:profile" %}">{{ user }}</a>
+                            (<a href="{% url "accounts:change_password" %}">{% trans 'Change Password' %}</a> | <a href="{% url "accounts:logout" %}">{% trans 'Logout' %}</a>)
                         {% endif %}
                     </p>
                 </div>
