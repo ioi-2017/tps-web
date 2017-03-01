@@ -1,5 +1,5 @@
 # Amir Keivan Mohtashami
-
+import json
 import logging
 
 from django.conf import settings
@@ -122,7 +122,7 @@ class TestCaseGeneration(Task):
 
 
 class TestCase(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
+    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
     name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
     # FIXME: Better naming for this
@@ -193,6 +193,19 @@ class TestCase(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return ["name"]
+
+    def get_value_as_string(self):
+        data = {}
+        if self.input_static:
+            data["input"] = self.input_file.read()
+        else:
+            data["input"] = self.input_generation_command
+
+        if self.output_static:
+            data["output"] = self.output_file.read()
+        else:
+            data["output"] = "Generated using {}".format(self.solution)
+        return json.dumps(data)
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator_name is None:
@@ -474,7 +487,7 @@ class TestCase(RevisionObject):
 
 
 class Subtask(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"), related_name="subtasks")
+    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"), related_name='subtasks')
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
@@ -483,6 +496,13 @@ class Subtask(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return ["name"]
+
+    def get_value_as_string(self):
+        data = {
+            "score": self.score,
+            "testcases": [str(testcase) for testcase in self.testcases.all()]
+        }
+        return json.dumps(data)
 
     def __str__(self):
         return self.name

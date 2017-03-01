@@ -1,0 +1,16 @@
+<div id="changes_accordion" >
+{% for difference_title, difference_desc in differences %}
+<div class="change">
+    <div class="change-header">
+        <h4>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse_changes_{{ forloop.counter }}">
+                {{ difference_title }}
+            </a>
+        </h4>
+    </div>
+    <div id="collapse_changes_{{ forloop.counter }}" class="collapse">
+        <pre class="change-description">{{ difference_desc|safe }}</pre>
+    </div>
+</div>
+{% endfor %}
+</div>

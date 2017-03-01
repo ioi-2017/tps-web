@@ -1,0 +1,15 @@
+{% load i18n %}
+
+{% for comment in comments %}
+    <div class="row">
+        <h4>{{ comment.text }}</h4>
+        <p class="text-muted">
+            <small>
+                {% blocktrans with author=comment.author posting_date=comment.posting_date %}
+                    Created by {{ author }} at {{ posting_date }}
+                {% endblocktrans %}
+            </small>
+        </p>
+    </div>
+    <br />
+{% endfor %}

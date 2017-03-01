@@ -7,32 +7,7 @@ from django.db import migrations
 
 
 def create_base_problem(apps, schema_editor):
-    # FIXME: It seems Django messes-up the model
-    # so when retrieving the model through apps.get_model
-    # the methods aren't there.
-
-    from problems.models import Problem, ProblemFork, ProblemData, ProblemRevision
-
-    UserModel = get_user_model()
-
-    if UserModel.objects.filter(id=0).count() == 0:
-        user = UserModel.objects.create(username='base_creator', id=0)
-        user.save()
-
-    user = UserModel.objects.get(id=0)
-
-    if Problem.objects.filter(id=0).count() == 0:
-        problem = Problem.objects.create(pk=0, creator_id=user.id)
-        problem.save()
-
-        problem_revision = ProblemRevision.objects.create(author=user, problem=problem)
-        problem_revision.commit("Created problem")
-        problem_fork = ProblemFork.objects.create(problem=problem, head=problem_revision)
-        problem_data = ProblemData.objects.create(problem=problem_revision,
-                                                  title="BaseProblem",
-                                                  code_name="BaseProblem")
-        problem.master_revision = problem_revision
-        problem.save()
+    pass
 
 
 class Migration(migrations.Migration):

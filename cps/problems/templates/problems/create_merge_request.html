@@ -1,0 +1,22 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h1>{% blocktrans with destination=problem.get_master_branch.name source=branch.name %}Request merging {{ source }} into {{ destination}} {% endblocktrans %}</h1>
+        <h2>{% trans 'Changes' %}</h2>
+        {% include "problems/blocks/revision_diff.html" with differences=differences %}
+        <form class="form-horizontal" method="post" action="{% problem_url "problems:create_merge_request" %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <div class="form-group">
+                <button type="submit" class="form-control btn btn-success">
+                    {% trans 'Submit' %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

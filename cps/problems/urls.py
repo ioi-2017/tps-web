@@ -1,13 +1,6 @@
 from django.conf.urls import url
 
-from problems.views.export import ExportView, ExportDownloadView, ExportPackageStarterView
-from problems.views.generators import GeneratorEnableView, GeneratorDisableView
-from problems.views.grader import GradersListView, GraderAddView, GraderShowSourceView, GraderDeleteView, GraderEditView
-from problems.views.invocations import InvocationResultView, InvocationOutputDownloadView, InvocationInputDownloadView, \
-        InvocationAnswerDownloadView
-from problems.views.statement import EditStatement
-from problems.views.subtasks import SubtasksListView, SubtaskAddView, SubtaskDetailsView, SubtaskDeleteView, \
-        SubtaskEditView
+
 from .views import *
 
 problem_urls = ([
@@ -81,20 +74,24 @@ problem_urls = ([
             name="disable_generator"),
 
         url(r'^checkers/$', CheckerListView.as_view(), name="checkers"),
-        url(r'^checker/add/$', CheckerAddView.as_view(), name="add_checker"),
-        url(r'^checker/(?P<checker_id>\d+)/activate/$', CheckerActivateView.as_view(), name="activate_checker"),
-        url(r'^checker/(?P<checker_id>\d+)/delete/$', CheckerDeleteView, name="delete_checker"),
-        url(r'^checker/(?P<checker_id>\d+)/edit/$', CheckerEditView.as_view(), name="edit_checker"),
-        url(r'^checker/(?P<checker_id>\d+)/source/$', CheckerShowSourceView.as_view(), name="checker_source"),
+        url(r'^checker/add/$$', CheckerAddView.as_view(), name="add_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/activate/$$', CheckerActivateView.as_view(), name="activate_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/delete/$$', CheckerDeleteView, name="delete_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/edit/$$', CheckerEditView.as_view(), name="edit_checker"),
+        url(r'^checker/(?P<checker_id>\d+)/source/$$', CheckerShowSourceView.as_view(), name="checker_source"),
 
-        url(r'^clone/', CreateWorkingCopy.as_view(), name="create_working_copy"),
-        url(r'^update/', UpdateForkView.as_view(), name="update_fork"),
-        url(r'^commit/', CommitWorkingCopy.as_view(), name="commit"),
-        url(r'^conflicts/', ConflictsListView.as_view(), name="conflicts"),
-        url(r'^conflict/(?P<conflict_id>\d+)/', ResolveConflictView.as_view(), name="resolve_conflict"),
-        url(r'^apply/', ApplyForkToMaster.as_view(), name="apply_fork"),
+        url(r'^clone/$', CreateWorkingCopy.as_view(), name="create_working_copy"),
+        url(r'^pull/$', PullBranchView.as_view(), name="pull_branch"),
+        url(r'^commit/$', CommitWorkingCopy.as_view(), name="commit"),
+        url(r'^conflicts/$', ConflictsListView.as_view(), name="conflicts"),
+        url(r'^conflict/(?P<conflict_id>\d+)/$', ResolveConflictView.as_view(), name="resolve_conflict"),
+        url(r'^create_branch/$', CreateBranchView.as_view(), name="create_branch"),
 
-
+        url(r'^merge_request/create/$', CreateMergeRequest.as_view(), name="create_merge_request"),
+        url(r'^merge_request/list/$', MergeRequestList.as_view(), name="merge_requests_list"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request_discussion"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/changes/$', MergeRequestChangesView.as_view(), name="merge_request_changes"),
     ], None, None)
 
 urlpatterns = [

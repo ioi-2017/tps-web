@@ -37,14 +37,45 @@
 
 
                         </li>
+                        <li>
+                             <a href="{% problem_url "problems:merge_requests_list" %}" >
+                                 <i class="fa fa-code-fork "></i>
+                                <span class="full-open-only">
+                                    {% trans 'Merge Requests' %}
+                                </span>
+                             </a>
+                         </li>
+                        <li>
+                             <a href="{% problem_url "problems:discussions" %}" >
+                                 <i class="fa fa-comment "></i>
+                                <span class="full-open-only">
+                                    {% trans 'Discussions' %}
+                                </span>
+                                 {% if errors.discussion > 0 %}
+                                    <p class="label label-danger error">
+                                        {{ errors.discussion }}
+                                         <span class="full-open-only">{% trans 'Open' %}</span>
+                                    </p>
+                                 {% endif %}
+                             </a>
+                         </li>
                     </ul>
-                    <ul class="fork-selection full-open-only">
-                        <li {% if revision_slug == "master" %} class="active" {% endif %} >
-                            <a href="{% url "problems:overview" problem.id "master" %}" >{% trans 'Master' %}</a>
-                        </li><li {% if revision_slug == request.user.username %} class="active" {% endif %}>
-                            <a href="{% url "problems:overview" problem.id request.user.username %}" >{% trans 'My Fork' %}</a>
-                        </li>
-                    </ul>
+                    <hr />
+                    <div class="row full-open-only">
+                        <div class="container-fluid">
+                        <span class="col-md-3">{% trans 'Branch' %}:</span>
+                        <span class="col-md-7">
+                        <select class="full-open-only  form-control" name="branch_choice" onchange="location.href=this.value">
+                            {% for itr_branch in branches %}
+                                <option value="{% url "problems:overview" problem.id itr_branch.get_slug %}" {% if itr_branch == branch %} selected="selected" {% endif %}>{{ itr_branch }}</option>
+                            {% endfor %}
+                        </select>
+                        </span>
+                        <span class="col-md-1"><a href="{% problem_url "problems:create_branch" %}"><i class="fa fa-plus text-success"></i></a></span>
+
+                        </div>
+                    </div>
+                    <br />
                     <ul class="sidebar-menu">
 
                          <li class="active">
@@ -152,20 +183,7 @@
                                  {% endif %}
                              </a>
                          </li>
-                        <li>
-                             <a href="{% problem_url "problems:discussions" %}" >
-                                 <i class="fa fa-comment "></i>
-                                <span class="full-open-only">
-                                    {% trans 'Discussions' %}
-                                </span>
-                                 {% if errors.discussion > 0 %}
-                                    <p class="label label-danger error">
-                                        {{ errors.discussion }}
-                                         <span class="full-open-only">{% trans 'Open' %}</span>
-                                    </p>
-                                 {% endif %}
-                             </a>
-                         </li>
+
                         <li>
                              <a href="{% problem_url "problems:history" %}" >
                                  <i class="fa fa-history "></i>
@@ -194,8 +212,8 @@
                                      </a>
                                  {% endif %}
                              </li>
-                        {% elif fork %}
-                            {% if fork_editable %}
+                        {% elif branch %}
+                            {% if branch_editable %}
                                 <li>
                                      <a data-method="post" href="{% problem_url "problems:create_working_copy" %}" >
                                          <i class="fa fa-folder-open "></i>
@@ -204,23 +222,19 @@
                                         </span>
                                      </a>
                                  </li>
-                            {% endif %}
-                            {% if can_be_merged_with_master %}
                                 <li>
-                                     <a data-method="post" href="{% problem_url "problems:apply_fork" %}" >
+                                     <a href="{% problem_url "problems:create_merge_request" %}" >
                                          <i class="fa fa-upload "></i>
                                         <span class="full-open-only">
-                                            {% trans 'Push to master' %}
+                                            {% trans 'Request merge into master' %}
                                         </span>
                                      </a>
                                  </li>
-                            {% endif %}
-                            {% if should_be_updated_from_master %}
                                 <li>
-                                     <a data-method="post" href="{% problem_url "problems:update_fork" %}" >
+                                     <a href="{% problem_url "problems:pull_branch" %}" >
                                          <i class="fa fa-refresh "></i>
                                         <span class="full-open-only">
-                                            {% trans 'Update from master' %}
+                                            {% trans 'Pull from another branch' %}
                                         </span>
                                      </a>
                                  </li>

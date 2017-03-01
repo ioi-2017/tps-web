@@ -1,0 +1,22 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <div class="row">
+            <h2> {{ merge_request.title }} </h2>
+            <span class="badge"> {{ merge_request.get_status_display }}</span>
+            <p class="text-muted">
+                {{ merge_request.author }} wants to merge {{ merge_request.source_branch }} into {{ merge_request.destination_branch }}
+            </p>
+        </div>
+        <ul class="nav nav-tabs">
+          <li role="presentation" ><a href="{% problem_url "problems:merge_request_discussion" merge_request.id  %}">{% trans 'Discussion' %}</a></li>
+          <li role="presentation" class="active"><a href="{% problem_url "problems:merge_request_changes" merge_request.id %}">{% trans 'Changes' %}</a></li>
+        </ul>
+        {% include "problems/blocks/revision_diff.html" with differences=differences %}
+    </div>
+{% endblock %}

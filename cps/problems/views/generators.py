@@ -11,7 +11,8 @@ from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddVie
     ProblemObjectShowSourceView, ProblemObjectEditView
 
 __all__ = ["GeneratorsListView", "GeneratorEditView", "GeneratorAddView",
-           "GeneratorDeleteView", "GeneratorShowSourceView"]
+           "GeneratorDeleteView", "GeneratorShowSourceView", "GeneratorEnableView",
+           "GeneratorDisableView"]
 
 class GeneratorsListView(RevisionObjectView):
 

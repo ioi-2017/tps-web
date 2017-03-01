@@ -10,3 +10,4 @@ from problems.models.checker import *
 from problems.models.export import *
 from problems.models.grader import *
 from problems.models.roles import *
+from problems.models.merge_request import *

@@ -26,7 +26,7 @@ class ProblemAddView(View):
             obj = form.save()
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": obj.id,
-                "revision_slug": obj.get_upstream_fork().get_slug()
+                "revision_slug": obj.get_master_branch().get_slug()
             }))
 
         return render(request, self.template_name, context={"form": form})

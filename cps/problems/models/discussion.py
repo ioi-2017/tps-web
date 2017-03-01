@@ -1,6 +1,9 @@
+
 # Amir Keivan Mohtashami
 from enum import Enum
 
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -34,13 +37,20 @@ class Discussion(models.Model):
                                 default=Priority.medium.value)
 
     closed = models.BooleanField(verbose_name=_("closed"), default=False)
+    comments = GenericRelation(
+        "problems.Comment",
+        content_type_field="topic_content_type",
+        object_id_field="topic_id"
+    )
 
     def last_comment(self):
         return self.comments.latest()
 
 
 class Comment(models.Model):
-    discussion = models.ForeignKey(Discussion, verbose_name=_("discussion"), related_name='comments')
+    topic_content_type = models.ForeignKey(ContentType, related_name='+')
+    topic_id = models.PositiveIntegerField()
+    topic = GenericForeignKey("topic_content_type", "topic_id")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("author"))
     text = models.TextField(verbose_name=_("text"))
     posting_date = models.DateTimeField(auto_now_add=True, verbose_name=_("posting date"))
@@ -48,3 +58,4 @@ class Comment(models.Model):
 
     class Meta:
         get_latest_by = "posting_date"
+        ordering = ("topic_content_type", "topic_id", "posting_date", )

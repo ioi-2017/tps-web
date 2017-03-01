@@ -1,4 +1,6 @@
 # Amir Keivan Mohtashami
+import json
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -11,14 +13,14 @@ from judge.results import JudgeVerdict
 from problems.models import Solution, RevisionObject, SolutionSubtaskExpectedVerdict
 from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase
-from problems.utils import run_checker
+from problems.utils.run_checker import run_checker
 from tasks.decorators import allow_async_method
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
 
 class SolutionRun(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem revision"))
+    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
     solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
@@ -35,6 +37,14 @@ class SolutionRun(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return ["pk"]
+
+    def get_value_as_string(self):
+        data = {
+            "solutions": [str(solution) for solution in self.solutions.all()],
+            "testcases": [str(testcase) for testcase in self.testcases.all()],
+        }
+        return json.dumps(data)
+
 
     def validate(self):
         is_valid = True

@@ -4,6 +4,7 @@ import hashlib
 import heapq
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_clone.clone import Cloner
@@ -19,7 +20,7 @@ from tasks.models import Task
 from trader import get_exporter
 from trader.exporters import AVAILABLE_EXPORTERS
 
-__all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemFork"]
+__all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemBranch"]
 
 logger = logging.getLogger(__name__)
 
@@ -29,44 +30,81 @@ class Problem(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
 
-    def get_upstream_fork(self):
-        return self.forks.get(owner=None)
+    def get_master_branch(self):
+        return self.branches.get(name="master")
 
-    def get_or_create_fork(self, user):
-        # TODO: Maybe check permissions here
-        try:
-            return self.forks.get(owner=user)
-        except ProblemFork.DoesNotExist:
-            with transaction.atomic():
-                master_fork = self.get_upstream_fork()
-                master_fork.id = None
-                master_fork.owner = user
-                master_fork.save()
-                return master_fork
+    @staticmethod
+    def get_or_create_template_problem():
+
+        if not Problem.objects.filter(pk=0).exists():
+            # FIXME: Maybe it would be better to allow null value for creator
+            user = get_user_model().objects.filter(is_superuser=True)[0]
+
+            problem = Problem.objects.create(pk=0, creator_id=user.id)
+            problem.save()
+
+            problem_revision = ProblemRevision.objects.create(author=user, problem=problem)
+            problem_revision.commit("Created problem")
+            ProblemBranch.objects.create(
+                name="master",
+                problem=problem,
+                head=problem_revision
+            )
+            ProblemData.objects.create(
+                problem=problem_revision,
+                title="BaseProblem",
+                code_name="BaseProblem"
+            )
+        return Problem.objects.get(pk=0)
+
+    @classmethod
+    def create_from_template_problem(cls, creator, title, code_name):
+
+        template_problem = cls.get_or_create_template_problem()
+
+        problem = cls.objects.create(creator=creator)
+
+        problem_revision = template_problem.get_master_branch().head.clone()
+
+        problem_data = problem_revision.problem_data
+        problem_data.title = title
+        problem_data.code_name = code_name
+        problem_data.save()
+
+        problem_revision.author = creator
+        problem_revision.problem = problem
+        problem_revision.parent_revisions.clear()
+        problem_revision.commit("Created problem")
+
+        ProblemBranch.objects.create(
+            name="master",
+            problem=problem,
+            head=problem_revision
+        )
+        return problem
 
     def __str__(self):
-        return str(self.pk)
+        return "{}(#{})".format(str(self.get_master_branch().head.problem_data.title), str(self.pk))
 
 
-class ProblemFork(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("fork owner"), null=True, blank=True, db_index=True)
-    problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="forks")
+class ProblemBranch(models.Model):
+    name = models.CharField(max_length=30, verbose_name=_("name"))
+    problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="branches")
     head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+')
     working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True)
 
     class Meta:
-        unique_together = (("owner", "problem"), )
+        unique_together = (("name", "problem"), )
+        index_together = (("name", "problem"), )
 
     def has_working_copy(self):
         if self.working_copy is not None and self.working_copy.committed():
             self.working_copy = None
+            self.save()
         return self.working_copy is not None
 
     def get_slug(self):
-        if self.owner:
-            return self.owner.username
-        else:
-            return "master"
+        return self.name
 
     def discard_working_copy(self, commit=True):
         self.working_copy = None
@@ -81,8 +119,8 @@ class ProblemFork(models.Model):
             self.save()
         return self.working_copy
 
-    def get_working_copy_or_head(self):
-        if self.has_working_copy():
+    def get_working_copy_or_head(self, user):
+        if self.has_working_copy() and self.working_copy.author == user:
             return self.working_copy
         else:
             return self.head
@@ -94,13 +132,20 @@ class ProblemFork(models.Model):
         if commit:
             self.save()
 
+    def editable(self, user):
+        if not user.has_perm("problems.edit_problem", obj=self.problem):
+            return False
+        if self.name == "master":
+            return False
+        return not self.has_working_copy() or self.working_copy.author == user
+
     def set_working_copy_as_head(self):
         self.set_as_head(self.working_copy, commit=False)
         self.discard_working_copy(commit=False)
         self.save()
 
     def __str__(self):
-        return str(self.problem) + ": " + str(self.owner)
+        return self.name
 
     def merge(self, another_revision):
         self.working_copy = self.head.merge(another_revision)
@@ -337,7 +382,7 @@ class ProblemDataManager(models.Manager):
 
 
 class ProblemData(RevisionObject):
-    problem = models.ForeignKey(ProblemRevision)
+    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
     code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
     statement = models.TextField(verbose_name=_("statement"), default="", blank=True)
@@ -362,6 +407,9 @@ class ProblemData(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return []
+
+    def get_value_as_string(self):
+        return super(ProblemData, self).get_value_as_string()
 
     def __str__(self):
         return self.title

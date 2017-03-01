@@ -1,4 +1,5 @@
 # Amir Keivan Mohtashami
+import json
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -16,7 +17,7 @@ __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScor
 class Solution(RevisionObject):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
-    problem = models.ForeignKey(ProblemRevision, verbose_name=_("problem"))
+    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
                             blank=True, db_index=True)
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
@@ -38,6 +39,16 @@ class Solution(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return ["name"]
+
+    def get_value_as_string(self):
+        data = {
+            "name": self.name,
+            "language": self.get_language_representation(),
+            "verdict": self.verdict,
+            "code": self.code.read(),
+        }
+        return json.dumps(data)
+
 
 
     def get_language_representation(self):

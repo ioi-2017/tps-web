@@ -1,0 +1,37 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Merge requests' %} </h2>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-striped table-responsive">
+        <thead>
+            <tr>
+                <th class="col-md-4">{% trans 'Title' %}</th>
+                <th class="col-md-4">{% trans 'Source Branch' %}</th>
+                <th class="col-md-4">{% trans 'Destination Branch' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in merge_requests %}
+            <tr>
+                <td><a href="{% problem_url "problems:merge_request" request.id %}">{{ request.title }}</a><br />
+                    <p class="text-muted">
+                        <small>
+                            {% blocktrans with requester=request.requester start_date=request.created_at %}
+                            Created by {{ requester }} at {{ start_date }}
+                            {% endblocktrans %}
+                        </small>
+                    </p>
+                </td>
+                <td><a href="{% url "problems:overview" problem.id request.source_branch.get_slug %}">{{ request.source_branch }}</a></td>
+                <td><a href="{% url "problems:overview" problem.id request.destination_branch.get_slug %}">{{ request.destination_branch }}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+{% endblock %}

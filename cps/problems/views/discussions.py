@@ -5,32 +5,30 @@ from django.views.generic import View
 
 from problems.forms.discussion import DiscussionAddForm, CommentAddForm
 from problems.models import Discussion
-from problems.views.generics import ProblemObjectAddView
+from problems.views.generics import ProblemObjectAddView, ProblemObjectView
 from problems.views.utils import extract_revision_data
 
 __all__ = ["DiscussionsListView", "DiscussionAddView", "CommentListView"]
 
 
-class DiscussionsListView(View):
+class DiscussionsListView(ProblemObjectView):
     def get(self, request, problem_id, revision_slug):
-        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         return render(request, "problems/discussions_list.html", context={
-            "discussions": problem.discussions.all()}
+            "discussions": self.problem.discussions.all()}
         )
 
 
-class DiscussionAddView(View):
+class DiscussionAddView(ProblemObjectView):
     permissions_required = ["add_discussion"]
 
     def post(self, request, problem_id, revision_slug):
-        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
         form = DiscussionAddForm(request.POST, request.FILES,
-                                 problem=problem,
+                                 problem=self.problem,
                                  owner=request.user)
         if form.is_valid():
             obj = form.save()
             return HttpResponseRedirect(reverse("problems:comments", kwargs={
-                "problem_id": problem.id,
+                "problem_id": self.problem.id,
                 "revision_slug": revision_slug,
                 "discussion_id": obj.id
             }))
@@ -39,21 +37,20 @@ class DiscussionAddView(View):
         })
 
     def get(self, request, problem_id, revision_slug):
-        problem, fork, revision = extract_revision_data(problem_id, revision_slug)
-        form = DiscussionAddForm(problem=problem, owner=request.user)
+        form = DiscussionAddForm(problem=self.problem, owner=request.user)
         return render(request, "problems/add_discussion.html", context={
             "form": form
         })
 
 
-class CommentListView(View):
+class CommentListView(ProblemObjectView):
     required_permissions = ["read_comment"]
 
     def post(self, request, problem_id, revision_slug, discussion_id):
         discussion = get_object_or_404(Discussion, problem_id=problem_id, id=discussion_id)
         form = CommentAddForm(request.POST, request.FILES,
                               owner=request.user,
-                              discussion=discussion)
+                              topic=discussion)
         if form.is_valid():
             obj = form.save()
             return HttpResponseRedirect(reverse("problems:comments", kwargs={
@@ -61,7 +58,7 @@ class CommentListView(View):
                 "revision_slug": revision_slug,
                 "discussion_id": discussion_id
             }))
-        return render(request, "problems/comments_list.html", context={
+        return render(request, "problems/discussion_comments.html", context={
             "comments": discussion.comments.all(),
             "form": form,
             "discussion": discussion
@@ -69,8 +66,8 @@ class CommentListView(View):
 
     def get(self, request, problem_id, revision_slug, discussion_id):
         discussion = get_object_or_404(Discussion, problem_id=problem_id, id=discussion_id)
-        form = CommentAddForm(owner=request.user, discussion=discussion)
-        return render(request, "problems/comments_list.html", context={
+        form = CommentAddForm(owner=request.user, topic=discussion)
+        return render(request, "problems/discussion_comments.html", context={
             "comments": discussion.comments.all(),
             "form": form,
             "discussion": discussion

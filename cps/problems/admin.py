@@ -10,7 +10,7 @@ admin.site.register(Solution)
 admin.site.register(SolutionRun)
 admin.site.register(Grader)
 # admin.site.register(SourceFile)
-admin.site.register(ProblemFork)
+admin.site.register(ProblemBranch)
 admin.site.register(TestCase)
 
 

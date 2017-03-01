@@ -9,14 +9,12 @@ from django.views.generic import View
 
 from problems.views.utils import extract_revision_data
 
-__all__ = ["ProblemObjectDeleteView", "RevisionObjectView",
+__all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
            "ProblemObjectShowSourceView"]
 
 
-class RevisionObjectView(View):
-    http_method_names_requiring_edit_access = ['post', 'put', 'delete', 'patch']
-
+class ProblemObjectView(View):
     @classonlymethod
     def as_view(cls, **initkwargs):
         """
@@ -41,8 +39,8 @@ class RevisionObjectView(View):
             self.kwargs = kwargs
             self.revision_slug = revision_slug
 
-            self.problem, self.fork, self.revision = \
-                extract_revision_data(problem_id, revision_slug)
+            self.problem, self.branch, self.revision = \
+                extract_revision_data(problem_id, revision_slug, request.user)
 
             return self.dispatch(request, problem_id, revision_slug, *args, **kwargs)
 
@@ -56,6 +54,10 @@ class RevisionObjectView(View):
         # like csrf_exempt from dispatch
         update_wrapper(view, cls.dispatch, assigned=())
         return view
+
+
+class RevisionObjectView(ProblemObjectView):
+    http_method_names_requiring_edit_access = ['post', 'put', 'delete', 'patch']
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() in self.http_method_names_requiring_edit_access and \

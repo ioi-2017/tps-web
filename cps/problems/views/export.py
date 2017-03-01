@@ -24,7 +24,7 @@ class ExportView(RevisionObjectView):
         return self.show(request, self.get_form())
 
     def post(self, request, *args, **kwargs):
-        if self.fork != self.problem.get_upstream_fork():
+        if self.branch != self.problem.get_master_branch():
             return self.redirect_home()
 
         form = ExportForm(request.POST, problem=self.problem, revision=self.revision, user=self.request.user)
@@ -32,10 +32,10 @@ class ExportView(RevisionObjectView):
             form.save()
             return self.redirect_home()
 
-        self.show(request, form)
+        return self.show(request, form)
 
     def show(self, request, form):
-        is_master = (self.fork != self.problem.get_upstream_fork())
+        is_master = (self.branch != self.problem.get_master_branch())
         return render(request, self.template_name,
                       {'form': form, 'exports': self.problem.exports.order_by('-pk'), 'is_master': is_master})
 

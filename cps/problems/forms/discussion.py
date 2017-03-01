@@ -21,7 +21,7 @@ class DiscussionAddForm(forms.ModelForm):
         self.instance.author = self.owner
         self.instance.problem = self.problem
         self.instance.save()
-        comment = Comment(discussion=self.instance, author=self.owner, text=self.cleaned_data["text"])
+        comment = Comment(topic=self.instance, author=self.owner, text=self.cleaned_data["text"])
         comment.save()
         if commit:
             self.instance.save()
@@ -35,14 +35,14 @@ class CommentAddForm(forms.ModelForm):
         fields = ["text"]
 
     def __init__(self, *args, **kwargs):
-        self.discussion = kwargs.pop("discussion")
+        self.topic = kwargs.pop("topic")
         self.owner = kwargs.pop("owner")
         super(CommentAddForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
         super(CommentAddForm, self).save(commit=False)
         self.instance.author = self.owner
-        self.instance.discussion = self.discussion
+        self.instance.topic = self.topic
         if commit:
             self.instance.save()
             self.save_m2m()

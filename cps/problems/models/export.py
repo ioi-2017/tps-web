@@ -18,7 +18,6 @@ class ExportPackage(models.Model):
         ("zip", "zip"),
         ("tar", "tar"),
     )
-    models.AutoField
     problem = models.ForeignKey("Problem", related_name='exports')
     revision = models.ForeignKey("ProblemRevision", related_name='+')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))

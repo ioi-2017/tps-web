@@ -1,3 +1,6 @@
+from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -74,48 +77,17 @@ class RevisionObjectManager(models.Manager):
     use_for_related_fields = True
 
 
-class RevisionObject(models.Model):
+class AbstractModelMeta(ABCMeta, type(models.Model)):
+    pass
+
+
+class RevisionObject(models.Model, metaclass=AbstractModelMeta):
 
     objects = RevisionObjectManager.from_queryset(RevisionObjectQuerySet)()
 
-    def _get_json_representation(self, included_fields=None, excluded_fields=None):
-        """
-        Returns a json representation of the current version,
-        including all fields in included_fields (or all fields if not present),
-        excluding all fields in excluded_fields (or no fields if not present).
-        :param included_fields: List[str] or None
-        :param excluded_fields: List[str] or None
-        :return str
-        """
-        if excluded_fields is None:
-            excluded_fields = ["problem"]
-        full_dump = json.loads(serializers.serialize('json', [self]))[0]
-        limited_dump = {}
-        for field_name in full_dump['fields']:
-            if included_fields is not None and field_name not in included_fields:
-                continue
-            if excluded_fields is not None and field_name in excluded_fields:
-                continue
-            limited_dump[field_name] = full_dump['fields'][field_name]
-        return json.dumps(limited_dump)
-
-    def get_json_representation(self, *args, **kwargs):
-        return self._get_json_representation(*args, **kwargs)
-
-    def diff(self, other_object):
-        """
-        Returns diff of this version and another_version in HTML format.
-        By default, it will output produced by executing diff on JSON representation
-        of the two versions returned by get_json_representation.
-        It may be overridden in the subclasses to produce different outputs.
-        :param another_version: Version
-        :return str
-        """
-        import difflib
-        return difflib.HtmlDiff(tabsize=4, wrapcolumn=80).make_table(
-            self.get_json_representation(),
-            other_object.get_json_representation()
-        )
+    @abstractmethod
+    def get_value_as_string(self):
+        return get_model_as_json(self, excluded_fields=["problem"])
 
     def get_match(self, other_revision):
         matching_data = {
@@ -128,6 +100,7 @@ class RevisionObject(models.Model):
             return None
 
     @staticmethod
+    @abstractmethod
     def get_matching_fields():
         return ["pk"]
 
@@ -141,9 +114,7 @@ class RevisionObject(models.Model):
         return True
 
     def diverged_from(self, other_object):
-        our_json = json.loads(self.get_json_representation())
-        their_json = json.loads(other_object.get_json_representation())
-        return our_json != their_json
+        return self.get_value_as_string() != other_object.get_value_as_string()
 
     @staticmethod
     def differ(version_a, version_b):
@@ -186,3 +157,24 @@ class Conflict(models.Model):
 
     def __str__(self):
         return "Conflict ({}) -> {}:{}".format(self.content_type, self.ours_id, self.theirs_id)
+
+
+def get_model_as_json(obj, included_fields=None, excluded_fields=None):
+    """
+    Returns a json representation of obj
+    including all fields in included_fields (or all fields if not present),
+    excluding all fields in excluded_fields (or no fields if not present).
+    :param included_fields: List[str] or None
+    :param excluded_fields: List[str] or None
+    :return str
+    """
+    full_dump = json.loads(serializers.serialize('json', [obj]))[0]
+    if excluded_fields is not None:
+        for excluded_field in excluded_fields:
+            full_dump['fields'].pop(excluded_field)
+    if included_fields is None:
+        included_fields = sorted([k for k, v in full_dump['fields'].items()])
+    limited_dump = OrderedDict()
+    for k in included_fields:
+        limited_dump[k] = full_dump['fields'][k]
+    return json.dumps(limited_dump, indent=4)

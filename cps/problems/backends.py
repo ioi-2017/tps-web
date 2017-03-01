@@ -16,7 +16,6 @@ class ProblemRoleBackend(object):
         app_label, codename = perm[:dot_index], perm[dot_index+1:]
         if app_label != "problems":
             return False
-
         if obj.creator == user_obj:
             return True
         # TODO: This can be optimized by caching all permissions like Django auth does

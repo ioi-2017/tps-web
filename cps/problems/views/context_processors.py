@@ -1,5 +1,9 @@
+from django.core.urlresolvers import reverse
+
 from problems.models.enums import SolutionVerdict
 from .utils import extract_revision_data
+
+
 
 
 def revision_data(request):
@@ -7,10 +11,10 @@ def revision_data(request):
         return {}
     problem_id = request.resolver_match.kwargs["problem_id"]
     revision_slug = request.resolver_match.kwargs["revision_slug"]
-    problem, fork, revision = extract_revision_data(problem_id, revision_slug)
+    problem, branch, revision = extract_revision_data(problem_id, revision_slug, request.user)
     revision_editable = revision.editable(request.user)
-    master = revision.problem.get_upstream_fork()
-    if revision.committed and fork is not None and fork != master:
+    master = revision.problem.get_master_branch()
+    if revision.committed and branch is not None and branch != master:
         can_be_merged_with_master = revision.child_of(master.head)
         should_be_updated_from_master = not can_be_merged_with_master
     else:
@@ -38,17 +42,21 @@ def revision_data(request):
     else:
         errors["validator"] = 0
     errors["discussion"] = problem.discussions.filter(closed=False).count()
+
+
+    def get_url_for_slug(view_name, slug, problem_id, revision_slug, *args, **kwargs):
+        kwargs["revision_slug"] = slug
+        kwargs["problem_id"] = problem_id
+        return reverse(view_name, args=args, kwargs=kwargs)
+
+    branches = problem.branches.all()
     return {
         "problem": problem,
         "revision": revision,
-        "fork": fork,
+        "branch": branch,
+        "branches": branches,
         "revision_slug": revision_slug,
         "revision_editable": revision_editable,
-        "fork_editable": fork is not None and (
-            request.user.is_superuser or
-            fork.owner == request.user
-        ),
-        "can_be_merged_with_master": can_be_merged_with_master,
-        "should_be_updated_from_master": should_be_updated_from_master,
+        "branch_editable": branch is not None and branch.editable(request.user),
         "errors": errors
     }

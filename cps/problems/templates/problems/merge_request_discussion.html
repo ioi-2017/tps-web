@@ -1,0 +1,71 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <div class="row">
+            <h2> {{ merge_request.title }} </h2>
+            <span class="badge"> {{ merge_request.get_status_display }}</span>
+            <p class="text-muted">
+                {{ merge_request.author }} wants to merge {{ merge_request.source_branch }} into {{ merge_request.destination_branch }}
+            </p>
+        </div>
+        <ul class="nav nav-tabs">
+          <li role="presentation" class="active"><a href="{% problem_url "problems:merge_request_discussion" merge_request.id  %}">{% trans 'Discussion' %}</a></li>
+          <li role="presentation"><a href="{% problem_url "problems:merge_request_changes" merge_request.id %}">{% trans 'Changes' %}</a></li>
+        </ul>
+        {% include "problems/blocks/comments_list.html" with comments=merge_request.comments.all %}
+        {% if merge_request.status == merge_request.OPEN %}
+            <form method="post" action="{% problem_url "problems:merge_request_discussion" merge_request.id %}">
+                {% csrf_token %}
+                <div class="row">
+                    {% csrf_token %}
+                {% bootstrap_field comment_form.text layout='inline'%}
+                    <div class="form-group">
+                        <button name="add_comment" type="submit" class="form-control btn btn-success">
+                            {% trans 'Submit' %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% with merge_check=merge_request.can_be_merged %}
+
+            <div class="row">
+                {% if merge_check.0 %}
+                    <form method="post" action="{% problem_url "problems:merge_request_discussion" merge_request.id %}">
+                        {% csrf_token %}
+                        <div class="form-group col-md-2">
+                            <input type="hidden" name="merge" value="confirmed" />
+                            <button type="submit" class="form-control btn btn-success">
+                                {% trans 'Merge' %}
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <h3> {% trans "Merge is not possible" %} </h3>
+                    <p class="text-danger">
+                        {{ merge_check.1 }}
+                    </p>
+                    <div class="form-group col-md-2">
+                        <button disabled="disabled" class="form-control btn btn-success">
+                            {% trans 'Merge' %}
+                        </button>
+                    </div>
+                {% endif %}
+                <form method="post" action="{% problem_url "problems:merge_request_discussion" merge_request.id %}">
+                    {% csrf_token %}
+                    <div class="form-group col-md-2">
+                        <input type="hidden" name="close" value="confirmed" />
+                        <button type="submit" class="form-control btn btn-error">
+                            {% trans 'Close' %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endwith %}
+        {% endif %}
+    </div>
+{% endblock %}

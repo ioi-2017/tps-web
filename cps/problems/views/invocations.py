@@ -12,7 +12,9 @@ from problems.models import Solution, SolutionRun, SolutionRunResult, SolutionSu
 from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
-__all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView"]
+__all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView",
+           "InvocationAnswerDownloadView", "InvocationInputDownloadView", "InvocationOutputDownloadView",
+           "InvocationResultView",]
 
 
 class InvocationsListView(RevisionObjectView):
