@@ -32,16 +32,17 @@ class Migration(migrations.Migration):
             field=models.OneToOneField(auto_created=True, default=None, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tasks.Task'),
             preserve_default=False,
         ),
+        migrations.RemoveField(
+            model_name='validatorresult',
+            name='id',
+        ),
         migrations.AddField(
             model_name='validatorresult',
             name='task_ptr',
             field=models.OneToOneField(auto_created=True, default=None, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='tasks.Task'),
             preserve_default=False,
         ),
-        migrations.RemoveField(
-            model_name='validatorresult',
-            name='id',
-        ),
+
         migrations.AlterUniqueTogether(
             name='validatorresult',
             unique_together=set([('testcase', 'validator')]),
