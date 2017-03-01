@@ -5,6 +5,7 @@ import heapq
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_clone.clone import Cloner
@@ -88,7 +89,7 @@ class Problem(models.Model):
 
 
 class ProblemBranch(models.Model):
-    name = models.CharField(max_length=30, verbose_name=_("name"))
+    name = models.CharField(max_length=30, verbose_name=_("name"), validators=[RegexValidator(r'^\w{1,30}$')])
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="branches")
     head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+')
     working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True)
