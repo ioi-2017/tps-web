@@ -1,5 +1,7 @@
 <div id="changes_accordion" >
+<ol>
 {% for difference_title, difference_desc in differences %}
+    <li>
 <div class="change">
     <div class="change-header">
         <h4>
@@ -9,8 +11,9 @@
         </h4>
     </div>
     <div id="collapse_changes_{{ forloop.counter }}" class="collapse">
-        <pre class="change-description">{{ difference_desc|safe }}</pre>
+        <span class="change-description">{{ difference_desc|safe }}</span>
     </div>
 </div>
+    </li>
 {% endfor %}
 </div>

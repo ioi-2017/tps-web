@@ -138,30 +138,7 @@ class CommitWorkingCopy(BranchControlView):
 
         # TODO: Optimize the process of calculating changes
 
-        matching_pairs = self.revision.find_matching_pairs(self.branch.head)
-        changes = []
-        for current, prev in matching_pairs:
-            if current is None:
-                instance = prev
-            else:
-                instance = current
-            if isinstance(current, SolutionRun):
-                continue
-            if instance.differ(current, prev):
-                if current is None:
-                    tag = _("Removed")
-                elif prev is None:
-                    tag = _("Added")
-                else:
-                    tag = _("Changed")
-                if isinstance(instance, ProblemData):
-                    changes.append(_("Updated problem general details"))
-                else:
-                    changes.append("{tag} {type} {instance}".format(
-                        tag=tag,
-                        type=instance._meta.verbose_name,
-                        instance=instance
-                    ))
+        changes = get_revision_difference(self.branch.head, self.revision)
 
         return render(request, "problems/confirm_commit.html", context={
             "changes": changes,
