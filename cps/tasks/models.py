@@ -53,8 +53,10 @@ class Task(models.Model):
             self.queue_reference_key = result.id
             self.state = State.queued.name
             self.save()
-            result = sig.apply() # FIXME: Make this async
-            result.wait(propagate=True)
+            result = sig.apply_async() # FIXME: Make this async
+            from django.conf import settings
+            if getattr(settings, "CELERY_WAIT_FOR_RESULT", False):
+                result.wait(propagate=True)
 
     def abort(self):
         """

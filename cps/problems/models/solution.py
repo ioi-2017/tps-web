@@ -15,7 +15,7 @@ __all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScor
 
 
 class Solution(RevisionObject):
-    _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
+    _VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
 
     problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
@@ -45,7 +45,7 @@ class Solution(RevisionObject):
             "name": self.name,
             "language": self.get_language_representation(),
             "verdict": self.verdict,
-            "code": self.code.read(),
+            "code": self.code.get_value_as_string(),
         }
         return json.dumps(data)
 
@@ -72,7 +72,7 @@ class Solution(RevisionObject):
         super(Solution, self).save(*args, **kwargs)
 
 
-class SolutionSubtaskExpectedScore(RevisionObject):
+class SolutionSubtaskExpectedScore(models.Model):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     score = models.FloatField(verbose_name=_("score"))
@@ -83,7 +83,7 @@ class SolutionSubtaskExpectedScore(RevisionObject):
         )
 
 
-class SolutionTestExpectedScore(RevisionObject):
+class SolutionTestExpectedScore(models.Model):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     score = models.FloatField(verbose_name=_("score"))
@@ -93,7 +93,7 @@ class SolutionTestExpectedScore(RevisionObject):
             ("solution", "testcase")
         )
 
-class SolutionSubtaskExpectedVerdict(RevisionObject):
+class SolutionSubtaskExpectedVerdict(models.Model):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))

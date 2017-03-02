@@ -25,12 +25,19 @@ def get_revision_difference(base, new):
     result = []
     diff_lib = diff_match_patch()
     for base_object, new_object in base.find_matching_pairs(new):
-        if new_object.diverged_from(base_object):
-            base_str = base_object.get_value_as_string()
-            new_str = new_object.get_value_as_string()
+        not_none_obj = new_object if new_object is not None else base_object
+        if not_none_obj.differ(base_object, new_object):
+            if base_object is None:
+                operation = "Added"
+            elif new_object is None:
+                operation = "Deleted"
+            else:
+                operation = "Changed"
+            base_str = base_object.get_value_as_string() if base_object is not None else ""
+            new_str = new_object.get_value_as_string() if new_object is not None else ""
 
             result.append((
-                "{} - {}".format(type(new_object)._meta.verbose_name, str(new_object)),
+                "{} {} - {}".format(operation, type(new_object)._meta.verbose_name, str(new_object)),
                 diff_lib.diff_prettyHtml(diff_lib.diff_main(base_str, new_str))
             ))
     return result

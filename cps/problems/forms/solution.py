@@ -9,8 +9,9 @@ from problems.models.enums import SolutionVerdict
 
 
 class SolutionEditForm(ProblemObjectModelForm):
-    _VERDICTS = [("N / A", None)] + [(x.name, x.value) for x in list(SolutionVerdict)]
-
+    # FIXME : Enable N/A for subtask scoring
+    # _VERDICTS = [("N / A", None)] + [(x.name, x.value[0]) for x in list(SolutionVerdict)]
+    _VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
 
     file = forms.FileField(label=_("Solution"), required=False)
 

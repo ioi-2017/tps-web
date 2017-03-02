@@ -169,6 +169,9 @@ class TestCase(RevisionObject):
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
+    class Meta:
+        ordering = ("problem", "name", )
+
     def get_judge_code(self):
         if self.judge_code:
             return self.judge_code

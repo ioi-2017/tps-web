@@ -1,5 +1,7 @@
 # Amir Keivan Mohtashami
 # Amirmohsen Ahanchi
+import hashlib
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import os
@@ -22,9 +24,26 @@ class FileModel(models.Model):
     def __str__(self):
         return self.name
 
-    def khar(self):
-        content = self.file.read(2).decode()
-        print(content)
+    def get_file_hash(self):
+        self.file.open('rb')
+        f = self.file
+        hash = hashlib.sha1()
+        if f.multiple_chunks():
+            for chunk in f.chunks():
+                hash.update(chunk)
+        else:
+            while True:
+                data = f.read(1 << 20)
+                if not data:
+                    break
+                hash.update(data)
+        return hash.hexdigest()
+
+    def get_value_as_string(self):
+        try:
+            return self.file.file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return self.file.get_file_hash()
 
     def get_truncated_content(self, len=255):
         content = self.file.read(len)

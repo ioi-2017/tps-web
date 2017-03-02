@@ -65,4 +65,4 @@ class ChooseBranchForm(forms.Form):
 
 class MergeRequestAddForm(forms.Form):
     title = forms.CharField(label=_("title"), max_length=100)
-    description = forms.CharField(label=_("description"), widget=forms.TextInput)
+    description = forms.CharField(label=_("description"), widget=forms.Textarea)

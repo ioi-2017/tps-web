@@ -62,7 +62,7 @@ class ResourceBase(RevisionObject):
         return ["name"]
 
     def get_value_as_string(self):
-        return self.file.read()
+        return self.file.get_value_as_string()
 
     class Meta:
         abstract = True
