@@ -233,11 +233,12 @@ class CreateMergeRequest(BranchControlView):
 class MergeRequestList(ProblemObjectView):
 
     def get(self, request, *args, **kwargs):
-        show_closed = request.GET.get("closed", 0) == 1
+        show_closed = request.GET.get("closed", 0) == "1"
         merge_requests = MergeRequest.objects.filter(source_branch__problem=self.problem)
         if not show_closed:
             merge_requests = merge_requests.filter(status=MergeRequest.OPEN)
         return render(request, "problems/merge_requests_list.html", context={
+            "show_closed": show_closed,
             "merge_requests": merge_requests
         })
 

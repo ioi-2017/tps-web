@@ -3,7 +3,16 @@
 {% load problems_tags %}
 {% block problem_content %}
     <div class="row">
-        <h2> {% trans 'Merge requests' %} </h2>
+        <div class="col-md-10">
+        <h2 > {% trans 'Merge requests' %} </h2>
+        </div>
+        <div class="col-md-2">
+            {% if show_closed %}
+                <a href="{% problem_url "problems:merge_requests_list" %}"> <h2><button class="btn btn-primary">{% trans 'Hide closed requests' %}</button></h2></a>
+            {% else %}
+                <a href="{% problem_url "problems:merge_requests_list" %}?closed=1"> <h2><button class="btn btn-primary">{% trans 'Show closed requests' %}</button></h2></a>
+            {% endif %}
+        </div>
     </div>
     <br />
     <div class="row">
