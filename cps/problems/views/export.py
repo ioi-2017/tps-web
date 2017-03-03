@@ -42,7 +42,7 @@ class ExportView(RevisionObjectView):
 
 class ExportDownloadView(RevisionObjectView):
     def get(self, request, *args, **kwargs):
-        export_package = get_object_or_404(ExportPackage, pk=kwargs['export_id'], revision=self.revision, problem=self.problem)
+        export_package = get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem)
         response = HttpResponse(export_package.archive.file,
                                 content_type='application/file')
         response['Content-Disposition'] = 'attachment; filename=%s' % export_package.archive.name
