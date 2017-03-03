@@ -40,6 +40,7 @@ class FileModel(models.Model):
         return hash.hexdigest()
 
     def get_value_as_string(self):
+        self.file.open()
         try:
             return self.file.file.read().decode("utf-8")
         except UnicodeDecodeError:
