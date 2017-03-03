@@ -43,6 +43,12 @@
                                 <span class="full-open-only">
                                     {% trans 'Merge Requests' %}
                                 </span>
+                                 {% if errors.merge_requests > 0 %}
+                                    <p class="label label-danger error">
+                                        {{ errors.merge_requests }}
+                                         <span class="full-open-only">{% trans 'Open' %}</span>
+                                    </p>
+                                 {% endif %}
                              </a>
                          </li>
                         <li>

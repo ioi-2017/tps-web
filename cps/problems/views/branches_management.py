@@ -203,6 +203,7 @@ class CreateMergeRequest(BranchControlView):
             title = form.cleaned_data["title"]
             first_comment = form.cleaned_data["description"]
             merge_request = MergeRequest.objects.create(
+                problem=self.problem,
                 title=title,
                 source_branch=self.branch,
                 destination_branch=self.problem.get_master_branch(),

@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 
+from problems.models import MergeRequest
 from problems.models.enums import SolutionVerdict
 from .utils import extract_revision_data
 
@@ -42,6 +43,7 @@ def revision_data(request):
     else:
         errors["validator"] = 0
     errors["discussion"] = problem.discussions.filter(closed=False).count()
+    errors["merge_requests"] = problem.merge_requests.filter(status=MergeRequest.OPEN).count()
 
 
     def get_url_for_slug(view_name, slug, problem_id, revision_slug, *args, **kwargs):

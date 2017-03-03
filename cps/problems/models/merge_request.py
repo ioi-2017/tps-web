@@ -21,7 +21,7 @@ class MergeRequest(models.Model):
                                 "It is necessary to pull from {base} and resolve "
                                 "possible conflicts before merging {new} into {base}")
     }
-
+    problem = models.ForeignKey("problems.Problem", verbose_name=_("problem"), related_name='merge_requests')
     title = models.CharField(max_length=100)
     source_branch = models.ForeignKey(
         "problems.ProblemBranch",
