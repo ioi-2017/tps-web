@@ -65,9 +65,7 @@ class MergeRequest(models.Model):
         return True, None
 
     def merge(self, merger):
-        self.status = MergeRequest.MERGED
-        self.closed_by = merger
-        self.save()
+
         merge_commit = self.source_branch.head.clone()
         merge_commit.commit(_("Merged {new} into {base} (#{merge_request_id})").format(
             new=self.source_branch,
@@ -77,6 +75,9 @@ class MergeRequest(models.Model):
         merge_commit.author = merger
         merge_commit.save()
         self.destination_branch.set_as_head(merge_commit)
+        self.status = MergeRequest.MERGED
+        self.closed_by = merger
+        self.save()
 
     def close(self, closer):
         self.status = MergeRequest.CLOSED
