@@ -1,0 +1,8 @@
+Dear {{ full_name }},
+
+You may find credentials to enter the system below:
+
+Username: {{ username }}
+Password: {{ password }}
+
+

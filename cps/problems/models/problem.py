@@ -134,7 +134,7 @@ class ProblemBranch(models.Model):
             self.save()
 
     def editable(self, user):
-        if not user.has_perm("problems.edit_problem", obj=self.problem):
+        if not user.has_perm("problems.change_problem", obj=self.problem):
             return False
         if self.name == "master":
             return False

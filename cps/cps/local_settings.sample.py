@@ -9,3 +9,8 @@ JUDGE_HANDLERS = {
         }
     },
 }
+
+EMAIL_USE_TLS = False
+EMAIL_HOST = 'localhost'
+EMAIL_ADDRESS = EMAIL_HOST_USER = 'webmaster@localhost'
+EMAIL_HOST_PASSWORD = 'password'

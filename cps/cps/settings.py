@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 
     # Vendor Apps
     'bootstrap3',
+    'import_export',
 
     # CPS Apps
     'core',
