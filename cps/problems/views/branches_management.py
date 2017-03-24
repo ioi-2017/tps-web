@@ -9,7 +9,7 @@ from problems.forms.discussion import CommentAddForm
 from problems.forms.version_control import BranchCreationForm, ChooseBranchForm, CommitForm, MergeRequestAddForm
 from problems.models import SolutionRun, ProblemData, Conflict, Comment, MergeRequest
 from problems.views.generics import ProblemObjectView
-from problems.views.utils import get_revision_difference
+from problems.views.utils import get_revision_difference, diff_dict
 
 __all__ = ["CreateBranchView", "BranchControlView", "ConflictsListView", "PullBranchView",
            "ResolveConflictView", "CreateWorkingCopy", "CommitWorkingCopy",
@@ -179,8 +179,13 @@ class ResolveConflictView(BranchControlView):
             merge__merged_revision=self.revision,
             resolved=False
         )
+        base_object = conflict.theirs
+        new_object = conflict.current
+        base_dict = base_object.get_value_as_dict() if base_object is not None else {}
+        new_dict = new_object.get_value_as_dict() if new_object is not None else {}
         return render(request, "problems/show_conflict_diff.html", context={
             "conflict": conflict,
+            "current_with_master_diff": diff_dict(base_dict, new_dict)
         })
 
 

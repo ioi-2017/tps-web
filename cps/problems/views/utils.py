@@ -47,7 +47,7 @@ def get_revision_difference(base, new):
             new_dict = new_object.get_value_as_dict() if new_object is not None else {}
 
             result.append((
-                "{} {} - {}".format(operation, type(new_object)._meta.verbose_name, str(new_object)),
+                "{} {} - {}".format(operation, type(not_none_obj)._meta.verbose_name, str(new_object)),
                 diff_dict(base_dict, new_dict)
             ))
     return result

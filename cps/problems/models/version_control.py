@@ -87,7 +87,7 @@ class RevisionObject(models.Model, metaclass=AbstractModelMeta):
 
     @abstractmethod
     def get_value_as_dict(self):
-        return get_model_as_json(self, excluded_fields=["problem"])
+        return get_model_as_dict(self, excluded_fields=["problem"])
 
     def get_match(self, other_revision):
         matching_data = {
@@ -159,7 +159,7 @@ class Conflict(models.Model):
         return "Conflict ({}) -> {}:{}".format(self.content_type, self.ours_id, self.theirs_id)
 
 
-def get_model_as_json(obj, included_fields=None, excluded_fields=None):
+def get_model_as_dict(obj, included_fields=None, excluded_fields=None):
     """
     Returns a json representation of obj
     including all fields in included_fields (or all fields if not present),
@@ -176,5 +176,5 @@ def get_model_as_json(obj, included_fields=None, excluded_fields=None):
         included_fields = sorted([k for k, v in full_dump['fields'].items()])
     limited_dump = OrderedDict()
     for k in included_fields:
-        limited_dump[k] = full_dump['fields'][k]
-    return json.dumps(limited_dump, indent=4)
+        limited_dump[k] = str(full_dump['fields'][k])
+    return limited_dump
