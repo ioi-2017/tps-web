@@ -197,7 +197,7 @@ class TestCase(RevisionObject):
     def get_matching_fields():
         return ["name"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         data = {}
         if self.input_static:
             data["input"] = self.input_file.read()
@@ -500,7 +500,7 @@ class Subtask(RevisionObject):
     def get_matching_fields():
         return ["name"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         data = {
             "score": self.score,
             "testcases": [str(testcase) for testcase in self.testcases.all()]

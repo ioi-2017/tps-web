@@ -86,7 +86,7 @@ class RevisionObject(models.Model, metaclass=AbstractModelMeta):
     objects = RevisionObjectManager.from_queryset(RevisionObjectQuerySet)()
 
     @abstractmethod
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         return get_model_as_json(self, excluded_fields=["problem"])
 
     def get_match(self, other_revision):
@@ -114,7 +114,7 @@ class RevisionObject(models.Model, metaclass=AbstractModelMeta):
         return True
 
     def diverged_from(self, other_object):
-        return self.get_value_as_string() != other_object.get_value_as_string()
+        return self.get_value_as_dict() != other_object.get_value_as_dict()
 
     @staticmethod
     def differ(version_a, version_b):

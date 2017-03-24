@@ -409,8 +409,8 @@ class ProblemData(RevisionObject):
     def get_matching_fields():
         return []
 
-    def get_value_as_string(self):
-        return super(ProblemData, self).get_value_as_string()
+    def get_value_as_dict(self):
+        return super(ProblemData, self).get_value_as_dict()
 
     def __str__(self):
         return self.title

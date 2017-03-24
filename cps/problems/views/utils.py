@@ -21,9 +21,19 @@ def extract_revision_data(problem_id, revision_slug, user):
     return problem, branch, revision
 
 
+def diff_dict(dict1, dict2):
+    keys = set(dict1.keys()).union(set(dict2.keys()))
+    result = {}
+    diff_lib = diff_match_patch()
+    for key in keys:
+        str1 = dict1.get(key, "")
+        str2 = dict2.get(key, "")
+        result[key] = diff_lib.diff_prettyHtml(diff_lib.diff_main(str1, str2))
+    return result
+
+
 def get_revision_difference(base, new):
     result = []
-    diff_lib = diff_match_patch()
     for base_object, new_object in base.find_matching_pairs(new):
         not_none_obj = new_object if new_object is not None else base_object
         if not_none_obj.differ(base_object, new_object):
@@ -33,12 +43,12 @@ def get_revision_difference(base, new):
                 operation = "Deleted"
             else:
                 operation = "Changed"
-            base_str = base_object.get_value_as_string() if base_object is not None else ""
-            new_str = new_object.get_value_as_string() if new_object is not None else ""
+            base_dict = base_object.get_value_as_dict() if base_object is not None else {}
+            new_dict = new_object.get_value_as_dict() if new_object is not None else {}
 
             result.append((
                 "{} {} - {}".format(operation, type(new_object)._meta.verbose_name, str(new_object)),
-                diff_lib.diff_prettyHtml(diff_lib.diff_main(base_str, new_str))
+                diff_dict(base_dict, new_dict)
             ))
     return result
 

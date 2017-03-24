@@ -40,14 +40,14 @@ class Solution(RevisionObject):
     def get_matching_fields():
         return ["name"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         data = {
             "name": self.name,
             "language": self.get_language_representation(),
             "verdict": self.verdict,
             "code": self.code.get_value_as_string(),
         }
-        return json.dumps(data)
+        return data
 
 
 

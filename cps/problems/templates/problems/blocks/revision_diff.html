@@ -11,7 +11,11 @@
         </h4>
     </div>
     <div id="collapse_changes_{{ forloop.counter }}" class="collapse">
-        <span class="change-description">{{ difference_desc|safe }}</span>
+        <div class="change-description">
+        {% for key, value in difference_desc.items %}
+            <p>{{ key }}: {{ value|safe }}</p>
+        {% endfor %}
+        </div>
     </div>
 </div>
     </li>

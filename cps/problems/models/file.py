@@ -61,7 +61,7 @@ class ResourceBase(RevisionObject):
     def get_matching_fields():
         return ["name"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         return self.file.get_value_as_string()
 
     class Meta:

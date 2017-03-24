@@ -22,7 +22,7 @@ class Grader(RevisionObject):
     def get_matching_fields():
         return ["name"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         data = dict()
         data["language"] = self.get_language_representation()
         data["code"] = self.code.get_value_as_string()

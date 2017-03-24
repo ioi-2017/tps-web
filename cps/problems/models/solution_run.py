@@ -37,7 +37,7 @@ class SolutionRun(RevisionObject):
     def get_matching_fields():
         return ["pk"]
 
-    def get_value_as_string(self):
+    def get_value_as_dict(self):
         data = {
             "solutions": [str(solution) for solution in self.solutions.all()],
             "testcases": [str(testcase) for testcase in self.testcases.all()],
