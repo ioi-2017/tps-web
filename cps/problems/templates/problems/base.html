@@ -249,6 +249,15 @@
                                         </span>
                                      </a>
                                  </li>
+                                <li>
+                                     <a href="{% problem_url "problems:delete_branch" %}" class="text-danger" >
+                                         <i class="fa fa-trash "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Delete branch' %}
+                                        </span>
+                                     </a>
+                                 </li>
+
                             {% endif %}
                         {% endif %}
 

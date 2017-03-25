@@ -87,6 +87,7 @@ problem_urls = ([
         url(r'^conflicts/$', ConflictsListView.as_view(), name="conflicts"),
         url(r'^conflict/(?P<conflict_id>\d+)/$', ResolveConflictView.as_view(), name="resolve_conflict"),
         url(r'^create_branch/$', CreateBranchView.as_view(), name="create_branch"),
+        url(r'^delete/$', DeleteBranchView.as_view(), name="delete_branch"),
 
         url(r'^merge_request/create/$', CreateMergeRequest.as_view(), name="create_merge_request"),
         url(r'^merge_request/list/$', MergeRequestList.as_view(), name="merge_requests_list"),

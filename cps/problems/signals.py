@@ -1,7 +1,7 @@
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-from problems.models import Solution, Validator, InputGenerator, Resource
+from problems.models import Solution, Validator, InputGenerator, Resource, ProblemBranch
 
 
 @receiver(post_save, sender=Solution, dispatch_uid="invalidate_testcase_solution")
@@ -40,3 +40,9 @@ def invalidate_testcase_on_validator_change(sender, instance, **kwargs):
     revision.validator_set.update(_compiled_file=None)
     revision.checker_set.update(_compiled_file=None)
     revision.inputgenerator_set.update(_compiled_file=None)
+
+
+@receiver(post_delete, sender=ProblemBranch, dispatch_uid="delete_branch_working_copy")
+def delete_working_copy_on_branch_delete(sender, instance, **kwargs):
+    if instance.has_working_copy():
+        instance.working_copy.delete()

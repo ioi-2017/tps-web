@@ -1,0 +1,27 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h1>{% trans 'Delete branch' %}</h1>
+        {% if not_merged_changes %}
+            <h4 class="text-danger">
+                {% trans 'This branch has commits that have not been pushed to the master' %}
+            </h4>
+        {% else %}
+            <h4 class="text-success">
+                {% trans 'All commits of this branch have been pushed to the master' %}
+            </h4>
+        {% endif %}
+        <p>{% trans 'Are you sure you want to delete this branch?' %}</p>
+
+        <div class="form-group">
+            <a href="{% problem_url "problems:delete_branch" %}" type="submit" class="form-control btn btn-danger" data-method="post">
+                {% trans 'Yes' %}
+            </a>
+        </div>
+    </div>
+{% endblock %}

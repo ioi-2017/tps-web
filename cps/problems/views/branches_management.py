@@ -14,7 +14,7 @@ from problems.views.utils import get_revision_difference, diff_dict
 __all__ = ["CreateBranchView", "BranchControlView", "ConflictsListView", "PullBranchView",
            "ResolveConflictView", "CreateWorkingCopy", "CommitWorkingCopy", "DiscardWorkingCopy",
            "CreateMergeRequest", "MergeRequestList", "MergeRequestDiscussionView",
-           "MergeRequestChangesView"]
+           "MergeRequestChangesView", "DeleteBranchView"]
 
 
 def branch_pull(request, source, destination):
@@ -76,7 +76,7 @@ def assert_no_working_copy(func):
         if self.branch.has_working_copy():
             messages.error(
                 request,
-                _("Pull failed. {user} is working on this branch.").format(
+                _("{user} is working on this branch.").format(
                     user=self.branch.working_copy.author
                 )
             )
@@ -415,3 +415,34 @@ class DiscardWorkingCopy(BranchControlView):
             "problem_id": self.problem.id,
             "revision_slug": self.revision_slug
         }))
+
+
+class DeleteBranchView(BranchControlView):
+    @assert_no_working_copy
+    def get(self, request, *args, **kwargs):
+        if self.branch == self.problem.get_master_branch():
+            messages.error(request, _("Cannot delete master branch"))
+            return HttpResponseRedirect(reverse("problems:overview", kwargs={
+                "problem_id": self.problem.id,
+                "revision_slug": self.revision_slug
+            }))
+        diverged_from_master = self.revision.find_merge_base(self.problem.get_master_branch().head) != self.revision
+        return render(request, "problems/confirm_delete_branch.html", context={
+            "not_merged_changes": diverged_from_master
+        })
+
+    @assert_no_working_copy
+    def post(self, request, *args, **kwargs):
+        if self.branch == self.problem.get_master_branch():
+            messages.error(request, _("Cannot delete master branch"))
+            return HttpResponseRedirect(reverse("problems:overview", kwargs={
+                "problem_id": self.problem.id,
+                "revision_slug": self.revision_slug
+            }))
+        else:
+            self.branch.delete()
+            messages.success(request, _("Branch deleted successfully"))
+            return HttpResponseRedirect(reverse("problems:overview", kwargs={
+                "problem_id": self.problem.id,
+                "revision_slug": self.problem.get_master_branch().get_slug()
+            }))
