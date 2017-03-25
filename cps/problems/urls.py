@@ -83,6 +83,7 @@ problem_urls = ([
         url(r'^clone/$', CreateWorkingCopy.as_view(), name="create_working_copy"),
         url(r'^pull/$', PullBranchView.as_view(), name="pull_branch"),
         url(r'^commit/$', CommitWorkingCopy.as_view(), name="commit"),
+        url(r'^discard/$', DiscardWorkingCopy.as_view(), name="discard"),
         url(r'^conflicts/$', ConflictsListView.as_view(), name="conflicts"),
         url(r'^conflict/(?P<conflict_id>\d+)/$', ResolveConflictView.as_view(), name="resolve_conflict"),
         url(r'^create_branch/$', CreateBranchView.as_view(), name="create_branch"),

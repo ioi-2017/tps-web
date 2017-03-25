@@ -1,0 +1,17 @@
+{%  extends "problems/base.html" %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h1>{% trans 'Discard working copy' %}</h1>
+        {% include "problems/blocks/revision_diff.html" with differences=changes %}
+        <div class="form-group">
+            <a href="{% problem_url "problems:discard" %}" type="submit" class="form-control btn btn-danger" data-method="post">
+                {% trans 'Discard' %}
+            </a>
+        </div>
+    </div>
+{% endblock %}

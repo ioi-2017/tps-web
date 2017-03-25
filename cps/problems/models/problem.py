@@ -91,8 +91,8 @@ class Problem(models.Model):
 class ProblemBranch(models.Model):
     name = models.CharField(max_length=30, verbose_name=_("name"), validators=[RegexValidator(r'^\w{1,30}$')])
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="branches")
-    head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+')
-    working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True)
+    head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+', on_delete=models.PROTECT)
+    working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = (("name", "problem"), )
@@ -148,9 +148,23 @@ class ProblemBranch(models.Model):
     def __str__(self):
         return self.name
 
+    def pull_from_branch(self, branch):
+        self.merge(branch.head)
+        if not self.working_copy.has_unresolved_conflicts():
+            self.working_copy.commit("Merged with {}".format(branch.name))
+            self.set_working_copy_as_head()
+            return True
+        else:
+            return False
+
     def merge(self, another_revision):
+        if self.has_working_copy():
+            raise AssertionError("Impossible to merge a revision with a branch with working copy")
+        if not another_revision.committed():
+            raise AssertionError("Impossible to merge with an uncommitted revision")
         self.working_copy = self.head.merge(another_revision)
         self.save()
+
 
 
 class ProblemRevision(models.Model):
@@ -277,6 +291,23 @@ class ProblemRevision(models.Model):
                     heapq.heappush(priority_queue, (-parent_revision.pk, parent_revision))
                 marks[parent_revision.pk] |= marks[revision.pk]
         return None
+
+    def path_to_parent(self, another_revision):
+        priority_queue = []
+        parents = []
+        marks = []
+        heapq.heappush(priority_queue, (-self.pk, self))
+        marks.append(self.pk)
+        while len(priority_queue) > 0:
+            revision = heapq.heappop(priority_queue)[1]
+            if revision == another_revision:
+                break
+            for parent_revision in revision.parent_revisions.all():
+                if parent_revision.pk not in marks:
+                    marks.append(parent_revision.pk)
+                    heapq.heappush(priority_queue, (-parent_revision.pk, parent_revision))
+            parents.append(revision)
+        return parents
 
     def find_matching_pairs(self, another_revision):
         res = [(self.problem_data, another_revision.problem_data)]

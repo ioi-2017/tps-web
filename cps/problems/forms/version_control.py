@@ -7,12 +7,17 @@ from django.utils.translation import ugettext as _
 
 
 class CommitForm(forms.ModelForm):
+
+    pull_from_master = forms.BooleanField(label=_("pull from master after this commit"), initial=True)
+
     class Meta:
         model = ProblemRevision
         fields = ["commit_message"]
 
-    def save(self, commit=True):
+    def save(self, *args, **kwargs):
+        super(CommitForm, self).save(*args, **kwargs)
         self.instance.commit(self.cleaned_data["commit_message"])
+        return self.instance
 
 
 class BranchCreationForm(forms.ModelForm):

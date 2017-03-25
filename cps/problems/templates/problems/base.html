@@ -215,6 +215,12 @@
                                             {% trans 'Review & Commit' %}
                                         </span>
                                      </a>
+                                    <a href="{% problem_url "problems:discard" %}" >
+                                         <i class="fa fa-remove "></i>
+                                        <span class="full-open-only">
+                                            {% trans 'Discard' %}
+                                        </span>
+                                     </a>
                                  {% endif %}
                              </li>
                         {% elif branch %}

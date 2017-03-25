@@ -1,4 +1,7 @@
+{% load i18n %}
+
 <div id="changes_accordion" >
+{% if differences %}
 <ol>
 {% for difference_title, difference_desc in differences %}
     <li>
@@ -20,4 +23,8 @@
 </div>
     </li>
 {% endfor %}
+</ol>
+{% else %}
+    <h3 class="text-muted"> {% trans 'No changes' %} </h3>
+{% endif %}
 </div>

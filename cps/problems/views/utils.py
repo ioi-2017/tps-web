@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -51,4 +53,5 @@ def get_revision_difference(base, new):
                 diff_dict(base_dict, new_dict)
             ))
     return result
+
 

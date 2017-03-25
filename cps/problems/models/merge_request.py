@@ -21,6 +21,10 @@ class MergeRequest(models.Model):
                                 "It is necessary to pull from {base} and resolve "
                                 "possible conflicts before merging {new} into {base}")
     }
+    error_messages = {
+        "same_open_request_exists": _("An open merge request with the same source and destination already exists."
+                                      " Merge or close it before opening a new request")
+    }
     problem = models.ForeignKey("problems.Problem", verbose_name=_("problem"), related_name='merge_requests')
     title = models.CharField(max_length=100)
     source_branch = models.ForeignKey(
