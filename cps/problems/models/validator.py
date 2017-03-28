@@ -34,6 +34,7 @@ class ValidatorResult(models.Model):
             return cls.objects.create(validator=validator, testcase=testcase)
 
     def run(self):
+        # TODO: Make sure testcase has already been generated
         validation_command = get_execution_command(self.validator.source_language, "validator")
         validation_command.append("input.txt")
         validator_compiled_file = self.validator.compiled_file()

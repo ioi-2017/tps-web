@@ -44,7 +44,7 @@
                         <td> {{ forloop.counter }} </td>
                         <td> <a href="{% problem_url "problems:solution_source" solution.pk %}"> {{ solution }} </a> </td>
                         <td> {{ solution.get_language_representation }} </td>
-                        <td> {{ solution.get_verdict_representation }} </td>
+                        <td> {{ solution.verdict }} </td>
                         {% if revision_editable %}
                             <td>
 

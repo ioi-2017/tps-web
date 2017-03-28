@@ -16,8 +16,13 @@ class SolutionVerdict(Enum):
         self.full_name = full_name
         self.short_name = short_name
 
+    def __str__(self):
+        return self.full_name
+
+
 class SolutionRunVerdict(Enum):
-    invalid_submission = (_noop("Bad Submission"), "BS")
+    judging = (_noop("Judging"), "N / A")
+    invalid_submission = (_noop("Invalid Submission"), "BS")
     compilation_failed = (_noop("Compilation Error"), "CE")
     runtime_error = (_noop("Runtime error"), "RE")
     time_limit_exceeded = (_noop("Time limit exceeded"), "TLE")
@@ -31,4 +36,8 @@ class SolutionRunVerdict(Enum):
         self.full_name = full_name
         self.short_name = short_name
 
-
+    @classmethod
+    def get_from_judge_verdict(cls, verdict):
+        # FIXME: The following line makes the implicit requirement that all members of JudgeVerdict
+        # will be present in SolutionRunVerdict. Either remove this requirement or make it explicit.
+        return cls.__members__.get(verdict.name)

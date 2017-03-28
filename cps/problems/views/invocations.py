@@ -78,10 +78,15 @@ class InvocationDetailsView(RevisionObjectView):
             for solution in solutions:
                 testcase_subtasks = []
                 current_results.append(dic[testcase][solution])
+                if not dic[testcase][solution].validate():
+                    testcase_subtasks.append((None, solution.verdict.short_name))
                 for subtask in testcase.subtasks.all():
                     if not dic[testcase][solution].validate(subtasks=[subtask]):
-                        subtask_verdict = SolutionSubtaskExpectedVerdict.objects.get(solution=solution, subtask=subtask)
-                        short_name = SolutionVerdict.__members__.get(subtask_verdict.verdict).short_name
+                        try:
+                            subtask_verdict = SolutionSubtaskExpectedVerdict.objects.get(solution=solution, subtask=subtask)
+                            short_name = subtask_verdict.verdict.short_name
+                        except SolutionSubtaskExpectedVerdict.DoesNotExist:
+                            short_name = solution.verdict.short_name
                         testcase_subtasks.append((subtask, short_name))
                 failed_subtasks.append(testcase_subtasks)
             results.append((testcase, zip(current_results, failed_subtasks)))

@@ -176,6 +176,7 @@ class TestCase(RevisionObject):
         if self.judge_code:
             return self.judge_code
         judge = Judge.get_judge()
+        # TODO: Make sure testcase has already been generated
         input_file = self.input_file
         if not input_file:
             return None
@@ -317,10 +318,9 @@ class TestCase(RevisionObject):
         returns a File instance of the input file or None if the input hasn't been generated yet.
         If the latter is the case, then it automatically starts the generation of input file.
         """
-
+        if not self.input_file_generated():
+            return None
         if self.input_static is False:
-            if not self.input_file_generated():
-                self._generate_input_file()
             return self._input_generated_file
         else:
             return self._input_uploaded_file
@@ -409,9 +409,9 @@ class TestCase(RevisionObject):
         returns a File instance for the input file or None if the input hasn't been generated yet.
         If the latter is the case, then it automatically starts the generation of input file.
         """
+        if not self.output_file_generated():
+            return None
         if self.output_static is False:
-            if not self.output_generation_successful:
-                self.generate()
             return self._output_generated_file
         else:
             return self._output_uploaded_file

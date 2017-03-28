@@ -5,6 +5,8 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from core.fields import EnumField
+from judge.results import JudgeVerdict
 from problems.models.enums import SolutionVerdict, SolutionRunVerdict
 from tasks.models import Task
 from file_repository.models import FileModel
@@ -82,6 +84,16 @@ class SolutionRun(RevisionObject):
         return solution_run
 
 
+def report_failed_on_exception(func):
+    def wrapper(self, *args, **kwargs):
+        try:
+            func(self, *args, **kwargs)
+        except Exception as e:
+            self.verdict = SolutionRunVerdict.judge_failed.name
+            self.save()
+            raise e
+    return wrapper
+
 
 class SolutionRunResult(Task):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionRunVerdict)]
@@ -94,20 +106,19 @@ class SolutionRunResult(Task):
     class Meta:
         unique_together = ("solution_run", "solution", "testcase")
 
-    solution_verdict = models.CharField(
+    verdict = EnumField(
         max_length=max([len(x[0]) for x in _VERDICTS]),
         verbose_name=_("verdict"),
-        choices=_VERDICTS,
-        null=True
+        enum=SolutionRunVerdict,
+        default=SolutionRunVerdict.judging
     )
+    execution_message = models.TextField(verbose_name=_("execution message"), null=True)
     score = models.FloatField(verbose_name=_("score"), null=True)
     contestant_message = models.TextField(verbose_name=_("checker comment to contestant"), null=True)
 
     solution_output = models.ForeignKey(FileModel, verbose_name=_("solution output file"), null=True, related_name='+')
     solution_execution_time = models.FloatField(verbose_name=_("solution execution time"), null=True)
     solution_memory_usage = models.IntegerField(verbose_name=_("solution memory usage"), null=True)
-    solution_execution_success = models.NullBooleanField(verbose_name=_("solution execution success"), null=True)
-    solution_execution_message = models.TextField(verbose_name=_("solution execution message"), null=True)
 
     checker_standard_output = models.ForeignKey(
         FileModel,
@@ -119,46 +130,36 @@ class SolutionRunResult(Task):
         verbose_name=_("checker standard error"),
         null=True, related_name='+'
     )
-    checker_execution_success = models.NullBooleanField(verbose_name=_("checker execution success"), null=True)
-    checker_execution_message = models.TextField(verbose_name=_("checker execution message"), null=True)
 
-    @property
-    def verdict(self):
-        if self.solution_execution_success:
-            if self.checker_execution_success is None:
-                if self.solution_verdict == SolutionRunVerdict.ok.name:
-                    return None
-                else:
-                    return self.solution_verdict
-            elif self.checker_execution_success is True:
-                return self.solution_verdict
-            else:
-                return SolutionRunVerdict.checker_failed.name
-        else:
-            return self.solution_verdict
-
+    @report_failed_on_exception
     def run(self):
         problem = self.solution_run.problem
         testcase = self.testcase
         # FIXME: Handle the case in which the judge code can't be acquired
         problem_code = problem.get_judge_code()
-        testcase_code = testcase.get_judge_code()
-        if not testcase_code:
-            self.solution_verdict = SolutionRunVerdict.judge_failed.name
-            self.solution_execution_message = _("Couldn't add testcase to the judge")
-            self.save()
-            return
+
+        # TODO: This task must be scheduled so testcase has been already generated
+        testcase.generate()
+
         input_file = testcase.input_file
         if not input_file:
-            self.solution_verdict = SolutionRunVerdict.invalid_testcase.name
-            self.solution_execution_message = _("Testcase couldn't be generated")
+            self.verdict = SolutionRunVerdict.invalid_testcase.name
+            self.execution_message = _("Testcase couldn't be generated")
             self.save()
             return
         # TODO: Should we check if the testcase validates as well?
+
+        testcase_code = testcase.get_judge_code()
+        if not testcase_code:
+            self.verdict = SolutionRunVerdict.judge_failed.name
+            self.execution_message = _("Couldn't add testcase to the judge")
+            self.save()
+            return
+
         output_file = testcase.output_file
         if not output_file:
-            self.solution_verdict = SolutionRunVerdict.invalid_testcase.name
-            self.solution_execution_message = _("Testcase couldn't be generated")
+            self.verdict = SolutionRunVerdict.invalid_testcase.name
+            self.execution_message = _("Testcase couldn't be generated")
             self.save()
             return
 
@@ -170,68 +171,76 @@ class SolutionRunResult(Task):
             [(self.solution.name, self.solution.code)],
             testcase_code
         )
-        self.solution_output, self.solution_execution_success, \
+        self.solution_output, solution_execution_success, \
         self.solution_execution_time, self.solution_memory_usage, \
-        self.solution_verdict, \
-        self.solution_execution_message = \
+        solution_verdict, solution_execution_message = \
             evaluation_result.output_file, \
             evaluation_result.success, \
             evaluation_result.execution_time, \
             evaluation_result.execution_memory, \
-            SolutionRunVerdict.__members__.get(evaluation_result.verdict.name), \
+            evaluation_result.verdict, \
             evaluation_result.message
 
-        self.save()
-
-        if self.solution_verdict == SolutionRunVerdict.ok.name:
+        if solution_verdict == JudgeVerdict.ok:
             if self.solution_output is None:
-                self.solution_verdict = SolutionRunVerdict.judge_failed.name
-                self.solution_execution_message = "Judge provided no output"
-                self.solution_execution_success = False
+                self.verdict = SolutionRunVerdict.judge_failed.name
+                self.execution_message = _("Judge provided no output")
             else:
                 checker = self.solution_run.problem.problem_data.checker
                 if checker is None:
-                    self.checker_execution_message = "No checker found"
-                    self.checker_execution_success = False
-                    self.save()
+                    self.verdict = SolutionRunVerdict.checker_failed.name
+                    self.execution_message = _("No checker found")
                 else:
-                    self.checker_execution_success, \
+                    checker_execution_success, \
                     self.score, self.contestant_message, \
                     self.checker_standard_output, \
                     self.checker_standard_error, \
-                    self.checker_execution_message = run_checker(
+                    checker_execution_message = run_checker(
                         self.solution_run.problem.problem_data.checker,
                         input_file=input_file,
                         jury_output=output_file,
                         contestant_output=self.solution_output
                     )
+                    if checker_execution_success:
+                        self.verdict = SolutionRunVerdict.ok.name
+                    else:
+                        self.verdict = SolutionRunVerdict.checker_failed.name
+                        self.execution_message = checker_execution_message
         else:
+            self.verdict = SolutionRunVerdict.get_from_judge_verdict(solution_verdict).name
+            self.execution_message = solution_execution_message
             self.score = 0
 
         self.save()
 
     def validate(self, subtasks=None, strict=False):
-        if self.verdict is None:
+        if self.verdict == SolutionRunVerdict.judging:
             return True
-        if self.verdict not in SolutionRunVerdict.__members__:
-            return False
         if not strict and self.score == 1:
             return True
-        solution_verdict = SolutionVerdict.__members__.get(self.solution.verdict)
+        solution_verdict = self.solution.verdict
         flag = True
-        flag &= self.validate_for_verdict(solution_verdict)
 
         if subtasks is None:
             subtasks = self.testcase.subtasks.all()
+            flag &= self.validate_for_verdict(solution_verdict)
+
         for subtask in subtasks:
-            solution_subtask_expected_verdict = SolutionSubtaskExpectedVerdict.objects.get(subtask=subtask, solution=self.solution)
-            flag &= self.validate_for_verdict(SolutionVerdict.__members__.get(solution_subtask_expected_verdict.verdict))
+            try:
+                solution_subtask_expected_verdict = \
+                    SolutionSubtaskExpectedVerdict.objects.get(
+                        subtask=subtask, solution=self.solution
+                    )
+                flag &= self.validate_for_verdict(
+                    solution_subtask_expected_verdict.verdict
+                )
+            except SolutionSubtaskExpectedVerdict.DoesNotExist:
+                flag &= self.validate_for_verdict(solution_verdict)
 
         return flag
 
-
     def validate_for_verdict(self, verdict):
-        judge_verdict = SolutionRunVerdict.__members__.get(self.solution_verdict)
+        judge_verdict = self.verdict
         if verdict in [SolutionVerdict.correct, SolutionVerdict.model_solution]:
             return self.score == 1
         elif verdict == SolutionVerdict.incorrect:
@@ -243,21 +252,18 @@ class SolutionRunResult(Task):
         elif verdict == SolutionVerdict.time_limit:
             return judge_verdict == SolutionRunVerdict.time_limit_exceeded
         elif verdict == SolutionVerdict.failed:
-            return judge_verdict != SolutionRunVerdict.ok or self.score != 1
+            return judge_verdict != SolutionRunVerdict.ok or self.score == 0
         elif verdict == SolutionVerdict.time_limit_and_runtime_error:
             return judge_verdict in [SolutionRunVerdict.runtime_error, SolutionRunVerdict.time_limit_exceeded]
         return False
 
     def get_short_name_for_verdict(self):
-
-        if self.verdict == SolutionRunVerdict.ok.name:
+        if self.verdict == SolutionRunVerdict.ok:
             if self.score == 1:
                 return "AC"
             elif self.score == 0:
                 return "WA"
             else:
-                return self.score
-        elif self.verdict is None:
-            return "N / A"
+                return "PS: {score}".format(score=self.score)
         else:
-            return SolutionRunVerdict.__members__.get(self.verdict).short_name
+            return self.verdict.short_name

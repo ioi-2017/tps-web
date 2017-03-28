@@ -1,5 +1,6 @@
 from django import forms
 
+from core.fields import EnumChoiceField
 from file_repository.models import FileModel
 from problems.forms.generic import ProblemObjectModelForm
 from problems.models import SourceFile, Solution, SolutionSubtaskExpectedScore, SolutionSubtaskExpectedVerdict
@@ -9,9 +10,8 @@ from problems.models.enums import SolutionVerdict
 
 
 class SolutionEditForm(ProblemObjectModelForm):
-    # FIXME : Enable N/A for subtask scoring
-    # _VERDICTS = [("N / A", None)] + [(x.name, x.value[0]) for x in list(SolutionVerdict)]
-    _VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
+    _VERDICTS = [(None, _("Same as global verdict"))] + [(x.name, x) for x in list(SolutionVerdict)]
+    #_VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
 
     file = forms.FileField(label=_("Solution"), required=False)
 
@@ -31,10 +31,11 @@ class SolutionEditForm(ProblemObjectModelForm):
             for verdict in self.instance.solutionsubtaskexpectedverdict_set.all():
                 verdicts_defaults[verdict.subtask] = verdict.verdict
         for subtask in self.revision.subtasks.all():
-            self.fields[str(subtask)] = forms.ChoiceField(
+            self.fields[str(subtask)] = EnumChoiceField(
                 choices=self._VERDICTS,
                 label=str(subtask),
-                initial=verdicts_defaults.get(subtask, None)
+                initial=verdicts_defaults.get(subtask, None),
+                required=False,
             )
             self.subtask_fields.append(str(subtask))
 
@@ -47,7 +48,7 @@ class SolutionEditForm(ProblemObjectModelForm):
         self.instance.save()
         self.instance.solutionsubtaskexpectedverdict_set.all().delete()
         for subtask in self.revision.subtasks.all():
-            if self.cleaned_data[str(subtask)] is not None:
+            if self.cleaned_data[str(subtask)]:
                 solution_subtask_verdict = SolutionSubtaskExpectedVerdict(
                     solution=self.instance, subtask=subtask,
                     verdict=self.cleaned_data[str(subtask)])

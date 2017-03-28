@@ -11,8 +11,6 @@ def run_checker(source_file, input_file, jury_output, contestant_output):
     checker <testcase_input> <testcase_output> <contestant_output>
     The checker should output the score to standard output.
     The first line of standard error stream is the message shown to the contestant.
-    The second line of standard error stream is the message shown to the jury
-    which might be useful for debugging purposes.
     """
 
     CHECKER_FILENAME = "checker"
@@ -25,7 +23,6 @@ def run_checker(source_file, input_file, jury_output, contestant_output):
     compiled_checker = source_file.compiled_file()
     if compiled_checker is None:
         return False, None, None, None, None, None
-
 
     execution_command = get_execution_command(source_file.source_language, CHECKER_FILENAME)
     execution_command.extend([TESTCASE_INPUT_FILENAME, TESTCASE_OUTPUT_FILENAME, CONTESTANT_OUTPUT_FILENAME])

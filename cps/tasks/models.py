@@ -40,8 +40,6 @@ class Task(models.Model):
         # TODO: Handle the case where run might fail with an exception
         try:
             self.run(*args, **kwargs)
-        except Exception as e:
-            logger.error(repr(e))
         finally:
             self.state = State.finished.name
             self.save()

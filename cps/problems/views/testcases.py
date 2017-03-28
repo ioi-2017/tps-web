@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import ugettext as _
 from django.views.generic import View
@@ -121,14 +122,9 @@ class TestCaseInputDownloadView(RevisionObjectView):
             "problem_id": self.revision.id,
             "id": testcase_id
         })
-        file = testcase.input_file
-        if testcase.input_file_generated():
-            return FileResponse(file.file, content_type="txt")
-        else:
-            return HttpResponse(content="A problem occurred during input generation:\n{}".format(
-                testcase.input_generation_log),
-                content_type="txt")
-
+        if not testcase.input_file_generated():
+            raise Http404()
+        return FileResponse(testcase.input_file, content_type="txt")
 
 class TestCaseOutputDownloadView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, testcase_id):
@@ -136,15 +132,7 @@ class TestCaseOutputDownloadView(RevisionObjectView):
             "problem_id": self.revision.id,
             "id": testcase_id
         })
-        file = testcase.output_file
-        if testcase.output_file_generated():
-            return FileResponse(file.file, content_type="txt")
-        elif testcase.input_file_generated():
-            return HttpResponse(content="A problem occurred during output generation:\n{}".format(
-                testcase.output_generation_log),
-                content_type="txt")
-        else:
-            return HttpResponse(content="A problem occurred during output generation:\n{}".format(
-                "Input generation failed"),
-                content_type="txt")
+        if not testcase.output_file_generated():
+            raise Http404()
+        return FileResponse(testcase.output_file, content_type="txt")
 

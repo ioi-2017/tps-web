@@ -4,6 +4,7 @@ import json
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from core.fields import EnumField
 from file_repository.models import FileModel
 from problems.models import RevisionObject
 from problems.models.enums import SolutionVerdict
@@ -27,7 +28,7 @@ class Solution(RevisionObject):
 
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
-    verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
+    verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
 
     class Meta:
@@ -57,13 +58,6 @@ class Solution(RevisionObject):
             if self.language == val:
                 return repr
         return "Not supported"
-
-    def get_verdict_representation(self):
-        verdict = SolutionVerdict.__members__.get(self.verdict, None)
-        if verdict:
-            return verdict.value
-        else:
-            return None
 
     def save(self, *args, **kwargs):
         if self.name == "":
@@ -98,7 +92,7 @@ class SolutionSubtaskExpectedVerdict(models.Model):
 
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
-    verdict = models.CharField(choices=_VERDICTS, verbose_name=_("verdict"), max_length=50)
+    verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
     class Meta:
         unique_together = (
