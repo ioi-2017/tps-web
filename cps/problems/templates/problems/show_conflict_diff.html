@@ -3,9 +3,9 @@
 {% load problems_tags %}
 {% block problem_content %}
     <div class="panel panel-primary panel-body">
-        <p>{% trans 'Since last time this branch was brought up-to-date with master, this object has been changed both on this branch and on the master. ' %}</p>
+        <p>{% trans 'Since last time this branch was synced with the branch you pulled from, this object has been changed both on this branch and on the other one. ' %}</p>
         <p>
-            {% trans 'Below is the difference of current version of this object with its equivalent on master. ' %}
+            {% trans 'Below is the difference of current version of this object with its equivalent on the other branch. ' %}
             {% trans 'Please note that the changes might not conflict and you even might not see any difference. The reason is that due to sensitivity of task preperation, auto-merging is disabled.' %}
         </p>
     </div>

@@ -44,7 +44,7 @@ class SolutionRun(RevisionObject):
             "solutions": [str(solution) for solution in self.solutions.all()],
             "testcases": [str(testcase) for testcase in self.testcases.all()],
         }
-        return json.dumps(data)
+        return data
 
 
     def validate(self):
@@ -82,6 +82,9 @@ class SolutionRun(RevisionObject):
         solution_run.testcases = testcases
         solution_run.save()
         return solution_run
+
+    def clone(self, cloned_instances=None):
+        raise NotImplementedError
 
 
 def report_failed_on_exception(func):

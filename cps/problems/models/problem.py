@@ -12,7 +12,7 @@ from django_clone.clone import Cloner
 
 from file_repository.models import FileModel
 from judge import Judge
-from problems.models import RevisionObject, Conflict, Merge
+from problems.models import RevisionObject, Conflict, Merge, CloneableMixin
 
 import logging
 
@@ -166,7 +166,6 @@ class ProblemBranch(models.Model):
         self.save()
 
 
-
 class ProblemRevision(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"))
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="revisions")
@@ -179,8 +178,8 @@ class ProblemRevision(models.Model):
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
     USER_REVISION_OBJECTS = {
-        "testcase_set", "solution_set", "validator_set", "checker_set", "inputgenerator_set",
-        "resource_set", "solutionrun_set", "subtasks", "grader_set",
+        "solution_set", "validator_set", "checker_set", "inputgenerator_set", "grader_set",
+        "resource_set", "subtasks", "testcase_set",
     }
 
     def get_judge(self):
@@ -227,31 +226,28 @@ class ProblemRevision(models.Model):
             self.depth = max(self.depth, parent.depth + 1)
         super(ProblemRevision, self).save()
 
-    def _clean_commit_data(self, commit=True):
+    def _clean_for_clone(self, cloned_instances):
         self.revision_id = None
         self.commit_message = ""
-        if commit:
-            self.save()
 
-    @staticmethod
-    def _get_cloner():
-        return Cloner(blocking_models=["file_repository.FileModel", settings.AUTH_USER_MODEL],
-                      ignored_models=["file_repository.FileModel", settings.AUTH_USER_MODEL],
-                      ignored_fields=[("problems.ProblemRevision", "parent_revisions"),
-                                      ("problems.ProblemRevision", "problem"),
-                                      ("problems.ProblemRevision", "author"),
-                                      ("problems.ProblemRevision", "merge_result")],)
+    def clone(self, cloned_instances=None):
+        if not cloned_instances:
+            cloned_instances = {}
+        if self not in cloned_instances:
+            cloned_instances[self] = CloneableMixin.clone_model(self, cloned_instances)
+        cloned_instances[self].parent_revisions.add(self)
+        cloned_instances = self.problem_data.clone(cloned_instances=cloned_instances)
 
-    def clone(self):
-        with transaction.atomic():
-            # TODO: This is a hack to handle uniqueness of revision id.
-            # TODO: Find some other way to handle it properly.
-            self.revision_id = None
-            cloned = self._get_cloner().clone(self)
-            cloned._clean_commit_data(commit=False)
-            cloned.parent_revisions = [self]
-            cloned.save()
-        return cloned
+        for queryset in self.USER_REVISION_OBJECTS:
+            cloned_instances = CloneableMixin.clone_queryset(getattr(self, queryset),
+                                                             cloned_instances=cloned_instances)
+
+        self.problem_data.clone_relations(cloned_instances=cloned_instances)
+        for queryset in self.USER_REVISION_OBJECTS:
+            CloneableMixin.clone_queryset_relations(getattr(self, queryset),
+                                                                       cloned_instances=cloned_instances)
+
+        return cloned_instances[self]
 
     def child_of(self, revision):
         return self.find_merge_base(revision) == revision
@@ -320,8 +316,8 @@ class ProblemRevision(models.Model):
             raise AssertionError("Commit changes before merge")
 
         merge_base = self.find_merge_base(another_revision)
-        base_current = merge_base.find_matching_pairs(self)
-        base_other = merge_base.find_matching_pairs(another_revision)
+        base_current = merge_base.find_matching_pairs(self) if merge_base is not None else {}
+        base_other = merge_base.find_matching_pairs(another_revision) if merge_base is not None else {}
         current_other = self.find_matching_pairs(another_revision)
         base_current_dict = {a: b for a, b in base_current if a is not None}
         current_base_dict = {b: a for a, b in base_current if b is not None}
@@ -377,7 +373,7 @@ class ProblemRevision(models.Model):
                     pass
 
             theirs_ignored[another_revision] = new_revision
-            self._get_cloner().apply_limits(ignored_instances=theirs_ignored).clone(another_revision)
+            another_revision.clone(cloned_instances=theirs_ignored)
             for ours, theirs in conflicts:
                 if ours is None:
                     current = None
@@ -445,6 +441,15 @@ class ProblemData(RevisionObject):
 
     def __str__(self):
         return self.title
+
+    def _clean_for_clone(self, cloned_instances):
+        super(ProblemData, self)._clean_for_clone(cloned_instances)
+        self.checker = None
+
+    def clone_relations(self, cloned_instances):
+        super(ProblemData, self).clone_relations(cloned_instances)
+        if self.checker:
+            cloned_instances[self].checker = cloned_instances[self.checker]
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

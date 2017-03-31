@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 
 import json
 
-__all__ = ["RevisionObject", "Merge", "Conflict"]
+__all__ = ["RevisionObject", "Merge", "Conflict", "CloneableMixin"]
 
 
 class RevisionObjectQuerySet(models.QuerySet):
@@ -77,13 +77,52 @@ class RevisionObjectManager(models.Manager):
     use_for_related_fields = True
 
 
+class CloneableMixin(object):
+    @staticmethod
+    def clone_queryset(queryset, cloned_instances):
+        for obj in queryset.all():
+            cloned_instances = obj.clone(cloned_instances=cloned_instances)
+        return cloned_instances
+
+    @staticmethod
+    def clone_queryset_relations(queryset, cloned_instances):
+        for obj in queryset.all():
+            obj.clone_relations(cloned_instances=cloned_instances)
+        return cloned_instances
+
+    def _clean_for_clone(self, cloned_instances):
+        pass
+
+    def clone(self, cloned_instances=None):
+        if not cloned_instances:
+            cloned_instances = {}
+        if self not in cloned_instances:
+            cloned_instances[self] = self.clone_model(self, cloned_instances)
+        return cloned_instances
+
+    def clone_relations(self, cloned_instances):
+        pass
+
+    @staticmethod
+    def clone_model(obj, cloned_instances):
+        new_object = type(obj).objects.get(pk=obj.pk)
+        new_object.pk = None
+        new_object._clean_for_clone(cloned_instances=cloned_instances)
+        new_object.save()
+        return new_object
+
+
 class AbstractModelMeta(ABCMeta, type(models.Model)):
     pass
 
 
-class RevisionObject(models.Model, metaclass=AbstractModelMeta):
+class RevisionObject(models.Model, CloneableMixin, metaclass=AbstractModelMeta):
 
     objects = RevisionObjectManager.from_queryset(RevisionObjectQuerySet)()
+
+    def _clean_for_clone(self, cloned_instances):
+        super(RevisionObject, self)._clean_for_clone(cloned_instances)
+        self.problem = cloned_instances[self.problem]
 
     @abstractmethod
     def get_value_as_dict(self):
@@ -135,7 +174,7 @@ class Merge(models.Model):
     merged_revision = models.OneToOneField("ProblemRevision", related_name='merge_result')
     our_revision = models.ForeignKey("ProblemRevision", related_name='+')
     their_revision = models.ForeignKey("ProblemRevision", related_name='+')
-    base_revision = models.ForeignKey("ProblemRevision", related_name='+')
+    base_revision = models.ForeignKey("ProblemRevision", related_name='+', null=True)
 
 
 class Conflict(models.Model):

@@ -132,3 +132,10 @@ class Validator(SourceFile):
 
     def invalidate(self):
         self.results.all().delete()
+
+    def clone_relations(self, cloned_instances):
+        subtasks = []
+        for subtask in self._subtasks.all():
+            subtasks.append(cloned_instances[subtask])
+        if len(subtasks) > 0:
+            cloned_instances[self]._subtasks.add(*subtasks)

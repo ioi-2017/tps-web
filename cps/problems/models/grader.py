@@ -26,7 +26,7 @@ class Grader(RevisionObject):
         data = dict()
         data["language"] = self.get_language_representation()
         data["code"] = self.code.get_value_as_string()
-        return json.dumps(data)
+        return data
 
     def get_language_representation(self):
         choices = [(a, a) for a in self.problem.get_judge().get_supported_languages()]

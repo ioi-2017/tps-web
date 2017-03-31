@@ -172,6 +172,17 @@ class TestCase(RevisionObject):
     class Meta:
         ordering = ("problem", "name", )
 
+    def _clean_for_clone(self, cloned_instances):
+        super(TestCase, self)._clean_for_clone(cloned_instances)
+        self.generator = None
+
+    def clone_relations(self, cloned_instances):
+        super(TestCase, self).clone_relations(cloned_instances=cloned_instances)
+        if self.generator:
+            cloned_instances[self].generator = cloned_instances[self.generator]
+
+
+
     def get_judge_code(self):
         if self.judge_code:
             return self.judge_code
@@ -201,15 +212,15 @@ class TestCase(RevisionObject):
     def get_value_as_dict(self):
         data = {}
         if self.input_static:
-            data["input"] = self.input_file.read()
+            data["input"] = self.input_file.get_value_as_string()
         else:
             data["input"] = self.input_generation_command
 
         if self.output_static:
-            data["output"] = self.output_file.read()
+            data["output"] = self.output_file.get_value_as_string()
         else:
             data["output"] = "Generated using {}".format(self.solution)
-        return json.dumps(data)
+        return data
 
     def clean(self):
         if self._input_uploaded_file is None and self._input_generator_name is None:
@@ -502,10 +513,10 @@ class Subtask(RevisionObject):
 
     def get_value_as_dict(self):
         data = {
-            "score": self.score,
-            "testcases": [str(testcase) for testcase in self.testcases.all()]
+            "score": str(self.score),
+            "testcases": ",".join([str(testcase) for testcase in self.testcases.all()])
         }
-        return json.dumps(data)
+        return data
 
     def __str__(self):
         return self.name
@@ -513,3 +524,10 @@ class Subtask(RevisionObject):
     @property
     def validators(self):
         return self.problem.validator_set.filter(Q(global_validator=True) | Q(_subtasks=self))
+
+    def clone_relations(self, cloned_instances):
+        testcases = []
+        for testcase in self.testcases.all():
+            testcases.append(cloned_instances[testcase])
+        if len(testcases) > 0:
+            cloned_instances[self].testcases.add(*testcases)

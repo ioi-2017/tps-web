@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from core.fields import EnumField
 from file_repository.models import FileModel
-from problems.models import RevisionObject
+from problems.models import RevisionObject, CloneableMixin
 from problems.models.enums import SolutionVerdict
 from problems.models.file import FileNameValidator, get_valid_name
 from problems.models.problem import ProblemRevision
@@ -45,7 +45,7 @@ class Solution(RevisionObject):
         data = {
             "name": self.name,
             "language": self.get_language_representation(),
-            "verdict": self.verdict,
+            "verdict": str(self.verdict),
             "code": self.code.get_value_as_string(),
         }
         return data
@@ -65,8 +65,14 @@ class Solution(RevisionObject):
 
         super(Solution, self).save(*args, **kwargs)
 
+    def clone_relations(self, cloned_instances):
+        super(Solution, self).clone_relations(cloned_instances)
+        CloneableMixin.clone_queryset(self.tests_scores, cloned_instances=cloned_instances)
+        CloneableMixin.clone_queryset(self.subtask_verdict, cloned_instances=cloned_instances)
+        CloneableMixin.clone_queryset(self.subtask_scores, cloned_instances=cloned_instances)
 
-class SolutionSubtaskExpectedScore(models.Model):
+
+class SolutionSubtaskExpectedScore(models.Model, CloneableMixin):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     score = models.FloatField(verbose_name=_("score"))
@@ -76,8 +82,13 @@ class SolutionSubtaskExpectedScore(models.Model):
             ("solution", "subtask")
         )
 
+    def _clean_for_clone(self, cloned_instances):
+        super(SolutionSubtaskExpectedScore, self)._clean_for_clone(cloned_instances)
+        self.solution = cloned_instances[self.solution]
+        self.subtask = cloned_instances[self.subtask]
 
-class SolutionTestExpectedScore(models.Model):
+
+class SolutionTestExpectedScore(models.Model, CloneableMixin):
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     score = models.FloatField(verbose_name=_("score"))
@@ -87,7 +98,12 @@ class SolutionTestExpectedScore(models.Model):
             ("solution", "testcase")
         )
 
-class SolutionSubtaskExpectedVerdict(models.Model):
+    def _clean_for_clone(self, cloned_instances):
+        super(SolutionTestExpectedScore, self)._clean_for_clone(cloned_instances)
+        self.solution = cloned_instances[self.solution]
+        self.testcase = cloned_instances[self.testcase]
+
+class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     solution = models.ForeignKey(Solution, verbose_name=_("solution"))
@@ -98,3 +114,8 @@ class SolutionSubtaskExpectedVerdict(models.Model):
         unique_together = (
             ("solution", "subtask")
         )
+
+    def _clean_for_clone(self, cloned_instances):
+        super(SolutionSubtaskExpectedVerdict, self)._clean_for_clone(cloned_instances)
+        self.solution = cloned_instances[self.solution]
+        self.subtask = cloned_instances[self.subtask]
