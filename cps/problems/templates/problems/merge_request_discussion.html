@@ -10,9 +10,26 @@
             <h2> {{ merge_request.title }} </h2>
             <span class="badge"> {{ merge_request.get_status_display }}</span>
             <p class="text-muted">
-                {{ merge_request.author }} wants to merge {{ merge_request.source_branch }} into {{ merge_request.destination_branch }}
+                {{ merge_request.requester }} wants to merge {{ merge_request.source_branch }} into {{ merge_request.destination_branch }}
             </p>
+            {% if merge_request.reopened_by and merge_request.status == merge_request.OPEN %}
+                <p class="text-muted">
+                    reopened by {{ merge_request.closed_by }}
+                </p>
+            {% endif %}
+            {% if merge_request.status == merge_request.CLOSED %}
+                <p class="text-muted">
+                    closed by {{ merge_request.closed_by }}
+                </p>
+            {% endif %}
+
+            {% if is_follow %}
+                <a data-method="post" href="{% problem_url "problems:merge_request_unfollow" merge_request.id %}" class="btn btn-warning">{% trans "Unfollow" %} </a>
+            {% else %}
+                <a data-method="post" href="{% problem_url "problems:merge_request_follow" merge_request.id %}" class="btn btn-primary">{% trans "Follow" %} </a>
+            {% endif %}
         </div>
+        <br>
         <ul class="nav nav-tabs">
           <li role="presentation" class="active"><a href="{% problem_url "problems:merge_request_discussion" merge_request.id  %}">{% trans 'Discussion' %}</a></li>
           <li role="presentation"><a href="{% problem_url "problems:merge_request_changes" merge_request.id %}">{% trans 'Changes' %}</a></li>
@@ -66,6 +83,8 @@
                 </form>
             </div>
             {% endwith %}
+        {% elif merge_request.status == merge_request.CLOSED %}
+            <a data-method="post" href="{% problem_url "problems:merge_request_reopen" merge_request.id %}" class="btn btn-warning">{% trans "Reopen merge request" %}</a>
         {% endif %}
     </div>
 {% endblock %}

@@ -47,6 +47,8 @@ class MergeRequest(models.Model):
         related_name='+',
         null=True, blank=True
     )
+    reopened_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("reopened by"),
+                                    related_name="+", null=True, blank=True)
     comments = GenericRelation(
         "problems.Comment",
         content_type_field="topic_content_type",
@@ -87,6 +89,21 @@ class MergeRequest(models.Model):
         self.status = MergeRequest.CLOSED
         self.closed_by = closer
         self.save()
+
+    def reopen(self, reopener):
+        if self.status == MergeRequest.CLOSED:
+            self.status = MergeRequest.OPEN
+            self.reopened_by = reopener
+            self.save()
+
+    def is_participant(self, user):
+        return self.participants.filter(id=user.id).count() > 0
+
+    def follow(self, user):
+        self.participants.add(user)
+
+    def unfollow(self, user):
+        self.participants.remove(user)
 
     def __str__(self):
         return self.title

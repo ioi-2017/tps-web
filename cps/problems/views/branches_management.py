@@ -1,20 +1,21 @@
 from django.contrib import messages
-from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.utils.translation import ugettext as _
 
 from problems.forms.discussion import CommentAddForm
 from problems.forms.version_control import BranchCreationForm, ChooseBranchForm, CommitForm, MergeRequestAddForm
-from problems.models import SolutionRun, ProblemData, Conflict, Comment, MergeRequest
+from problems.models import Conflict, Comment, MergeRequest
 from problems.views.generics import ProblemObjectView
 from problems.views.utils import get_revision_difference, diff_dict
 
 __all__ = ["CreateBranchView", "BranchControlView", "ConflictsListView", "PullBranchView",
            "ResolveConflictView", "CreateWorkingCopy", "CommitWorkingCopy", "DiscardWorkingCopy",
            "CreateMergeRequest", "MergeRequestList", "MergeRequestDiscussionView",
-           "MergeRequestChangesView", "DeleteBranchView"]
+           "MergeRequestChangesView", "MergeRequestReopenView", "UnfollowMergeRequestView", "FollowMergeRequestView",
+           "DeleteBranchView", ]
 
 
 def branch_pull(request, source, destination):
@@ -246,7 +247,6 @@ class CreateMergeRequest(BranchControlView):
             new=self.revision
         )
         master_merge_base = self.revision.find_merge_base(master.head)
-        print(master_merge_base)
         default_description = "\n".join(
             ["* " + revision.commit_message for revision in
              self.revision.path_to_parent(
@@ -323,6 +323,7 @@ class MergeRequestDiscussionView(ProblemObjectView):
         return render(request, "problems/merge_request_discussion.html", context={
             "merge_request": merge_request,
             "comment_form": form,
+            "is_follow": merge_request.is_participant(request.user),
         })
 
     def post(self, request, problem_id, revision_slug, merge_request_id):
@@ -446,3 +447,33 @@ class DeleteBranchView(BranchControlView):
                 "problem_id": self.problem.id,
                 "revision_slug": self.problem.get_master_branch().get_slug()
             }))
+
+
+class MergeRequestActionView(ProblemObjectView):
+    def post(self, request, problem_id, revision_slug, merge_request_id):
+        merge_request = get_object_or_404(MergeRequest, id=merge_request_id)
+        self.action(request, problem_id, revision_slug, merge_request)
+
+        return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": merge_request.destination_branch.get_slug(),
+            "merge_request_id": merge_request_id,
+            }))
+
+    def action(self, request, problem_id, revision_slug, merge_request):
+        pass
+
+
+class MergeRequestReopenView(MergeRequestActionView):
+    def action(self, request, problem_id, revision_slug, merge_request):
+        merge_request.reopen(request.user)
+
+
+class FollowMergeRequestView(MergeRequestActionView):
+    def action(self, request, problem_id, revision_slug, merge_request):
+        merge_request.follow(request.user)
+
+
+class UnfollowMergeRequestView(MergeRequestActionView):
+    def action(self, request, problem_id, revision_slug, merge_request):
+        merge_request.unfollow(request.user)

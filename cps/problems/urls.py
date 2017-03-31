@@ -1,6 +1,5 @@
 from django.conf.urls import url
 
-
 from .views import *
 
 problem_urls = ([
@@ -94,6 +93,9 @@ problem_urls = ([
         url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request"),
         url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request_discussion"),
         url(r'^merge_request/(?P<merge_request_id>\d+)/changes/$', MergeRequestChangesView.as_view(), name="merge_request_changes"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/reopen/$', MergeRequestReopenView.as_view(), name="merge_request_reopen"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/follow/$', FollowMergeRequestView.as_view(), name="merge_request_follow"),
+        url(r'^merge_request/(?P<merge_request_id>\d+)/unfollow/$', UnfollowMergeRequestView.as_view(), name="merge_request_unfollow"),
     ], None, None)
 
 urlpatterns = [
