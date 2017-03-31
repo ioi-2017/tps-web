@@ -95,8 +95,7 @@ class Judge(object):
         solution_files ([(str, FileModel)]): A list of files representing a single solution.
         Each element is a tuple (name, file).
         testcase_code (str): A reference code for the test case provided by add_testcases method
-        :return FileModel, EvaluationResult:
-        The output and the details of execution of solution
+        :return EvaluationResult: The output and the details of execution of solution
         """
         raise NotImplementedError
 
