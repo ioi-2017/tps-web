@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from file_repository.models import FileModel
-from tasks.models import Task, State
+from tasks.tasks import CeleryTask
 from trader import get_exporter
 
 from django.utils.translation import ugettext_lazy as _
@@ -26,7 +26,7 @@ class ExportPackage(models.Model):
     export_format = models.CharField(max_length=20, choices=EXPORT_FORMAT_CHOICES, verbose_name=_("export format"), default="zip")
     archive = models.ForeignKey(FileModel, verbose_name=_("archive"), null=True, editable=False)
 
-    def create_archive(self):
+    def _create_archive(self):
         exporter_class = get_exporter(self.exporter)
         with exporter_class(self.revision) as exporter_obj:
             exporter_obj.do_export()
@@ -36,18 +36,29 @@ class ExportPackage(models.Model):
             )
             self.save()
 
+    def create_archive(self):
+        if self.creation_task_id is not None:
+            self.creation_task_id = ExportPackageCreationTask().delay(self).id
+            self.save()
+
     @property
     def is_ready(self):
         return self.archive is not None
 
     @property
     def being_created(self):
-        return self.export_tasks.exclude(state=State.finished.name).exclude(state__isnull=True).exists()
+        return not self.is_ready and self.creation_task_id is not None
 
 
-class ExportPackageCreationTask(Task):
+class ExportPackageCreationTask(CeleryTask):
 
-    request = models.ForeignKey(ExportPackage, related_name="export_tasks")
+    def validate_dependencies(self, request):
+        result = True
+        for testcase in request.revision.testcase_set.all():
+            if not testcase.testcase_generation_completed():
+                testcase.generate()
+                result = None
+        return result
 
-    def run(self):
-        self.request.create_archive()
+    def execute(self, request):
+        request._create_archive()

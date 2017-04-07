@@ -24,10 +24,10 @@ class SourceFileTests(TestCase):
                                  source_language="c++",
                                  file=get_resource_as_file_model("codes", "print_hello_world.cpp"))
         source_file.compile()
-        self.assertIsNotNone(source_file._compiled_file)
+        self.assertIsNotNone(source_file.compiled_file)
         with tempfile.TemporaryDirectory() as temp_dir:
             exec_path = os.path.join(temp_dir, "executable")
-            shutil.copy(source_file.compiled_file().file.path, exec_path)
+            shutil.copy(source_file.compiled_file.file.path, exec_path)
             os.chmod(exec_path, stat.S_IREAD | stat.S_IEXEC)
             execution_output = subprocess.check_output([exec_path])
             self.assertEqual("Hello World", execution_output.decode().strip())
@@ -39,7 +39,7 @@ class SourceFileTests(TestCase):
                                  source_language="c++",
                                  file=get_resource_as_file_model("codes", "compilation_error.cpp"))
         source_file.compile()
-        self.assertIsNone(source_file._compiled_file)
+        self.assertIsNone(source_file.compiled_file)
 
     def test_auto_naming_containing_good_characters(self):
         file_model = get_resource_as_file_model("codes", "print_hello_world.cpp")

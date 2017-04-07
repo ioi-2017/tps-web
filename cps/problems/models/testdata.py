@@ -16,8 +16,7 @@ from problems.models.problem import ProblemRevision
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
-from tasks.decorators import allow_async_method
-from tasks.models import Task, State
+from tasks.tasks import CeleryTask
 import shlex
 
 logger = logging.getLogger(__name__)
@@ -89,36 +88,28 @@ class InputGenerator(SourceFile):
         self.is_enabled = False
         self.save()
 
-class TestCaseValidation(Task):
-    testcase = models.ForeignKey("TestCase")
-    validator = models.ForeignKey("Validator")
 
-    def run(self):
-        self.validator.validate_testcase(self.testcase)
+class TestCaseGeneration(CeleryTask):
 
-    @classmethod
-    def create_and_run_all_for_testcase(cls, testcase):
+    def validate_dependencies(self, testcase):
+        if testcase._input_generator:
+            if testcase._input_generator.compilation_finished:
+                if not testcase._input_generator.compilation_successful():
+                    testcase.input_generation_successful = False
+                    testcase.input_generation_log = "Generator didn't compile"
+                    testcase.save()
+                    return False
+            else:
+                testcase._input_generator.compile()
+                return None
+        return True
+
+    def execute(self, testcase):
+        testcase._generate()
+
+    def execute_child_tasks(self, testcase):
         for validator in testcase.validators:
-            cls.objects.create(
-                    testcase=testcase,
-                    validator=validator
-            ).apply_async()
-
-    @classmethod
-    def create_and_run_all_for_validator(cls, validator):
-        for testcase in validator.testcases:
-            cls.objects.create(
-                    testcase=testcase,
-                    validator=validator
-            ).apply_async()
-
-
-class TestCaseGeneration(Task):
-    testcase = models.ForeignKey("TestCase")
-
-    def run(self):
-        self.testcase.generate()
-        TestCaseValidation.create_and_run_all_for_testcase(self.testcase)
+            validator.validate_testcase(testcase)
 
 
 class TestCase(RevisionObject):
@@ -157,6 +148,8 @@ class TestCase(RevisionObject):
     output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
     output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
 
+    generation_task_id = models.CharField(verbose_name=_("generation task id"), max_length=128, null=True)
+
     # TODO: Add output_verified: each output must be verified either automatically
     # (e.g. by running checker on the test) or manually.
 
@@ -180,8 +173,6 @@ class TestCase(RevisionObject):
         super(TestCase, self).clone_relations(cloned_instances=cloned_instances)
         if self.generator:
             cloned_instances[self].generator = cloned_instances[self.generator]
-
-
 
     def get_judge_code(self):
         if self.judge_code:
@@ -287,7 +278,7 @@ class TestCase(RevisionObject):
             stdout_redirect = "output.txt"
 
             try:
-                generator_compiled = self._input_generator.compiled_file()
+                generator_compiled = self._input_generator.compiled_file
             except:
                 self.input_generation_log = "Generation failed. Generator didn't compile"
                 self.save()
@@ -368,9 +359,7 @@ class TestCase(RevisionObject):
             return
 
         if not self.input_file_generated():
-            self._generate_input_file()
-        if not self.input_file_generated():
-            self.output_generation_log = "Generation failed. Input couldn't be generated"
+            self.output_generation_log = "Generation failed. Input wasn't generated"
             self.output_generation_successful = False
         else:
             solution = self.solution
@@ -408,11 +397,14 @@ class TestCase(RevisionObject):
                         self._output_generated_file = evaluation_result.output_file
         self.save()
 
-    def generate(self):
-        # TODO: Only generate if a generation process hasn't started yet
+    def _generate(self):
         self._generate_input_file()
-        if self.input_file_generated():
-            self._generate_output_file()
+        self._generate_output_file()
+
+    def generate(self):
+        if not self.generation_started():
+            self.generation_task_id = TestCaseGeneration().delay(self).id
+            self.save()
 
     @property
     def output_file(self):
@@ -457,6 +449,7 @@ class TestCase(RevisionObject):
         self.validation_results.all().delete()
 
     def invalidate(self):
+        self.generation_task_id = None
         self._invalidate_output(commit=False)
         self._invalidate_validation()
         self._invalidate_input(commit=False)
@@ -482,6 +475,10 @@ class TestCase(RevisionObject):
         return self.output_generation_successful is not None or self.output_static
 
     def testcase_generation_completed(self):
+
+        if self.input_generation_successful is False:
+            return True
+
         input_validation_tried =  \
             self.validation_results.filter(valid__isnull=False).count() == len(self.validators)
 
@@ -489,12 +486,11 @@ class TestCase(RevisionObject):
             self.output_generation_completed() and \
             input_validation_tried
 
+    def generation_started(self):
+        return self.generation_task_id is not None
+
     def being_generated(self):
-        return self.testcasegeneration_set.exclude(
-            state=State.finished.name
-        ).exclude(state__isnull=True).exists() or self.testcasevalidation_set.exclude(
-            state=State.finished.name
-        ).exclude(state__isnull=True).exists()
+        return not self.testcase_generation_completed() and self.generation_started()
 
     def __str__(self):
         return self.name

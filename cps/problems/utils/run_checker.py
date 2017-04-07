@@ -20,7 +20,7 @@ def run_checker(source_file, input_file, jury_output, contestant_output):
     STDOUT_FILENAME = "stdout.txt"
     STDERR_FILENAME = "stderr.txt"
 
-    compiled_checker = source_file.compiled_file()
+    compiled_checker = source_file.compiled_file
     if compiled_checker is None:
         return False, None, None, None, None, None
 

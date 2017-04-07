@@ -88,8 +88,8 @@ class TestCaseGenerateView(RevisionObjectView):
             testcases = self.revision.testcase_set.all()
             count = 0
             for testcase in testcases:
-                if not testcase.testcase_generation_completed() and not testcase.being_generated():
-                    TestCaseGeneration.objects.create(testcase=testcase).apply_async()
+                if not testcase.generation_started():
+                    testcase.generate()
                     count += 1
             messages.success(request, _("Started generation of {} testcase(s).".format(count)))
             return HttpResponseRedirect(reverse("problems:testcases", kwargs={
@@ -106,7 +106,7 @@ class TestCaseGenerateView(RevisionObjectView):
             elif testcase.being_generated():
                 messages.error(request, _("Generation already started"))
             else:
-                TestCaseGeneration.objects.create(testcase=testcase).apply_async()
+                testcase.generate()
                 messages.success(request, _("Generation started"))
 
             return HttpResponseRedirect(reverse("problems:testcase_details", kwargs={

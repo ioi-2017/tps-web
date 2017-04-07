@@ -35,11 +35,11 @@ def invalidate_testcase_on_generator_change(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Resource, dispatch_uid="invalidate_file_compilation_resource")
 @receiver(pre_delete, sender=Resource, dispatch_uid="invalidate_file_compilation_resource")
-def invalidate_testcase_on_validator_change(sender, instance, **kwargs):
+def invalidate_compiled_on_resource_change(sender, instance, **kwargs):
     revision = instance.problem
-    revision.validator_set.update(_compiled_file=None)
-    revision.checker_set.update(_compiled_file=None)
-    revision.inputgenerator_set.update(_compiled_file=None)
+    revision.validator_set.update(compiled_file=None)
+    revision.checker_set.update(compiled_file=None)
+    revision.inputgenerator_set.update(compiled_file=None)
 
 
 @receiver(post_delete, sender=ProblemBranch, dispatch_uid="delete_branch_working_copy")

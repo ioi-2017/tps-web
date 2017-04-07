@@ -20,7 +20,7 @@ from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
 from runner import get_compilation_commands
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
-from tasks.models import Task
+from tasks.tasks import CeleryTask
 import os
 
 
@@ -91,22 +91,23 @@ class SourceFile(ResourceBase):
 
     compile_jobs = GenericRelation("CompileJob", related_query_name='sourcefile')
 
-    _compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
-                                       related_name="+", null=True, blank=True)
+    compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
+                                      related_name="+", null=True, blank=True)
+
+    compilation_task_id = models.CharField(verbose_name=_("compilation task id"), max_length=128, null=True)
+    compilation_finished = models.BooleanField(verbose_name=_("compilation finished"), default=False)
 
     last_compile_log = models.TextField(verbose_name=_("last compile log"))
 
     class Meta(ResourceBase.Meta):
         abstract = True
 
-
     @property
     def source_file(self):
         # Backward compatibility
         return self.file
 
-
-    def compile(self):
+    def _compile(self):
         # TODO: Handling of simulataneous compilation of a single source file
 
         code_name = self.name
@@ -125,7 +126,7 @@ class SourceFile(ResourceBase):
 
         success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
 
-        self._compiled_file = None
+        self.compiled_file = None
 
         if not success:
             logger.error("Running compilation command failed due to sandbox error")
@@ -133,26 +134,41 @@ class SourceFile(ResourceBase):
             self.last_compile_log = "Standard output:\n" + stdout + "\n"
             self.last_compile_log += "Standard error:\n" + stderr + "\n"
             if compilation_success:
-                self._compiled_file = outputs[compiled_file_name]
+                self.compiled_file = outputs[compiled_file_name]
+
+        self.compilation_finished = True
+
         self.save()
 
-    def compiled_file(self):
-        """
-        return compiled_file, if _compiled_file is None it runs compile method to build _compiled_file
-        """
-        if self._compiled_file is None:
-            self.compile()
-        return self._compiled_file
+    def compilation_started(self):
+        return self.compilation_task_id is not None
 
-    def is_compiled(self):
-        return self._compiled_file is not None
+    def compile(self):
+        if not self.compilation_started():
+            self.compilation_task_id = CompilationTask().delay(self).id
+            self.save()
+
+    def invalidate_compilation(self):
+        self.compiled_file = None
+        self.last_compile_log = ""
+        self.compilation_task_id = None
+        self.compilation_finished = False
+        self.save()
+
+    def compilation_successful(self):
+        return self.compiled_file is not None
 
 
+class CompilationTask(CeleryTask):
 
-class CompileJob(Task):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    source_file = GenericForeignKey('content_type', 'object_id')
+    def execute(self, source_file):
+        source_file._compile()
 
-    def run(self):
-        self.source_file.compile()
+    def shadow_name(self, args, kwargs, options):
+        def get_source_file(source_file, *args, **kwargs):
+            return source_file
+        source = get_source_file(*args, **kwargs)
+        return "Compilation of {source} in {problem}".format(
+            problem=str(source.problem),
+            source=str(source)
+        )

@@ -9,9 +9,28 @@ from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from runner.sandbox.utils import get_exit_status_human_translation
-
+from tasks.tasks import CeleryTask
 
 __all__ = ["Validator", "ValidatorResult"]
+
+
+class ValidatorResultComputationTask(CeleryTask):
+
+    def validate_dependencies(self, *args, **kwargs):
+        if self.validator.compilation_finished:
+            if self.validator.compilation_successful():
+                self.valid = False
+                self.executed = True
+                self.validation_message = "Validator didn't compile"
+                self.save()
+                return False
+        else:
+            self.validator.compile()
+            return None
+        return True
+
+    def execute(self, validator_result):
+        validator_result._run()
 
 
 class ValidatorResult(models.Model):
@@ -19,6 +38,8 @@ class ValidatorResult(models.Model):
     valid = models.NullBooleanField(verbose_name=_("valid"), default=None)
     executed = models.BooleanField(verbose_name=_("executed"), default=False)
     validation_message = models.TextField(verbose_name=_("validation message"))
+
+    task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
 
     testcase = models.ForeignKey("TestCase", verbose_name=_("testcase"), related_name="validation_results")
     validator = models.ForeignKey("Validator", verbose_name=_("validator"), related_name="results")
@@ -34,10 +55,15 @@ class ValidatorResult(models.Model):
             return cls.objects.create(validator=validator, testcase=testcase)
 
     def run(self):
+        if self.task_id is not None:
+            self.task_id = ValidatorResultComputationTask().delay(self).id
+            self.save()
+
+    def _run(self):
         # TODO: Make sure testcase has already been generated
         validation_command = get_execution_command(self.validator.source_language, "validator")
         validation_command.append("input.txt")
-        validator_compiled_file = self.validator.compiled_file()
+        validator_compiled_file = self.validator.compiled_file
 
         if validator_compiled_file is None:
             self.validation_message = "Validation failed. Validator didn't compile"
@@ -49,7 +75,7 @@ class ValidatorResult(models.Model):
         action = ActionDescription(
             commands=[validation_command],
             files=[("input.txt", self.testcase.input_file)],
-            executables=[("validator", self.validator.compiled_file())],
+            executables=[("validator", self.validator.compiled_file)],
             time_limit=settings.FAILSAFE_TIME_LIMIT,
             memory_limit=settings.FAILSAFE_MEMORY_LIMIT,
             stdin_redirect="input.txt",

@@ -26,7 +26,7 @@ class SourceFileEditForm(ProblemObjectModelForm):
         if "file" in self.cleaned_data and self.cleaned_data["file"] is not None:
             self.instance.file = \
                 FileModel.objects.create(file=self.cleaned_data["file"])
-        self.instance._compiled_file = None
+        self.instance.invalidate_compilation()
         if commit:
             self.instance.save()
             self.save_m2m()

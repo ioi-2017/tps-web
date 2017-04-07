@@ -55,7 +55,6 @@ class JSONExporter(BaseExporter):
         ignored_testcases = []
 
         for testcase in self.revision.testcase_set.all():
-            testcase.generate()
             if not testcase.input_file_generated() or not testcase.output_file_generated():
                 ignored_testcases.append(testcase)
                 logger.warning("Testcase {} couldn't be generated. Skipping".format(testcase.name))

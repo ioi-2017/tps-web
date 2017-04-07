@@ -61,10 +61,6 @@ class ExportPackageStarterView(RevisionObjectView):
 
     def post(self, request, *args, **kwargs):
         export_package = get_object_or_404(ExportPackage, pk=kwargs['export_id'])
-
-        export_package_starter = ExportPackageCreationTask()
-        export_package_starter.request = export_package
-        export_package_starter.save()
-        export_package_starter.apply_async()
+        export_package.create_archive()
 
         return self.redirect_home()

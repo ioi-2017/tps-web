@@ -17,9 +17,6 @@ from problems.models import RevisionObject, Conflict, Merge, CloneableMixin
 import logging
 
 from problems.models.enums import SolutionVerdict
-from tasks.models import Task
-from trader import get_exporter
-from trader.exporters import AVAILABLE_EXPORTERS
 
 __all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemBranch"]
 

@@ -8,14 +8,12 @@ from django.utils.translation import ugettext_lazy as _
 from core.fields import EnumField
 from judge.results import JudgeVerdict
 from problems.models.enums import SolutionVerdict, SolutionRunVerdict
-from tasks.models import Task
+from tasks.tasks import CeleryTask
 from file_repository.models import FileModel
 from judge import Judge
 from problems.models import Solution, RevisionObject, SolutionSubtaskExpectedVerdict
-from problems.models.problem import ProblemRevision
 from problems.models.testdata import TestCase
 from problems.utils.run_checker import run_checker
-from tasks.decorators import allow_async_method
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
@@ -33,7 +31,7 @@ class SolutionRun(RevisionObject):
             for testcase in self.testcases.all():
                 result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
                 result.save()
-                result.apply_async()
+                result.run()
 
     @staticmethod
     def get_matching_fields():
@@ -92,13 +90,43 @@ def report_failed_on_exception(func):
         try:
             func(self, *args, **kwargs)
         except Exception as e:
-            self.verdict = SolutionRunVerdict.judge_failed.name
+            self.verdict = SolutionRunVerdict.judge_failed
             self.save()
             raise e
     return wrapper
 
 
-class SolutionRunResult(Task):
+class SolutionRunExecutionTask(CeleryTask):
+    def validate_dependencies(self, run):
+        result = True
+        if run.testcase.testcase_generation_completed():
+            if not run.testcase.output_generation_successful:
+                run.verdict = SolutionRunVerdict.invalid_testcase
+                run.execution_message = "Testcase generation failed"
+                return False
+        else:
+            run.testcase.generate()
+            result = None
+        checker = run.testcase.problem.problem_data.checker
+        if checker is None:
+            run.verdict = SolutionRunVerdict.checker_failed
+            run.execution_message = "Checker not found"
+        else:
+            if checker.compilation_finished:
+                if not checker.compilation_successful():
+                    run.verdict = SolutionRunVerdict.checker_failed
+                    run.execution_message = "Checker didn't compile"
+                    return False
+            else:
+                checker.compile()
+                result = None
+
+        return result
+
+    def execute(self, run):
+        run._run()
+
+class SolutionRunResult(models.Model):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionRunVerdict)]
 
     solution_run = models.ForeignKey(SolutionRun, verbose_name=_("solution run"), editable=False,
@@ -110,11 +138,11 @@ class SolutionRunResult(Task):
         unique_together = ("solution_run", "solution", "testcase")
 
     verdict = EnumField(
-        max_length=max([len(x[0]) for x in _VERDICTS]),
         verbose_name=_("verdict"),
         enum=SolutionRunVerdict,
         default=SolutionRunVerdict.judging
     )
+    task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
     execution_message = models.TextField(verbose_name=_("execution message"), null=True)
     score = models.FloatField(verbose_name=_("score"), null=True)
     contestant_message = models.TextField(verbose_name=_("checker comment to contestant"), null=True)
@@ -135,18 +163,15 @@ class SolutionRunResult(Task):
     )
 
     @report_failed_on_exception
-    def run(self):
+    def _run(self):
         problem = self.solution_run.problem
         testcase = self.testcase
         # FIXME: Handle the case in which the judge code can't be acquired
         problem_code = problem.get_judge_code()
 
-        # TODO: This task must be scheduled so testcase has been already generated
-        testcase.generate()
-
         input_file = testcase.input_file
         if not input_file:
-            self.verdict = SolutionRunVerdict.invalid_testcase.name
+            self.verdict = SolutionRunVerdict.invalid_testcase
             self.execution_message = _("Testcase couldn't be generated")
             self.save()
             return
@@ -154,14 +179,14 @@ class SolutionRunResult(Task):
 
         testcase_code = testcase.get_judge_code()
         if not testcase_code:
-            self.verdict = SolutionRunVerdict.judge_failed.name
+            self.verdict = SolutionRunVerdict.judge_failed
             self.execution_message = _("Couldn't add testcase to the judge")
             self.save()
             return
 
         output_file = testcase.output_file
         if not output_file:
-            self.verdict = SolutionRunVerdict.invalid_testcase.name
+            self.verdict = SolutionRunVerdict.invalid_testcase
             self.execution_message = _("Testcase couldn't be generated")
             self.save()
             return
@@ -186,12 +211,12 @@ class SolutionRunResult(Task):
 
         if solution_verdict == JudgeVerdict.ok:
             if self.solution_output is None:
-                self.verdict = SolutionRunVerdict.judge_failed.name
+                self.verdict = SolutionRunVerdict.judge_failed
                 self.execution_message = _("Judge provided no output")
             else:
                 checker = self.solution_run.problem.problem_data.checker
                 if checker is None:
-                    self.verdict = SolutionRunVerdict.checker_failed.name
+                    self.verdict = SolutionRunVerdict.checker_failed
                     self.execution_message = _("No checker found")
                 else:
                     checker_execution_success, \
@@ -205,16 +230,21 @@ class SolutionRunResult(Task):
                         contestant_output=self.solution_output
                     )
                     if checker_execution_success:
-                        self.verdict = SolutionRunVerdict.ok.name
+                        self.verdict = SolutionRunVerdict.ok
                     else:
-                        self.verdict = SolutionRunVerdict.checker_failed.name
+                        self.verdict = SolutionRunVerdict.checker_failed
                         self.execution_message = checker_execution_message
         else:
-            self.verdict = SolutionRunVerdict.get_from_judge_verdict(solution_verdict).name
+            self.verdict = SolutionRunVerdict.get_from_judge_verdict(solution_verdict)
             self.execution_message = solution_execution_message
             self.score = 0
 
         self.save()
+
+    def run(self):
+        if self.task_id is None:
+            self.task_id = SolutionRunExecutionTask().delay(self).id
+            self.save()
 
     def validate(self, subtasks=None, strict=False):
         if self.verdict == SolutionRunVerdict.judging:
