@@ -55,7 +55,11 @@ class CreateBranchView(ProblemObjectView):
         form = BranchCreationForm(request.POST, problem=self.problem)
         if form.is_valid():
             branch = form.save()
-            return HttpResponseRedirect(reverse("problems:create_working_copy", kwargs={
+            branch.get_or_create_working_copy(request.user)
+            messages.success(request, _("Successfully created and locked branch. "
+                                        "Others will not be able to change this branch "
+                                        "until you commit or discard your changes."))
+            return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": branch.get_slug(),
             }))
