@@ -443,14 +443,9 @@ class IsolateSandbox(SandboxBase):
         """
         SandboxBase.__init__(self)
 
-        # Isolate only accepts ids between 0 and 99. We assign the
-        # range [(shard+1)*10, (shard+2)*10) to each Worker and keep
-        # the range [0, 10) for other uses (command-line scripts like
-        # cmsMake or direct console users of isolate). Inside each
-        # range ids are assigned sequentially, with a wrap-around.
-        # FIXME This is the only use of FileCacher.service, and it's an
-        # improper use! Avoid it!
-        box_id = IsolateSandbox.next_id % 10
+        # Isolate only accepts ids between 0 and 99.
+        # TODO: Make sure documentation notes that this prevents more than 100 workers
+        box_id = IsolateSandbox.next_id % 100
         IsolateSandbox.next_id += 1
 
         # We create a directory "tmp" inside the outer temporary directory,
