@@ -55,7 +55,7 @@ class CreateBranchView(ProblemObjectView):
         form = BranchCreationForm(request.POST, problem=self.problem)
         if form.is_valid():
             branch = form.save()
-            return HttpResponseRedirect(reverse("problems:overview", kwargs={
+            return HttpResponseRedirect(reverse("problems:create_working_copy", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": branch.get_slug(),
             }))
