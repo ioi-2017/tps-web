@@ -38,6 +38,8 @@ from .cmscommon.commands import pretty_print_cmdline
 from django.conf import settings
 from file_repository.models import FileModel
 
+from billiard.process import current_process
+
 logger = logging.getLogger(__name__)
 
 
@@ -444,8 +446,11 @@ class IsolateSandbox(SandboxBase):
         SandboxBase.__init__(self)
 
         # Isolate only accepts ids between 0 and 99.
-        # TODO: Make sure documentation notes that this prevents more than 100 workers
-        box_id = IsolateSandbox.next_id % 100
+        # TODO: Make sure documentation notes that this prevents more than 30 workers
+        # on the same computer
+        # FIXME: current_process is internal
+
+        box_id = (current_process().index * 3 + IsolateSandbox.next_id % 3) % 100
         IsolateSandbox.next_id += 1
 
         # We create a directory "tmp" inside the outer temporary directory,
