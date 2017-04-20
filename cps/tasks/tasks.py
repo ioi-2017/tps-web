@@ -89,7 +89,7 @@ class TaskType(type):
 class CeleryTask(celery.Task, metaclass=TaskType):
 
     serializer = DjangoPKSerializer.name
-    DEPENDENCY_WAIT_TIME = 20
+    DEPENDENCY_WAIT_TIME = 3
     track_started = True
     abstract = True
 

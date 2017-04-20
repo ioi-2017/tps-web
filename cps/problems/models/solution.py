@@ -50,8 +50,6 @@ class Solution(RevisionObject):
         }
         return data
 
-
-
     def get_language_representation(self):
         choices = [(a, a) for a in self.problem.get_judge().get_supported_languages()]
         for repr, val in choices:

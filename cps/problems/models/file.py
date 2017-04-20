@@ -20,6 +20,7 @@ from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
 from runner import get_compilation_commands
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
+from runner.sandbox.sandbox import SandboxInterfaceException
 from tasks.tasks import CeleryTask
 import os
 
@@ -52,7 +53,7 @@ def get_valid_name(name):
 
 
 class ResourceBase(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
+    problem = models.ForeignKey("ProblemRevision", verbose_name=_("problem"))
     name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator],
                             blank=True, db_index=True)
     file = models.ForeignKey(FileModel, verbose_name=_("file"), related_name="+")
@@ -62,7 +63,7 @@ class ResourceBase(RevisionObject):
         return ["name"]
 
     def get_value_as_dict(self):
-        return self.file.get_value_as_string()
+        return {"code": self.file.get_value_as_string()}
 
     class Meta:
         abstract = True
@@ -88,8 +89,6 @@ class SourceFile(ResourceBase):
         choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
         max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
     )
-
-    compile_jobs = GenericRelation("CompileJob", related_query_name='sourcefile')
 
     compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
                                       related_name="+", null=True, blank=True)
@@ -162,7 +161,10 @@ class SourceFile(ResourceBase):
 class CompilationTask(CeleryTask):
 
     def execute(self, source_file):
-        source_file._compile()
+        try:
+            source_file._compile()
+        except SandboxInterfaceException:
+            self.retry(countdown=5)
 
     def shadow_name(self, args, kwargs, options):
         def get_source_file(source_file, *args, **kwargs):

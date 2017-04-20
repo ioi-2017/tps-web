@@ -85,6 +85,7 @@ class SolutionRun(RevisionObject):
         raise NotImplementedError
 
 
+# TODO: This should be removed. exceptions should be handled explicitly
 def report_failed_on_exception(func):
     def wrapper(self, *args, **kwargs):
         try:

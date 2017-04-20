@@ -363,7 +363,8 @@ class ProblemRevision(models.Model):
                 try:
                     new_obj.delete()
                 except Exception as e:
-                    logger.error(e)
+                    # TODO: Catch explicit exception
+                    logger.error(e, e)
                     # if the remove fails (possibly due to
                     # previous removal caused by cascades)
                     # we ignore it
@@ -446,7 +447,9 @@ class ProblemData(RevisionObject):
     def clone_relations(self, cloned_instances):
         super(ProblemData, self).clone_relations(cloned_instances)
         if self.checker:
-            cloned_instances[self].checker = cloned_instances[self.checker]
+            obj = cloned_instances[self]
+            obj.checker = cloned_instances[self.checker]
+            obj.save()
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
