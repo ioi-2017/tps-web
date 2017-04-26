@@ -28,7 +28,7 @@
         <tbody>
         {% for resource in resources %}
             <tr>
-                <td> {{ resource }} </td>
+                <td> <a href="{% problem_url "problems:download_resource" resource.id %}">{{ resource }} </a></td>
                 {% if revision_editable %}
                 <td>
                     <a class="text-primary" href='{% problem_url "problems:edit_resource" resource.id %}?next={{request.path}}'>

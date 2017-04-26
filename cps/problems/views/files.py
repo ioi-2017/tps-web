@@ -1,12 +1,12 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from problems.forms.files import SourceFileAddForm, ResourceAddForm, ResourceEditForm
 from problems.models import SourceFile, Resource
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView
 
-__all__ = ["ResourceAddView", "ResourceDeleteView", "ResourceEditView"]
+__all__ = ["ResourceAddView", "ResourceDeleteView", "ResourceEditView", "ResourceDownloadView"]
 
 
 class ResourceAddView(ProblemObjectAddView):
@@ -63,3 +63,16 @@ class ResourceEditView(ProblemObjectEditView):
 
     def get_instance(self, request, *args, **kwargs):
         return self.revision.resource_set.get(pk=kwargs.get("resource_id"))
+
+
+class ResourceDownloadView(RevisionObjectView):
+    def get(self, request, problem_id, revision_slug, object_id):
+        resource = get_object_or_404(Resource, **{
+            "problem_id": self.revision.id,
+            "id": object_id
+        })
+        response = HttpResponse(resource.file.file, content_type='application/file')
+        name = "attachment; filename={}".format(str(resource.name))
+        response['Content-Disposition'] = name
+        return response
+

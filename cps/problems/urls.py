@@ -27,6 +27,7 @@ problem_urls = ([
         url(r'^resource/add/$', ResourceAddView.as_view(), name="add_resource"),
         url(r'^resource/(?P<resource_id>\d+)/edit/$', ResourceEditView.as_view(), name="edit_resource"),
         url(r'^resource/(?P<object_id>\d+)/delete/$', ResourceDeleteView.as_view(), name="delete_resource"),
+        url(r'^resource/(?P<object_id>\d+)/download/$', ResourceDownloadView.as_view(), name="download_resource"),
 
         url(r'^solutions/$', SolutionsListView.as_view(), name="solutions"),
         url(r'^solution/add/$', SolutionAddView.as_view(), name="add_solution"),
