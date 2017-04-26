@@ -174,10 +174,10 @@ class ProblemRevision(models.Model):
 
     judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
 
-    USER_REVISION_OBJECTS = {
+    USER_REVISION_OBJECTS = [
         "solution_set", "validator_set", "checker_set", "inputgenerator_set", "grader_set",
         "resource_set", "subtasks", "testcase_set",
-    }
+    ]
 
     def get_judge(self):
         # TODO: Determine how handle judges
@@ -233,11 +233,10 @@ class ProblemRevision(models.Model):
         if self not in cloned_instances:
             cloned_instances[self] = CloneableMixin.clone_model(self, cloned_instances)
         cloned_instances[self].parent_revisions.add(self)
-        cloned_instances = self.problem_data.clone(cloned_instances=cloned_instances)
-
         for queryset in self.USER_REVISION_OBJECTS:
             cloned_instances = CloneableMixin.clone_queryset(getattr(self, queryset),
                                                              cloned_instances=cloned_instances)
+        cloned_instances = self.problem_data.clone(cloned_instances=cloned_instances)
 
         self.problem_data.clone_relations(cloned_instances=cloned_instances)
         for queryset in self.USER_REVISION_OBJECTS:
@@ -350,37 +349,36 @@ class ProblemRevision(models.Model):
             else:
                 if ours is not None:
                     ours_ignored.append(ours)
-        with transaction.atomic():
-            new_revision = self.clone()
-            merge = Merge.objects.create(merged_revision=new_revision,
-                                         our_revision=self,
-                                         their_revision=another_revision,
-                                         base_revision=merge_base)
-            current_new = self.find_matching_pairs(new_revision)
-            current_new_dict = {a: b for a, b in current_new if a is not None}
-            for obj in ours_ignored:
-                new_obj = current_new_dict[obj]
-                try:
-                    new_obj.delete()
-                except Exception as e:
-                    # TODO: Catch explicit exception
-                    logger.error(e, e)
-                    # if the remove fails (possibly due to
-                    # previous removal caused by cascades)
-                    # we ignore it
-                    pass
+        new_revision = self.clone()
+        merge = Merge.objects.create(merged_revision=new_revision,
+                                     our_revision=self,
+                                     their_revision=another_revision,
+                                     base_revision=merge_base)
+        current_new = self.find_matching_pairs(new_revision)
+        current_new_dict = {a: b for a, b in current_new if a is not None}
+        for obj in ours_ignored:
+            new_obj = current_new_dict[obj]
+            try:
+                new_obj.delete()
+            except Exception as e:
+                # TODO: Catch explicit exception
+                logger.error(e, e)
+                # if the remove fails (possibly due to
+                # previous removal caused by cascades)
+                # we ignore it
+                pass
 
-            theirs_ignored[another_revision] = new_revision
-            another_revision.clone(cloned_instances=theirs_ignored)
-            for ours, theirs in conflicts:
-                if ours is None:
-                    current = None
-                else:
-                    current = current_new_dict[ours]
-                Conflict.objects.create(merge=merge, ours=ours, theirs=theirs, current=current)
-            new_revision.parent_revisions = [self, another_revision]
-            new_revision.save()
-            return new_revision
+        theirs_ignored[another_revision] = new_revision
+        another_revision.clone(cloned_instances=theirs_ignored)
+        for ours, theirs in conflicts:
+            if ours is None:
+                current = None
+            else:
+                current = current_new_dict[ours]
+            Conflict.objects.create(merge=merge, ours=ours, theirs=theirs, current=current)
+        new_revision.parent_revisions = [self, another_revision]
+        new_revision.save()
+        return new_revision
 
 
 class ProblemDataQuerySet(models.QuerySet):
@@ -442,14 +440,8 @@ class ProblemData(RevisionObject):
 
     def _clean_for_clone(self, cloned_instances):
         super(ProblemData, self)._clean_for_clone(cloned_instances)
-        self.checker = None
-
-    def clone_relations(self, cloned_instances):
-        super(ProblemData, self).clone_relations(cloned_instances)
         if self.checker:
-            obj = cloned_instances[self]
-            obj.checker = cloned_instances[self.checker]
-            obj.save()
+            self.checker = cloned_instances[self.checker]
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)

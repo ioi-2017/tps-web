@@ -22,9 +22,6 @@ class Solution(RevisionObject):
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
                             blank=True, db_index=True)
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
-    tests_scores = models.ManyToManyField(TestCase, through="SolutionTestExpectedScore", related_name="+")
-    subtask_scores = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedScore", related_name="+")
-    subtask_verdict = models.ManyToManyField(Subtask, through="SolutionSubtaskExpectedVerdict", related_name="+")
 
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
@@ -71,7 +68,7 @@ class Solution(RevisionObject):
 
 
 class SolutionSubtaskExpectedScore(models.Model, CloneableMixin):
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"))
+    solution = models.ForeignKey(Solution, verbose_name=_("solution"),related_name="subtask_scores")
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     score = models.FloatField(verbose_name=_("score"))
 
@@ -87,7 +84,7 @@ class SolutionSubtaskExpectedScore(models.Model, CloneableMixin):
 
 
 class SolutionTestExpectedScore(models.Model, CloneableMixin):
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"))
+    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="tests_scores")
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
     score = models.FloatField(verbose_name=_("score"))
 
@@ -104,7 +101,7 @@ class SolutionTestExpectedScore(models.Model, CloneableMixin):
 class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"))
+    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdict")
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 

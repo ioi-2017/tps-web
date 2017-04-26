@@ -28,7 +28,7 @@ __all__ = ["TestCase", "Subtask", "InputGenerator"]
 class InputGenerator(SourceFile):
     text_data = models.TextField(blank=True, null=False)
     is_enabled = models.BooleanField(default=False)
-
+    
     @classmethod
     def get_generation_parameters_from_script_line(cls, problem, input_line):
         line_split = shlex.split(input_line)
@@ -167,12 +167,8 @@ class TestCase(RevisionObject):
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
-        self.generator = None
-
-    def clone_relations(self, cloned_instances):
-        super(TestCase, self).clone_relations(cloned_instances=cloned_instances)
         if self.generator:
-            cloned_instances[self].generator = cloned_instances[self.generator]
+            self.generator = cloned_instances[self.generator]
 
     def get_judge_code(self):
         if self.judge_code:
@@ -305,7 +301,7 @@ class TestCase(RevisionObject):
                 self.input_generation_successful = False
             elif not execution_success:
                 self.input_generation_log = "Generation failed. Generator exited with exit code {}.".format(
-                    sandbox_datas["exit_code"]
+                    sandbox_datas[0]["exit_code"]
                 )
                 self.input_generation_successful = False
             else:
