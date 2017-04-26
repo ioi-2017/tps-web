@@ -55,7 +55,7 @@ class ValidatorResult(models.Model):
             return cls.objects.create(validator=validator, testcase=testcase)
 
     def run(self):
-        if self.task_id is not None:
+        if self.task_id is None:
             self.task_id = ValidatorResultComputationTask().delay(self).id
             self.save()
 
