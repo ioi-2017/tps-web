@@ -60,18 +60,18 @@ def run_compilation_commands(sandbox, commands,
     sandbox.allow_writing_all()
     idx = 0
     for command in commands:
-        if not execute_command(sandbox, command, time_limit, memory_limit,
-                               stdout_redirect="stdout_{}.txt".format(idx),
-                               stderr_redirect="stderr_{}.txt".format(idx)):
-            stdout = str(sandbox.get_file_to_string(sandbox.stdout_file),
-                         "utf-8", errors="replace").strip()
-            stderr = str(sandbox.get_file_to_string(sandbox.stderr_file),
-                         "utf-8", errors="replace").strip()
+        execution_result = execute_command(sandbox, command, time_limit, memory_limit,
+                                           stdout_redirect="stdout_{}.txt".format(idx),
+                                           stderr_redirect="stderr_{}.txt".format(idx))
+        stdout = str(sandbox.get_file_to_string(sandbox.stdout_file),
+                     "utf-8", errors="replace").strip()
+        stderr = str(sandbox.get_file_to_string(sandbox.stderr_file),
+                     "utf-8", errors="replace").strip()
 
-            stdouts.append(stdout)
-            stderrs.append(stderr)
-
-            return False, None, None
+        stdouts.append(stdout)
+        stderrs.append(stderr)
+        if not execution_result:
+            return False, stdouts, stderrs
         idx += 1
     return True, stdouts, stderrs
 

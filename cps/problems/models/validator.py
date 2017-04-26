@@ -16,16 +16,18 @@ __all__ = ["Validator", "ValidatorResult"]
 
 class ValidatorResultComputationTask(CeleryTask):
 
-    def validate_dependencies(self, *args, **kwargs):
-        if self.validator.compilation_finished:
-            if self.validator.compilation_successful():
-                self.valid = False
-                self.executed = True
-                self.validation_message = "Validator didn't compile"
-                self.save()
+    def validate_dependencies(self, validator_result):
+        if validator_result.validator.compilation_finished:
+            if not validator_result.validator.compilation_successful():
+                validator_result.valid = False
+                validator_result.executed = True
+                validator_result.validation_message = "Validator didn't compile. Log: {}".format(
+                    validator_result.validator.last_compile_log
+                )
+                validator_result.save()
                 return False
         else:
-            self.validator.compile()
+            validator_result.validator.compile()
             return None
         return True
 

@@ -276,7 +276,9 @@ class TestCase(RevisionObject):
             try:
                 generator_compiled = self._input_generator.compiled_file
             except:
-                self.input_generation_log = "Generation failed. Generator didn't compile"
+                self.input_generation_log = "Generation failed. Generator didn't compile. Log: {}".format(
+                    self._input_generator.last_compile_log
+                )
                 self.save()
                 return
 
@@ -379,7 +381,9 @@ class TestCase(RevisionObject):
                     )
                     if not evaluation_result.success:
                         self.output_generation_log = \
-                            "Generation failed. Judge couldn't execute the solution."
+                            "Generation failed. Judge couldn't execute the solution. Details: {}".format(
+                                evaluation_result.message
+                            )
                         self.output_generation_successful = False
                     elif evaluation_result.verdict != JudgeVerdict.ok:
                         self.output_generation_log = \
