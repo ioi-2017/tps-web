@@ -116,7 +116,7 @@ class SolutionRunExecutionTask(CeleryTask):
             if checker.compilation_finished:
                 if not checker.compilation_successful():
                     run.verdict = SolutionRunVerdict.checker_failed
-                    run.execution_message = "Checker didn't compile"
+                    run.execution_message = "Checker didn't compile. Log:{}".format(checker.last_compile_log)
                     return False
             else:
                 checker.compile()

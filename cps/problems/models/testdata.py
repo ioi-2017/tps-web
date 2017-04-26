@@ -96,7 +96,9 @@ class TestCaseGeneration(CeleryTask):
             if testcase._input_generator.compilation_finished:
                 if not testcase._input_generator.compilation_successful():
                     testcase.input_generation_successful = False
-                    testcase.input_generation_log = "Generator didn't compile"
+                    testcase.input_generation_log = "Generator didn't compile. Log:{}".format(
+                        testcase._input_generator.last_compile_log
+                    )
                     testcase.save()
                     return False
             else:
