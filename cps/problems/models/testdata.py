@@ -89,10 +89,10 @@ class InputGenerator(SourceFile):
         self.save()
 
 
-class TestCaseGeneration(CeleryTask):
+class TestCaseInputGeneration(CeleryTask):
 
     def validate_dependencies(self, testcase):
-        if testcase._input_generator:
+        if not testcase.input_static:
             if testcase._input_generator.compilation_finished:
                 if not testcase._input_generator.compilation_successful():
                     testcase.input_generation_successful = False
@@ -107,11 +107,66 @@ class TestCaseGeneration(CeleryTask):
         return True
 
     def execute(self, testcase):
-        testcase._generate()
+        testcase._generate_input_file()
 
     def execute_child_tasks(self, testcase):
         for validator in testcase.validators:
             validator.validate_testcase(testcase)
+        testcase.output_generation_task_id = TestCaseOutputGeneration().delay(testcase)
+        testcase.save()
+
+
+class TestCaseOutputGeneration(CeleryTask):
+    def validate_dependencies(self, testcase):
+        if testcase.judge_initialization_completed():
+            if not testcase.judge_initialization_successful:
+                testcase.output_generation_log = "Judge couldn't be initialized. {}".format(
+                    testcase.judge_initialization_message
+                )
+                testcase.output_generation_successful = False
+                testcase.save()
+                return False
+        else:
+            testcase.initialize_in_judge()
+            return None
+
+        return True
+
+    def execute(self, testcase):
+        testcase._generate_output_file()
+
+
+class TestCaseJudgeInitialization(CeleryTask):
+
+    def validate_dependencies(self, testcase):
+
+        if testcase.problem.judge_initialization_completed():
+            if not testcase.problem.judge_initialization_successful:
+                testcase.judge_initialization_message = \
+                    "Problem couldn't be initialized in the judge. Message: {}".format(
+                        testcase.problem.judge_initialization_message
+                    )
+                testcase.judge_initialization_successful = False
+                testcase.save()
+                return False
+        else:
+            testcase.problem.initialize_in_judge()
+            return None
+
+        if testcase.input_generation_completed():
+            if not testcase.input_file_generated():
+                testcase.judge_initialization_message = "Input couldn't be generated."
+                testcase.judge_initialization_successful = False
+                testcase.save()
+                return False
+        else:
+            testcase.generate()
+            return None
+
+        return True
+
+    def execute(self, testcase):
+        testcase._initialize_in_judge()
 
 
 class TestCase(RevisionObject):
@@ -142,6 +197,7 @@ class TestCase(RevisionObject):
     _input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
     input_generation_log = models.TextField(verbose_name=_("input generation log"), null=True)
     input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
+    input_generation_task_id = models.CharField(verbose_name=_("input generation task id"), max_length=128, null=True)
 
     # Output-related fields
     _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True, related_name='+', blank=True)
@@ -149,8 +205,7 @@ class TestCase(RevisionObject):
     _output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
     output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
     output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
-
-    generation_task_id = models.CharField(verbose_name=_("generation task id"), max_length=128, null=True)
+    output_generation_task_id = models.CharField(verbose_name=_("output generation task id"), max_length=128, null=True)
 
     # TODO: Add output_verified: each output must be verified either automatically
     # (e.g. by running checker on the test) or manually.
@@ -162,7 +217,9 @@ class TestCase(RevisionObject):
     # TODO: Add ability to automatically put the test in all subtasks
     # which their validators accept it
 
-    judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
+    judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization finished"), default=False)
+    judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     class Meta:
         ordering = ("problem", "name", )
@@ -172,23 +229,28 @@ class TestCase(RevisionObject):
         if self.generator:
             self.generator = cloned_instances[self.generator]
 
-    def get_judge_code(self):
-        if self.judge_code:
-            return self.judge_code
-        judge = Judge.get_judge()
-        # TODO: Make sure testcase has already been generated
-        input_file = self.input_file
-        if not input_file:
-            return None
-        self.judge_code = judge.add_testcase(
-            problem_code=self.problem.get_judge_code(),
-            testcase_id=self.pk,
-            input_file=self.input_file,
-            time_limit=self.problem.problem_data.time_limit,
-            memory_limit=self.problem.problem_data.memory_limit,
-        )
+    def initialize_in_judge(self):
+        if not self.judge_initialization_task_id:
+            self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
+            self.save()
+
+    def _initialize_in_judge(self):
+        self.judge_initialization_successful, self.judge_initialization_message = \
+            self.problem.get_task_type().add_testcase(
+                problem_code=self.problem.get_judge_code(),
+                testcase_code=self.name,
+                input_file=self.input_file,
+            )
         self.save()
-        return self.judge_code
+
+    def judge_initialization_completed(self):
+        return self.judge_initialization_successful is not None
+
+    def get_judge_code(self):
+        if not self.judge_initialization_successful:
+            return None
+        else:
+            return str(self.name)
 
     @property
     def input_generation_command(self):
@@ -369,17 +431,18 @@ class TestCase(RevisionObject):
             else:
                 problem_code = self.problem.get_judge_code()
                 testcase_code = self.get_judge_code()
-                judge = Judge.get_judge()
+                judge = self.problem.get_judge()
+                task_type = self.problem.get_task_type()
                 if solution.language not in judge.get_supported_languages():
                     self.output_generation_log = \
                         "Generation failed. Solution language is not supported by the judge"
                     self.output_generation_successful = False
                 else:
-                    evaluation_result = judge.generate_output(
-                        problem_code,
-                        solution.language,
-                        [(solution.name, solution.code)],
-                        testcase_code
+                    evaluation_result = task_type.generate_output(
+                        problem_code=problem_code,
+                        testcase_code=testcase_code,
+                        language=solution.language,
+                        solution_file=(solution.name, solution.code),
                     )
                     if not evaluation_result.success:
                         self.output_generation_log = \
@@ -399,13 +462,9 @@ class TestCase(RevisionObject):
                         self._output_generated_file = evaluation_result.output_file
         self.save()
 
-    def _generate(self):
-        self._generate_input_file()
-        self._generate_output_file()
-
     def generate(self):
         if not self.generation_started():
-            self.generation_task_id = TestCaseGeneration().delay(self).id
+            self.input_generation_task_id = TestCaseInputGeneration().delay(self).id
             self.save()
 
     @property
@@ -437,6 +496,7 @@ class TestCase(RevisionObject):
         self.output_generation_log = None
         self._output_generated_file = None
         self.output_generation_successful = None
+        self.output_generation_task_id = None
         if commit:
             self.save()
 
@@ -444,6 +504,7 @@ class TestCase(RevisionObject):
         self.input_generation_log = None
         self._input_generated_file = None
         self.input_generation_successful = None
+        self.input_generation_task_id = None
         if commit:
             self.save()
 
@@ -451,11 +512,11 @@ class TestCase(RevisionObject):
         self.validation_results.all().delete()
 
     def invalidate(self):
-        self.generation_task_id = None
         self._invalidate_output(commit=False)
         self._invalidate_validation()
         self._invalidate_input(commit=False)
-        self.judge_code = None
+        self.judge_initialization_successful = None
+        self.judge_initialization_task_id = None
         self.save()
 
     def has_errors(self):
@@ -489,7 +550,7 @@ class TestCase(RevisionObject):
             input_validation_tried
 
     def generation_started(self):
-        return self.generation_task_id is not None
+        return self.input_generation_task_id is not None
 
     def being_generated(self):
         return not self.testcase_generation_completed() and self.generation_started()

@@ -17,6 +17,7 @@ from problems.models import RevisionObject, Conflict, Merge, CloneableMixin
 import logging
 
 from problems.models.enums import SolutionVerdict
+from tasks.tasks import CeleryTask
 
 __all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemBranch"]
 
@@ -163,6 +164,12 @@ class ProblemBranch(models.Model):
         self.save()
 
 
+class ProblemJudgeInitialization(CeleryTask):
+
+    def execute(self, problem_revision):
+        problem_revision._initialize_in_judge()
+
+
 class ProblemRevision(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("revision owner"))
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="revisions")
@@ -172,7 +179,9 @@ class ProblemRevision(models.Model):
     parent_revisions = models.ManyToManyField("ProblemRevision", verbose_name=_("parent revisions"), related_name='+')
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
 
-    judge_code = models.CharField(verbose_name=_("judge code"), editable=False, max_length=128, null=True)
+    judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"))
+    judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     USER_REVISION_OBJECTS = [
         "solution_set", "validator_set", "checker_set", "inputgenerator_set", "grader_set",
@@ -180,23 +189,42 @@ class ProblemRevision(models.Model):
     ]
 
     def get_judge(self):
-        # TODO: Determine how handle judges
         return Judge.get_judge()
 
-    def get_judge_code(self, judge=None):
-        if judge is None:
-            judge = Judge.get_judge()
-        self.judge_code = judge.initialize_problem(
-                problem_id=self.pk,
-                task_type=self.problem_data.task_type,
-                score_type=self.problem_data.score_type,
+    def get_task_type(self):
+        return self.get_judge().get_task_type(self.problem_data.task_type)
+
+    def _initialize_in_judge(self):
+        self.judge_initialization_successful, self.judge_initialization_message = \
+            self.get_task_type().initialize_problem(
+                problem_code=str(self.pk),
+                time_limit=self.problem_data.time_limit,
+                memory_limit=self.problem_data.memory_limit,
+                task_type_parameters=self.problem_data.task_type_parameters,
                 helpers=[
-                    (grader.name, grader.code, grader.language) for grader in self.grader_set.all()
-                ],  # TODO: Add solution helpers
-                problem_code=self.judge_code
+                    (grader.name, grader.code) for grader in self.grader_set.all()
+                ],
             )
         self.save()
-        return self.judge_code
+
+    def initialize_in_judge(self):
+        if not self.judge_initialization_task_id:
+            self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
+            self.save()
+
+    def invalidate_judge_initialization(self):
+        self.judge_initialization_task_id = None
+        self.judge_initialization_successful = None
+        self.save()
+
+    def judge_initialization_completed(self):
+        return self.judge_initialization_successful is not None
+
+    def get_judge_code(self):
+        if not self.judge_initialization_successful:
+            return None
+        else:
+            return str(self.pk)
 
     def __str__(self):
         return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)
@@ -419,6 +447,9 @@ class ProblemData(RevisionObject):
 
     checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
 
+    time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
+    memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
+
     objects = ProblemDataManager.from_queryset(ProblemDataQuerySet)()
 
     @property
@@ -442,8 +473,5 @@ class ProblemData(RevisionObject):
         super(ProblemData, self)._clean_for_clone(cloned_instances)
         if self.checker:
             self.checker = cloned_instances[self.checker]
-
-    time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
-    memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
 
 

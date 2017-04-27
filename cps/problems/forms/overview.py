@@ -7,10 +7,13 @@ from problems.models import ProblemData
 class OverviewForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
-        fields = ['code_name', 'title', 'time_limit', 'memory_limit']
+        fields = ['code_name', 'title', 'time_limit', 'memory_limit', 'task_type']
 
     def __init__(self, *args, **kwargs):
         super(OverviewForm, self).__init__(*args, **kwargs)
+        self.fields["task_type"] = forms.ChoiceField(
+            choices=[(x, x) for x in self.revision.get_judge().get_task_types()]
+        )
 
     def save(self, commit=True):
         super(OverviewForm, self).save(commit=False)

@@ -230,3 +230,5 @@ JUDGE_HANDLERS = {
         }
     }
 }
+
+CELERY_MAX_RETRIES = None

@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from problems.forms.testcases import TestCaseAddForm, TestCaseEditForm
-from problems.models.testdata import TestCaseGeneration
 
 from .generics import ProblemObjectAddView, RevisionObjectView, ProblemObjectDeleteView, ProblemObjectEditView
 from problems.models import TestCase

@@ -92,6 +92,7 @@ class CeleryTask(celery.Task, metaclass=TaskType):
     DEPENDENCY_WAIT_TIME = 3
     track_started = True
     abstract = True
+    max_retries = None
 
     def validate_dependencies(self, *args, **kwargs):
         # returns True if all dependencies meet,

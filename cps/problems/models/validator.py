@@ -17,6 +17,7 @@ __all__ = ["Validator", "ValidatorResult"]
 class ValidatorResultComputationTask(CeleryTask):
 
     def validate_dependencies(self, validator_result):
+        verdict = True
         if validator_result.validator.compilation_finished:
             if not validator_result.validator.compilation_successful():
                 validator_result.valid = False
@@ -28,8 +29,20 @@ class ValidatorResultComputationTask(CeleryTask):
                 return False
         else:
             validator_result.validator.compile()
-            return None
-        return True
+            verdict = None
+
+        if validator_result.testcase.input_generation_completed():
+            if not validator_result.testcase.input_file_generated():
+                validator_result.valid = False
+                validator_result.executed = True
+                validator_result.validation_message = "Input couldn't be generated"
+                validator_result.save()
+                return False
+        else:
+            validator_result.testcase.generate()
+            verdict = None
+
+        return verdict
 
     def execute(self, validator_result):
         validator_result._run()

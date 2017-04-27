@@ -2,7 +2,20 @@ from logging import getLogger
 
 RUNNER_SUPPORTED_LANGUAGES = ["c++", "java", "pas"]
 
+
+class NotSupportedLanguage(Exception):
+    pass
+
 logger = getLogger(__name__)
+
+
+def get_valid_extensions(language):
+
+    if language not in RUNNER_SUPPORTED_LANGUAGES:
+        raise NotSupportedLanguage
+    if language == "c++":
+        return [".h", ".cpp"]
+
 
 def get_compilation_commands(language, source_filenames, executable_filename):
     """
@@ -12,10 +25,12 @@ def get_compilation_commands(language, source_filenames, executable_filename):
     :param executable_filename: string
     """
     if language not in RUNNER_SUPPORTED_LANGUAGES:
-        logger.error("Language" + language + "not supported in runner")
+        raise NotSupportedLanguage
     command_list = []
     if language == "c++":
-        command_list.append(["/usr/bin/g++",  "-x", "c++", "--std", "gnu++14"] + source_filenames + ["-O2", "-o", executable_filename])
+        command_list.append(
+            ["/usr/bin/g++",  "-x", "c++", "--std", "gnu++14"] + source_filenames + ["-O2", "-o", executable_filename]
+        )
     return command_list
 
 
@@ -33,11 +48,4 @@ def get_execution_command(language, executable_filename):
         command_list = [os.path.join(".", executable_filename)]
         return command_list
 
-
-def get_source_file_name(language):
-    if language not in RUNNER_SUPPORTED_LANGUAGES:
-        logger.error("Language" + language + "not supported in runner")
-
-    if language == "c++":
-        return "code.cpp"
 

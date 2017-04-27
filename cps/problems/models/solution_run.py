@@ -104,19 +104,36 @@ class SolutionRunExecutionTask(CeleryTask):
             if not run.testcase.output_generation_successful:
                 run.verdict = SolutionRunVerdict.invalid_testcase
                 run.execution_message = "Testcase generation failed"
+                run.save()
                 return False
         else:
             run.testcase.generate()
             result = None
+
+        if run.testcase.judge_initialization_completed():
+            if not run.testcase.judge_initialization_successful:
+                run.verdict = SolutionRunVerdict.invalid_testcase
+                run.execution_message = \
+                    "Testcase couldn't be added to the judge. {}".format(
+                        run.testcase.judge_initialization_message
+                    )
+                run.save()
+                return False
+        else:
+            run.testcase.initialize_in_judge()
+            result = None
+
         checker = run.testcase.problem.problem_data.checker
         if checker is None:
             run.verdict = SolutionRunVerdict.checker_failed
             run.execution_message = "Checker not found"
+            run.save()
         else:
             if checker.compilation_finished:
                 if not checker.compilation_successful():
                     run.verdict = SolutionRunVerdict.checker_failed
                     run.execution_message = "Checker didn't compile. Log:{}".format(checker.last_compile_log)
+                    run.save()
                     return False
             else:
                 checker.compile()

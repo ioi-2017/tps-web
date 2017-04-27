@@ -63,7 +63,7 @@ class Solution(RevisionObject):
     def clone_relations(self, cloned_instances):
         super(Solution, self).clone_relations(cloned_instances)
         CloneableMixin.clone_queryset(self.tests_scores, cloned_instances=cloned_instances)
-        CloneableMixin.clone_queryset(self.subtask_verdict, cloned_instances=cloned_instances)
+        CloneableMixin.clone_queryset(self.subtask_verdicts, cloned_instances=cloned_instances)
         CloneableMixin.clone_queryset(self.subtask_scores, cloned_instances=cloned_instances)
 
 
@@ -101,7 +101,7 @@ class SolutionTestExpectedScore(models.Model, CloneableMixin):
 class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdict")
+    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdicts")
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
