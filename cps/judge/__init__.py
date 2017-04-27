@@ -32,9 +32,10 @@ class Judge(object):
         """
         raise NotImplementedError
 
-    def get_task_type(self, name):
+    def get_task_type(self, name, fallback_to_default=True):
         """
-        Returns the TaskType with the given name
+        Returns the TaskType with the given name.
+        if fallback to default is True and the name is invalid, return the default task type instead
         """
         raise NotImplementedError
 

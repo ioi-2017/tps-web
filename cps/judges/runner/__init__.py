@@ -4,6 +4,7 @@ from runner.sandbox.sandbox import SandboxBase
 from .batch import Batch
 from runner import RUNNER_SUPPORTED_LANGUAGES
 
+
 class Runner(Judge):
 
     def __init__(self, compile_time_limit, compile_memory_limit):
@@ -19,8 +20,14 @@ class Runner(Judge):
     def get_score_types(self):
         pass
 
-    def get_task_type(self, name):
-        return self.task_types[name](self)
+    def get_task_type(self, name, fallback_to_default=True):
+        if name not in self.task_types:
+            if not fallback_to_default:
+                return None
+            task_type = self.task_types["Batch"]
+        else:
+            task_type = self.task_types[name]
+        return task_type(self)
 
     def get_task_types(self):
         return [x for x in self.task_types]
