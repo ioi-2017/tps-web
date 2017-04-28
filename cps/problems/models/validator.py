@@ -65,13 +65,6 @@ class ValidatorResult(models.Model):
     class Meta:
         unique_together = ("testcase", "validator")
 
-    @classmethod
-    def get_or_create(cls, validator, testcase):
-        try:
-            return cls.objects.get(validator=validator, testcase=testcase)
-        except cls.DoesNotExist:
-            return cls.objects.create(validator=validator, testcase=testcase)
-
     def run(self):
         if self.task_id is None:
             self.task_id = ValidatorResultComputationTask().delay(self).id
@@ -165,14 +158,11 @@ class Validator(SourceFile):
                 self.results.get(testcase=testcase).delete()
             except ValidatorResult.DoesNotExist:
                 pass
-        validator_result = self.get_or_create_testcase_result(testcase)
-        validator_result.run()
-
-    def get_or_create_testcase_result(self, testcase):
-        return ValidatorResult.get_or_create(
+        validator_result, _ = ValidatorResult.objects.get_or_create(
                 testcase=testcase,
                 validator=self
         )
+        validator_result.run()
 
     def invalidate(self):
         self.results.all().delete()
