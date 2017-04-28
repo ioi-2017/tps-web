@@ -1,5 +1,5 @@
 # Amir Keivan Mohtashami
-
+import logging
 from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +13,7 @@ from tasks.tasks import CeleryTask
 
 __all__ = ["Validator", "ValidatorResult"]
 
+logger = logging.getLogger(__name__)
 
 class ValidatorResultComputationTask(CeleryTask):
 
@@ -28,6 +29,7 @@ class ValidatorResultComputationTask(CeleryTask):
                 validator_result.save()
                 return False
         else:
+            logger.info("Waiting until validator {} is compiled".format(str(validator_result.validator)))
             validator_result.validator.compile()
             verdict = None
 
@@ -39,6 +41,7 @@ class ValidatorResultComputationTask(CeleryTask):
                 validator_result.save()
                 return False
         else:
+            logger.info("Waiting until testcase {} is generated".format(str(validator_result.testcase)))
             validator_result.testcase.generate()
             verdict = None
 

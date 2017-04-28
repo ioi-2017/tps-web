@@ -102,6 +102,7 @@ class TestCaseInputGeneration(CeleryTask):
                     testcase.save()
                     return False
             else:
+                logger.info("Waiting until input generator {} is compiled".format(str(testcase._input_generator)))
                 testcase._input_generator.compile()
                 return None
         return True
@@ -127,6 +128,7 @@ class TestCaseOutputGeneration(CeleryTask):
                 testcase.save()
                 return False
         else:
+            logger.info("Waiting until testcase {} is initialized in judge".format(str(testcase)))
             testcase.initialize_in_judge()
             return None
 
@@ -150,6 +152,7 @@ class TestCaseJudgeInitialization(CeleryTask):
                 testcase.save()
                 return False
         else:
+            logger.info("Waiting until problem {} is initialized in judge".format(str(testcase.problem)))
             testcase.problem.initialize_in_judge()
             return None
 

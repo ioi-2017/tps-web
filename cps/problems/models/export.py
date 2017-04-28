@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db import models
 
@@ -11,6 +13,7 @@ from trader.exporters import AVAILABLE_EXPORTERS
 
 EXPORTER_CHOICES = [(name, name) for loader, name in AVAILABLE_EXPORTERS]
 
+logger = logging.getLogger(__name__)
 
 class ExportPackage(models.Model):
 
@@ -56,6 +59,7 @@ class ExportPackageCreationTask(CeleryTask):
         result = True
         for testcase in request.revision.testcase_set.all():
             if not testcase.testcase_generation_completed():
+                logger.info("Waiting until testcase {} is generated".format(str(testcase)))
                 testcase.generate()
                 result = None
         return result

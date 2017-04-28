@@ -1,4 +1,5 @@
 # Amir Keivan Mohtashami
+import logging
 import json
 
 from django.conf import settings
@@ -16,6 +17,8 @@ from problems.models.testdata import TestCase
 from problems.utils.run_checker import run_checker
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
+
+logger = logging.getLogger(__name__)
 
 
 class SolutionRun(RevisionObject):
@@ -107,6 +110,7 @@ class SolutionRunExecutionTask(CeleryTask):
                 run.save()
                 return False
         else:
+            logger.info("Waiting until testcase {} is generated".format(str(run.testcase)))
             run.testcase.generate()
             result = None
 
@@ -120,6 +124,7 @@ class SolutionRunExecutionTask(CeleryTask):
                 run.save()
                 return False
         else:
+            logger.info("Waiting until testcase {} is initialized in judge".format(str(run.testcase)))
             run.testcase.initialize_in_judge()
             result = None
 
@@ -136,6 +141,7 @@ class SolutionRunExecutionTask(CeleryTask):
                     run.save()
                     return False
             else:
+                logger.info("Waiting until checker is compiled".format(str(run.testcase)))
                 checker.compile()
                 result = None
 
