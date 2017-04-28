@@ -643,7 +643,7 @@ class IsolateSandbox(SandboxBase):
         if self.stack_space is not None:
             res += ["--stack=%d" % self.stack_space]
         if self.address_space is not None:
-            res += ["--mem=%d" % self.address_space]
+            res += ["--cg-mem=%d" % self.address_space]
         if self.stdout_file is not None:
             res += ["--stdout=%s" % self.inner_absolute_path(self.stdout_file)]
         if self.max_processes is not None:
@@ -998,16 +998,17 @@ class IsolateSandbox(SandboxBase):
             raise SandboxInterfaceException("Sandbox exit status (%d) unknown"
                                             % exitcode)
 
-    def delete(self):
+    def cleanup(self):
         """Delete the directory where the sandbox operated.
 
         """
-        logger.debug("Deleting sandbox in %s.", self.path)
+        logger.debug("Cleaning up sandbox in %s.", self.path)
 
         # Tell isolate to cleanup the sandbox.
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
                   + ["--box-id=%d" % self.box_id]
         subprocess.call(box_cmd + ["--cleanup"])
 
+    def delete(self):
         # Delete the working directory.
         rmtree(self.outer_temp_dir)

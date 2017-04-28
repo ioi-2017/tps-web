@@ -34,7 +34,7 @@
                             <a href="{% problem_url "problems:view_invocation_result" invocation.id result.id %}">
                                 {{ result.get_short_name_for_verdict }}
                             </a>
-                            <small class="text-muted"> {{ result.solution_execution_time }}/{{ result.solution_memory_usage }} </small>
+                            <small class="text-muted"> {{ result.solution_execution_time }}s/{{ result.solution_memory_usage }}MB </small>
                             </td>
                         {% endfor %}
                     </tr>
@@ -43,7 +43,7 @@
                     <td>Max</td>
                     {% for max_time,max_memory in max_time_and_memory %}
                         <td>
-                            <small class="text-muted"> {{ max_time }} S/{{ max_memory}} KB </small>
+                            <small class="text-muted"> {{ max_time }}s/{{ max_memory}}MB </small>
                         </td>
                     {% endfor %}
                 </tr>

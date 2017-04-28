@@ -94,6 +94,6 @@ class Batch(TaskType):
                 success=evaluation_success,
                 output_file=output_file,
                 execution_time=execution_sandbox_datas[0]["execution_time"],
-                execution_memory=execution_sandbox_datas[0]["execution_memory"],
+                execution_memory=sum(int(sandbox["execution_memory"]) for sandbox in execution_sandbox_datas) / 1024,
                 verdict=self.judge.get_verdict_from_exit_status(execution_sandbox_datas[0]["exit_status"]),
         )

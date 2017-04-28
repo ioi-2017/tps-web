@@ -21,6 +21,7 @@ def create_sandbox() -> IsolateSandbox:
 
 def delete_sandbox(sandbox: IsolateSandbox):
     try:
+        sandbox.cleanup()
         if not settings.SANDBOX_KEEP:
             sandbox.delete()
     except (IOError, OSError):
@@ -33,7 +34,7 @@ def get_sandbox_execution_data_as_dict(sandbox):
     return {
         "execution_time": sandbox.get_execution_time(),
         "execution_wall_clock_time": sandbox.get_execution_wall_clock_time(),
-        "execution_memory": sandbox.get_memory_used(),
+        "execution_memory": sandbox.get_memory_used() / 1024,
         "exit_status": sandbox.get_exit_status(),
         "exit_code": sandbox.get_exit_code(),
     }

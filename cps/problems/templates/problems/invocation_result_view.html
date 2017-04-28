@@ -33,11 +33,15 @@
                 </tr>
                 <tr>
                     <td>{% trans 'Time' %}</td>
-                    <td>{{ result.solution_execution_time }}</td>
+                    <td>{{ result.solution_execution_time }} seconds</td>
                 </tr>
                 <tr>
                     <td>{% trans 'Memory' %}</td>
-                    <td>{{ result.solution_memory_usage }}</td>
+                    <td>{{ result.solution_memory_usage }} MB</td>
+                </tr>
+                <tr>
+                    <td> {% trans 'Execution message' %} </td>
+                    <td> {{ result.execution_message }} </td>
                 </tr>
                 <tr>
                     <td>

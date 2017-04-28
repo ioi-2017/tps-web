@@ -18,8 +18,8 @@ class EvaluationResult(object):
             success,
             verdict,
             output_file=None,
-            execution_time=None,
-            execution_memory=None,
+            execution_time=None, # in seconds
+            execution_memory=None, # in MB
             message="",
     ):
         self.success = success

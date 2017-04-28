@@ -209,13 +209,13 @@ class SolutionRunResult(models.Model):
             self.save()
             return
 
-        judge = Judge.get_judge()
+        task_type = problem.get_task_type()
 
-        evaluation_result = judge.generate_output(
+        evaluation_result = task_type.generate_output(
             problem_code,
+            testcase_code,
             self.solution.language,
-            [(self.solution.name, self.solution.code)],
-            testcase_code
+            (self.solution.name, self.solution.code),
         )
         self.solution_output, solution_execution_success, \
         self.solution_execution_time, self.solution_memory_usage, \
