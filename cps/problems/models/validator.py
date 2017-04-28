@@ -158,11 +158,15 @@ class Validator(SourceFile):
                 self.results.get(testcase=testcase).delete()
             except ValidatorResult.DoesNotExist:
                 pass
+        validator_result = self.get_or_create_testcase_result(testcase)
+        validator_result.run()
+
+    def get_or_create_testcase_result(self, testcase):
         validator_result, _ = ValidatorResult.objects.get_or_create(
                 testcase=testcase,
                 validator=self
         )
-        validator_result.run()
+        return validator_result
 
     def invalidate(self):
         self.results.all().delete()
