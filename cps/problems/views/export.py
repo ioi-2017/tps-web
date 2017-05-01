@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 
 from problems.forms.export import ExportForm
 from problems.models import ExportPackage, ExportPackageCreationTask
-from problems.views.generics import RevisionObjectView
+from problems.views.generics import RevisionObjectView, ProblemObjectDownloadView
 
 
 class ExportView(RevisionObjectView):
@@ -40,14 +40,12 @@ class ExportView(RevisionObjectView):
                       {'form': form, 'exports': self.problem.exports.order_by('-pk'), 'is_master': is_master})
 
 
-class ExportDownloadView(RevisionObjectView):
-    def get(self, request, *args, **kwargs):
-        export_package = get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem)
-        response = HttpResponse(export_package.archive.file,
-                                content_type='application/file')
-        response['Content-Disposition'] = 'attachment; filename=%s' % export_package.archive.name
+class ExportDownloadView(ProblemObjectDownloadView):
+    def get_name(self, request, *args, **kwargs):
+        return get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem).archive.name
 
-        return response
+    def get_file(self, request, *args, **kwargs):
+        return get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem).archive.file
 
 
 class ExportPackageStarterView(RevisionObjectView):

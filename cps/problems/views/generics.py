@@ -2,7 +2,7 @@ from functools import update_wrapper
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import classonlymethod
 from django.views.generic import View
@@ -11,7 +11,7 @@ from problems.views.utils import extract_revision_data
 
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
-           "ProblemObjectShowSourceView"]
+           "ProblemObjectShowSourceView", "ProblemObjectDownloadView", ]
 
 
 class ProblemObjectView(View):
@@ -212,3 +212,20 @@ class ProblemObjectShowSourceView(RevisionObjectView):
 
     def get_next_url(self, request, problem_id, revision_slug, obj):
         raise NotImplementedError("Must be implemented in subclasses")
+
+
+class ProblemObjectDownloadView(RevisionObjectView):
+    http_method_names_requiring_edit_access = []
+
+    def get_file(self, request, *args, **kwargs):
+        raise NotImplementedError("Must be implemented in subclasses")
+
+    def get_name(self, request, *args, **kwargs):
+        raise NotImplementedError("Must be implemented in subclasses")
+
+    def post(self, request, *args, **kwargs):
+        file = self.get_file(request, *args, **kwargs)
+        response = HttpResponse(file, content_type='application/file')
+        response['Content-Disposition'] = 'attachment; filename=%s' % self.get_name(request, *args, **kwargs)
+
+        return response

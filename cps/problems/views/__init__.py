@@ -15,3 +15,4 @@ from .statement import *
 from .invocations import *
 from. grader import *
 from .subtasks import *
+from .file import *

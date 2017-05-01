@@ -28,6 +28,7 @@ class Problem(models.Model):
 
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
+    files = models.ManyToManyField(FileModel, verbose_name=_("problem files"))
 
     def get_master_branch(self):
         return self.branches.get(name="master")

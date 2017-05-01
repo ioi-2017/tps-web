@@ -83,7 +83,16 @@
                     <br />
                     <ul class="sidebar-menu">
 
-                         <li class="active">
+                        <li class="active">
+                             <a href="{% problem_url "problems:files" %}" >
+                                 <i class="fa fa-file"></i>
+                                <span class="full-open-only">
+                                    {% trans 'Files' %}
+                                </span>
+                             </a>
+                         </li>
+
+                         <li>
                              <a href="{% problem_url "problems:overview" %}" >
                                  <i class="fa fa-eye"></i>
                                 <span class="full-open-only">

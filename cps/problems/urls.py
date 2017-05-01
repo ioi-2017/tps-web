@@ -97,6 +97,13 @@ problem_urls = ([
         url(r'^merge_request/(?P<merge_request_id>\d+)/reopen/$', MergeRequestReopenView.as_view(), name="merge_request_reopen"),
         url(r'^merge_request/(?P<merge_request_id>\d+)/follow/$', FollowMergeRequestView.as_view(), name="merge_request_follow"),
         url(r'^merge_request/(?P<merge_request_id>\d+)/unfollow/$', UnfollowMergeRequestView.as_view(), name="merge_request_unfollow"),
+
+        url(r'files/list/$', ProblemFilesView.as_view(), name="files"),
+        url(r'files/add/$', ProblemFileAddView.as_view(), name="add_file"),
+        url(r'^files/(?P<file_id>\d+)/edit/$', ProblemFileEditView.as_view(), name="edit_file"),
+        url(r'^files/(?P<file_id>\d+)/delete/$', ProblemFileDeleteView.as_view(), name="delete_file"),
+        url(r'^files/(?P<file_id>\d+)/source/$', ProblemFileShowSourceView.as_view(), name="file_source"),
+        url(r'^files/(?P<file_id>\d+)/download/$', ProblemFileDownloadView.as_view(), name="download_file"),
     ], None, None)
 
 urlpatterns = [

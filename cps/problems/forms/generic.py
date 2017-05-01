@@ -25,7 +25,8 @@ class ProblemObjectModelForm(forms.ModelForm):
 
     def _get_validation_exclusions(self):
         exclude = super(ProblemObjectModelForm, self)._get_validation_exclusions()
-        exclude.remove("problem")
+        if 'problem' in exclude:
+            exclude.remove("problem")
         return exclude
 
     def _post_clean(self):

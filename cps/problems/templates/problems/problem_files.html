@@ -1,0 +1,47 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Files' %} </h2>
+    </div>
+
+    <div class="row">
+        <a href="{% problem_url "problems:add_file" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a File' %}
+        </a>
+    </div>
+    {% if files %}
+        <table class="table table-bordered table-responsive table-striped">
+            <thead>
+            <tr>
+                <th class="col-md-1">#</th>
+                <th class="col-md-6">{% trans 'File' %}</th>
+                <th class="col-md-1"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for file in files %}
+                <tr>
+                    <td> {{ forloop.counter }} </td>
+                    <td><a href="{% problem_url "problems:file_source" file.pk %}"> {{ file }} </a></td>
+                    <td>
+                        <a data-method="post" href="{% problem_url "problems:delete_file" file.pk %}" class="btn btn-danger">
+                            <i class="fa fa-plus"></i> {% trans 'Delete this File' %}
+                        </a>
+                        <a data-method="post" href="{% problem_url "problems:download_file" file.pk %}" class="btn btn-warning">
+                            <i class="fa fa-plus"></i> {% trans 'Download this File' %}
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h4 class="alert alert-danger">
+            {% trans 'No Files exists' %}
+        </h4>
+    {% endif %}
+{% endblock %}
