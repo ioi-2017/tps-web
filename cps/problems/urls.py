@@ -34,12 +34,15 @@ problem_urls = ([
         url(r'^solution/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solution/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
         url(r'^solution/(?P<solution_id>\d+)/source/$', SolutionShowSourceView.as_view(), name="solution_source"),
+        url(r'^solution/(?P<solution_id>\d+)/download/$', SolutionDownloadView.as_view(), name="download_solution"),
 
         url(r'^graders/$', GradersListView.as_view(), name="graders"),
         url(r'^grader/add/$', GraderAddView.as_view(), name="add_grader"),
         url(r'^grader/(?P<grader_id>\d+)/edit/$', GraderEditView.as_view(), name="edit_grader"),
         url(r'^grader/(?P<grader_id>\d+)/delete/$', GraderDeleteView, name="delete_grader"),
         url(r'^grader/(?P<grader_id>\d+)/source/$', GraderShowSourceView.as_view(), name="grader_source"),
+        url(r'^grader/(?P<grader_id>\d+)/download/$', GraderDownloadView.as_view(), name="download_grader"),
+
 
         url(r'^testcases/$', TestCasesListView.as_view(), name="testcases"),
         url(r'^testcase/add/$', TestCaseAddView.as_view(), name="add_testcase"),
@@ -62,6 +65,7 @@ problem_urls = ([
         url(r'^validator/(?P<validator_id>\d+)/delete/$', ValidatorDeleteView, name="delete_validator"),
         url(r'^validator/(?P<validator_id>\d+)/source/$', ValidatorShowSourceView.as_view(), name="validator_source"),
         url(r'^validator/add/$', ValidatorAddView.as_view(), name="add_validator"),
+        url(r'^validator/(?P<validator_id>\d+)/download/$', ValidatorDownloadView.as_view(), name="download_validator"),
 
         url(r'^generators/$', GeneratorsListView.as_view(), name="generators"),
         url(r'^generator/(?P<generator_id>\d+)/edit/$', GeneratorEditView.as_view(), name="edit_generator"),
@@ -79,6 +83,7 @@ problem_urls = ([
         url(r'^checker/(?P<checker_id>\d+)/delete/$$', CheckerDeleteView, name="delete_checker"),
         url(r'^checker/(?P<checker_id>\d+)/edit/$$', CheckerEditView.as_view(), name="edit_checker"),
         url(r'^checker/(?P<checker_id>\d+)/source/$$', CheckerShowSourceView.as_view(), name="checker_source"),
+        url(r'^checker/(?P<checker_id>\d+)/download/$$', CheckerDownloadView.as_view(), name="download_checker"),
 
         url(r'^clone/$', CreateWorkingCopy.as_view(), name="create_working_copy"),
         url(r'^pull/$', PullBranchView.as_view(), name="pull_branch"),

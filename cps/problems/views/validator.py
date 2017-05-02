@@ -1,14 +1,14 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import View
 
 from problems.forms.validator import ValidatorAddForm, ValidatorEditForm
 from problems.models import Validator
 from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, \
-    ProblemObjectShowSourceView, ProblemObjectEditView
+    ProblemObjectShowSourceView, ProblemObjectEditView, ProblemObjectDownloadView
 
 __all__ = ["ValidatorsListView", "ValidatorEditView", "ValidatorAddView",
-           "ValidatorDeleteView", "ValidatorShowSourceView"]
+           "ValidatorDeleteView", "ValidatorShowSourceView", "ValidatorDownloadView", ]
 
 
 class ValidatorsListView(RevisionObjectView):
@@ -69,3 +69,11 @@ class ValidatorShowSourceView(ProblemObjectShowSourceView):
             "problem_id": problem_id,
             "revision_slug": revision_slug
         })
+
+
+class ValidatorDownloadView(ProblemObjectDownloadView):
+    def get_file(self, request, *args, **kwargs):
+        return get_object_or_404(Validator, id=kwargs.get('validator_id')).file
+
+    def get_name(self, request, *args, **kwargs):
+        return get_object_or_404(Validator, id=kwargs.get('validator_id')).name

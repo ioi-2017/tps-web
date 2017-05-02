@@ -1,10 +1,10 @@
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from problems.forms.grader import GraderAddForm, GraderEditForm
 from problems.models import Grader
 from problems.views.generics import RevisionObjectView, ProblemObjectAddView, ProblemObjectShowSourceView, \
-    ProblemObjectDeleteView, ProblemObjectEditView
+    ProblemObjectDeleteView, ProblemObjectEditView, ProblemObjectDownloadView
 
 
 class GradersListView(RevisionObjectView):
@@ -62,3 +62,11 @@ class GraderShowSourceView(ProblemObjectShowSourceView):
             "problem_id": problem_id,
             "revision_slug": revision_slug
         })
+
+
+class GraderDownloadView(ProblemObjectDownloadView):
+    def get_file(self, request, *args, **kwargs):
+        return get_object_or_404(Grader, id=kwargs.get('grader_id')).code.file
+
+    def get_name(self, request, *args, **kwargs):
+        return get_object_or_404(Grader, id=kwargs.get('grader_id')).name

@@ -8,11 +8,11 @@ from problems.forms.solution import SolutionAddForm, SolutionEditForm
 from problems.models import Solution
 from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
-    ProblemObjectShowSourceView
+    ProblemObjectShowSourceView, ProblemObjectDownloadView
 
 __all__ = ["SolutionAddView", "SolutionDeleteView",
            "SolutionEditView", "SolutionsListView", "SolutionShowSourceView",
-           ]
+           "SolutionDownloadView", ]
 
 
 class SolutionsListView(RevisionObjectView):
@@ -71,3 +71,11 @@ class SolutionShowSourceView(ProblemObjectShowSourceView):
             "problem_id": problem_id,
             "revision_slug": revision_slug
         })
+
+
+class SolutionDownloadView(ProblemObjectDownloadView):
+    def get_file(self, request, *args, **kwargs):
+        return get_object_or_404(Solution, id=kwargs.get('solution_id')).code.file
+
+    def get_name(self, request, *args, **kwargs):
+        return get_object_or_404(Solution, id=kwargs.get('solution_id')).name

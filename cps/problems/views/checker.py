@@ -6,12 +6,11 @@ from problems.forms.checker import CheckerAddForm
 from problems.forms.files import SourceFileEditForm
 from problems.models import Checker
 from problems.views.generics import ProblemObjectEditView, RevisionObjectView, ProblemObjectAddView, \
-    ProblemObjectDeleteView, ProblemObjectShowSourceView
-
+    ProblemObjectDeleteView, ProblemObjectShowSourceView, ProblemObjectDownloadView
 
 __all__ = ["CheckerListView", "CheckerActivateView",
            "CheckerAddView", "CheckerDeleteView", "CheckerShowSourceView",
-           "CheckerEditView"]
+           "CheckerEditView", "CheckerDownloadView", ]
 
 
 class CheckerListView(RevisionObjectView):
@@ -84,3 +83,11 @@ class CheckerEditView(ProblemObjectEditView):
 
     def get_instance(self, request, *args, **kwargs):
         return self.revision.checker_set.get(pk=kwargs.get("checker_id"))
+
+
+class CheckerDownloadView(ProblemObjectDownloadView):
+    def get_file(self, request, *args, **kwargs):
+        return get_object_or_404(Checker, id=kwargs.get('checker_id')).file
+
+    def get_name(self, request, *args, **kwargs):
+        return get_object_or_404(Checker, id=kwargs.get('checker_id')).name

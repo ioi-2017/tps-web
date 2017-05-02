@@ -29,6 +29,7 @@
                         <th class="col-md-7">{% trans 'Source Code' %}</th>
                         <th class="col-md-1">{% trans 'Language' %}</th>
                     {% endif %}
+                    <th class="col-md-1">{% trans 'Download' %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -50,7 +51,12 @@
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>
                         {% endif %}
-
+                        <td>
+                            <a href="{% problem_url "problems:download_grader" grader.id%}" class="btn btn-success"
+                               data-method='post'>
+                                <i class="fa fa-plus"></i> {% trans 'Download' %}
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
