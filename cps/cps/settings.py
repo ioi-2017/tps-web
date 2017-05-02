@@ -198,9 +198,6 @@ SANDBOX_MAX_FILE_SIZE = 1048576
 # isolate
 ISOLATE_PATH = os.path.join(BASE_DIR, "../isolate/isolate")
 
-log_level = logging.INFO
-logging.basicConfig(level=log_level)
-
 BOOTSTRAP3 = {
     'field_renderers': {
         'default': 'bootstrap3.renderers.FieldRenderer',
