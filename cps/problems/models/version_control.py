@@ -79,7 +79,7 @@ class RevisionObjectManager(models.Manager):
 
 class CloneableMixin(object):
     @staticmethod
-    def clone_queryset(queryset, cloned_instances, replace_objects):
+    def clone_queryset(queryset, cloned_instances, replace_objects=None):
         for obj in queryset.all():
             cloned_instances = obj.clone(cloned_instances=cloned_instances, replace_objects=replace_objects)
         return cloned_instances
