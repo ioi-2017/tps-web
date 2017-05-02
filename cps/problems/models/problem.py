@@ -483,7 +483,9 @@ class ProblemData(RevisionObject):
         return []
 
     def get_value_as_dict(self):
-        return super(ProblemData, self).get_value_as_dict()
+        json_dict = super(ProblemData, self).get_value_as_dict()
+        json_dict["checker"] = self.checker.name if self.checker else "None"
+        return json_dict
 
     def __str__(self):
         return self.title
