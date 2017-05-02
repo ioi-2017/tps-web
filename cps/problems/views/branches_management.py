@@ -322,7 +322,7 @@ class MergeRequestList(ProblemObjectView):
 class BranchesListView(ProblemObjectView):
     def get(self, request, *args, **kwargs):
         return render(request, "problems/branches.html", context={
-            "branches": self.problem.branches.all(),
+            "all_branches": self.problem.branches.all(),
         })
 
 class MergeRequestDiscussionView(ProblemObjectView):

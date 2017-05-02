@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for itr_branch in branches %}
+            {% for itr_branch in all_branches %}
             <tr>
                 <td><a href="{% url "problems:overview" problem.id itr_branch.get_slug %}">{{ itr_branch.name }}</a></td>
                 <td> {% if itr_branch.creator %} {{ itr_branch.creator }} {% else %} {% endif %} </td>
