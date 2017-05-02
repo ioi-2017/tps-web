@@ -171,11 +171,6 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static")
 
-try:
-    from .local_settings import *
-except:
-    pass
-
 MEDIA_ROOT = os.path.join(BASE_DIR, 'storage')
 MEDIA_URL = "/storage/"
 
@@ -231,3 +226,9 @@ JUDGE_HANDLERS = {
 CELERY_MAX_RETRIES = None
 
 DISABLE_BRANCHES = False
+
+
+try:
+    from .local_settings import *
+except:
+    pass
