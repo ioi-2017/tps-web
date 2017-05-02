@@ -405,6 +405,7 @@ class ProblemRevision(models.Model):
         current_new_dict = {a: b for a, b in current_new if a is not None}
         for obj in ours_ignored:
             new_obj = current_new_dict[obj]
+            new_obj.skip_signals = True
             try:
                 new_obj.delete()
             except Exception as e:
