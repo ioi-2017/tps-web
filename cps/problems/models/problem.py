@@ -266,15 +266,18 @@ class ProblemRevision(models.Model):
         self.revision_id = None
         self.commit_message = ""
 
-    def clone(self, cloned_instances=None):
+    def clone(self, cloned_instances=None, replace_objects=None):
         if not cloned_instances:
             cloned_instances = {}
+        if not replace_objects:
+            replace_objects = {}
         if self not in cloned_instances:
             cloned_instances[self] = CloneableMixin.clone_model(self, cloned_instances)
         cloned_instances[self].parent_revisions.add(self)
         for queryset in self.USER_REVISION_OBJECTS:
             cloned_instances = CloneableMixin.clone_queryset(getattr(self, queryset),
-                                                             cloned_instances=cloned_instances)
+                                                             cloned_instances=cloned_instances,
+                                                             replace_objects=replace_objects)
         cloned_instances = self.problem_data.clone(cloned_instances=cloned_instances)
 
         self.problem_data.clone_relations(cloned_instances=cloned_instances)
@@ -374,9 +377,17 @@ class ProblemRevision(models.Model):
             if current_base_dict.get(a, None) is None and other_base_dict.get(b, None) is None:
                 matched_triples.append((None, a, b))
 
-        ours_ignored = []
+        ours_ignored = {}
         theirs_ignored = {}
         conflicts = []
+
+        new_revision = self.clone()
+        merge = Merge.objects.create(merged_revision=new_revision,
+                                     our_revision=self,
+                                     their_revision=another_revision,
+                                     base_revision=merge_base)
+        current_new = self.find_matching_pairs(new_revision)
+        current_new_dict = {a: b for a, b in current_new if a is not None}
 
         for base, ours, theirs in matched_triples:
             not_none_object = next(a for a in [base, ours, theirs] if a is not None)
@@ -392,32 +403,14 @@ class ProblemRevision(models.Model):
                         theirs_ignored[theirs] = ours
                 else:
                     if ours is not None:
-                        ours_ignored.append(ours)
+                        ours_ignored[theirs] = current_new_dict[ours]
             else:
                 if ours is not None:
-                    ours_ignored.append(ours)
-        new_revision = self.clone()
-        merge = Merge.objects.create(merged_revision=new_revision,
-                                     our_revision=self,
-                                     their_revision=another_revision,
-                                     base_revision=merge_base)
-        current_new = self.find_matching_pairs(new_revision)
-        current_new_dict = {a: b for a, b in current_new if a is not None}
-        for obj in ours_ignored:
-            new_obj = current_new_dict[obj]
-            new_obj.skip_signals = True
-            try:
-                new_obj.delete()
-            except Exception as e:
-                # TODO: Catch explicit exception
-                logger.error(e, e)
-                # if the remove fails (possibly due to
-                # previous removal caused by cascades)
-                # we ignore it
-                pass
+                    ours_ignored[theirs] = current_new_dict[ours]
 
         theirs_ignored[another_revision] = new_revision
-        another_revision.clone(cloned_instances=theirs_ignored)
+
+        another_revision.clone(cloned_instances=theirs_ignored, replace_objects=ours_ignored)
         for ours, theirs in conflicts:
             if ours is None:
                 current = None

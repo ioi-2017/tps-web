@@ -79,9 +79,9 @@ class RevisionObjectManager(models.Manager):
 
 class CloneableMixin(object):
     @staticmethod
-    def clone_queryset(queryset, cloned_instances):
+    def clone_queryset(queryset, cloned_instances, replace_objects):
         for obj in queryset.all():
-            cloned_instances = obj.clone(cloned_instances=cloned_instances)
+            cloned_instances = obj.clone(cloned_instances=cloned_instances, replace_objects=replace_objects)
         return cloned_instances
 
     @staticmethod
@@ -93,22 +93,26 @@ class CloneableMixin(object):
     def _clean_for_clone(self, cloned_instances):
         pass
 
-    def clone(self, cloned_instances=None):
+    def clone(self, cloned_instances=None, replace_objects=None):
         if not cloned_instances:
             cloned_instances = {}
+        if not replace_objects:
+            replace_objects = {}
         if self not in cloned_instances:
-            cloned_instances[self] = self.clone_model(self, cloned_instances)
+            cloned_instances[self] = self.clone_model(self, cloned_instances, replace_objects.get(self, None))
         return cloned_instances
 
     def clone_relations(self, cloned_instances):
         pass
 
     @staticmethod
-    def clone_model(obj, cloned_instances):
+    def clone_model(obj, cloned_instances, previous_object=None):
         new_object = type(obj).objects.get(pk=obj.pk)
-        new_object.pk = None
+        new_object.pk = None if previous_object is None else previous_object.pk
+        print(str(new_object.pk) + " X E " + str(new_object))
         new_object._clean_for_clone(cloned_instances=cloned_instances)
-        new_object.save()
+        print(str(new_object.pk) + " X E " + str(new_object))
+        new_object.save(force_update=(previous_object is not None))
         return new_object
 
 
