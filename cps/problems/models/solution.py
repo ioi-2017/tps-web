@@ -30,6 +30,7 @@ class Solution(RevisionObject):
 
     class Meta:
         unique_together = ("problem", "name",)
+        ordering = ("problem", "name", )
 
     def __str__(self):
         return self.name
