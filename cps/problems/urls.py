@@ -1,6 +1,22 @@
+from django.conf import settings
 from django.conf.urls import url
 
 from .views import *
+
+
+branch_mode_urls = [
+    url(r'^merge_request/create/$', CreateMergeRequest.as_view(), name="create_merge_request"),
+    url(r'^merge_request/list/$', MergeRequestList.as_view(), name="merge_requests_list"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request_discussion"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/changes/$', MergeRequestChangesView.as_view(), name="merge_request_changes"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/reopen/$', MergeRequestReopenView.as_view(), name="merge_request_reopen"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/follow/$', FollowMergeRequestView.as_view(), name="merge_request_follow"),
+    url(r'^merge_request/(?P<merge_request_id>\d+)/unfollow/$', UnfollowMergeRequestView.as_view(), name="merge_request_unfollow"),
+    url(r'^branch/list/$', BranchesListView.as_view(), name="branches_list"),
+    url(r'^branch/create/$', CreateBranchView.as_view(), name="create_branch"),
+    url(r'^delete/$', DeleteBranchView.as_view(), name="delete_branch"),
+]
 
 problem_urls = ([
         url(r'^export/$', ExportView.as_view(), name="export"),
@@ -11,6 +27,7 @@ problem_urls = ([
 
         url(r'^history/$', HistoryView.as_view(), name="history"),
         url(r'^$', Overview.as_view(), name="overview"),
+
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),
         url(r'^discussion/add/$', DiscussionAddView.as_view(), name="add_discussion"),
         url(r'^discussion/(?P<discussion_id>\d+)/comments$', CommentListView.as_view(), name="comments"),
@@ -85,23 +102,11 @@ problem_urls = ([
         url(r'^checker/(?P<checker_id>\d+)/source/$$', CheckerShowSourceView.as_view(), name="checker_source"),
         url(r'^checker/(?P<checker_id>\d+)/download/$$', CheckerDownloadView.as_view(), name="download_checker"),
 
-        url(r'^clone/$', CreateWorkingCopy.as_view(), name="create_working_copy"),
         url(r'^pull/$', PullBranchView.as_view(), name="pull_branch"),
         url(r'^commit/$', CommitWorkingCopy.as_view(), name="commit"),
         url(r'^discard/$', DiscardWorkingCopy.as_view(), name="discard"),
         url(r'^conflicts/$', ConflictsListView.as_view(), name="conflicts"),
         url(r'^conflict/(?P<conflict_id>\d+)/$', ResolveConflictView.as_view(), name="resolve_conflict"),
-        url(r'^create_branch/$', CreateBranchView.as_view(), name="create_branch"),
-        url(r'^delete/$', DeleteBranchView.as_view(), name="delete_branch"),
-
-        url(r'^merge_request/create/$', CreateMergeRequest.as_view(), name="create_merge_request"),
-        url(r'^merge_request/list/$', MergeRequestList.as_view(), name="merge_requests_list"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/$', MergeRequestDiscussionView.as_view(), name="merge_request_discussion"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/changes/$', MergeRequestChangesView.as_view(), name="merge_request_changes"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/reopen/$', MergeRequestReopenView.as_view(), name="merge_request_reopen"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/follow/$', FollowMergeRequestView.as_view(), name="merge_request_follow"),
-        url(r'^merge_request/(?P<merge_request_id>\d+)/unfollow/$', UnfollowMergeRequestView.as_view(), name="merge_request_unfollow"),
 
         url(r'files/list/$', ProblemFilesView.as_view(), name="files"),
         url(r'files/add/$', ProblemFileAddView.as_view(), name="add_file"),
@@ -109,7 +114,7 @@ problem_urls = ([
         url(r'^files/(?P<file_id>\d+)/delete/$', ProblemFileDeleteView.as_view(), name="delete_file"),
         url(r'^files/(?P<file_id>\d+)/source/$', ProblemFileShowSourceView.as_view(), name="file_source"),
         url(r'^files/(?P<file_id>\d+)/download/$', ProblemFileDownloadView.as_view(), name="download_file"),
-    ], None, None)
+    ] + (branch_mode_urls if not settings.DISABLE_BRANCHES else []) , None, None)
 
 urlpatterns = [
     url(r'^$', ProblemsListView.as_view(), name="problems"),

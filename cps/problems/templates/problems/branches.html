@@ -1,0 +1,29 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+{% block problem_content %}
+    <div class="row">
+        <div class="col-md-10">
+        <h2 > {% trans 'Branches' %} </h2>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <table class="table table-striped table-responsive">
+        <thead>
+            <tr>
+                <th class="col-md-4">{% trans 'Name' %}</th>
+                <th class="col-md-4">{% trans 'Owner' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for itr_branch in branches %}
+            <tr>
+                <td><a href="{% url "problems:overview" problem.id itr_branch.get_slug %}">{{ itr_branch.name }}</a></td>
+                <td> {% if itr_branch.creator %} {{ itr_branch.creator }} {% else %} {% endif %} </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+{% endblock %}

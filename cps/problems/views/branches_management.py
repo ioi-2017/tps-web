@@ -6,16 +6,18 @@ from django.shortcuts import render, get_object_or_404
 from django.utils.translation import ugettext as _
 
 from problems.forms.discussion import CommentAddForm
-from problems.forms.version_control import BranchCreationForm, ChooseBranchForm, CommitForm, MergeRequestAddForm
+from problems.forms.version_control import BranchCreationForm, ChooseBranchForm, CommitForm, MergeRequestAddForm, \
+    CommitFormPullChoice
 from problems.models import Conflict, Comment, MergeRequest
 from problems.views.generics import ProblemObjectView
 from problems.views.utils import get_revision_difference, diff_dict
+from django.conf import settings
 
 __all__ = ["CreateBranchView", "BranchControlView", "ConflictsListView", "PullBranchView",
-           "ResolveConflictView", "CreateWorkingCopy", "CommitWorkingCopy", "DiscardWorkingCopy",
+           "ResolveConflictView", "CommitWorkingCopy", "DiscardWorkingCopy",
            "CreateMergeRequest", "MergeRequestList", "MergeRequestDiscussionView",
            "MergeRequestChangesView", "MergeRequestReopenView", "UnfollowMergeRequestView", "FollowMergeRequestView",
-           "DeleteBranchView", ]
+           "DeleteBranchView", "BranchesListView"]
 
 
 def branch_pull(request, source, destination):
@@ -23,8 +25,10 @@ def branch_pull(request, source, destination):
     if pull_result:
         messages.success(request,
                          _("No conflicts occurred when pulling from {}. Committed automatically").format(source.name))
+        return True
     else:
         messages.error(request, _("Conflicts occurred when pulling from {}. ").format(source.name))
+        return False
 
 
 def assert_no_open_merge_request(request, problem, revision_slug, source, destination):
@@ -44,21 +48,21 @@ def assert_no_open_merge_request(request, problem, revision_slug, source, destin
     else:
         return None
 
+
+
+
+
 class CreateBranchView(ProblemObjectView):
     def get(self, request, *args, **kwargs):
-        form = BranchCreationForm(problem=self.problem)
+        form = BranchCreationForm(problem=self.problem, user=request.user)
         return render(request, "problems/create_branch.html", {
             "form": form
         })
 
     def post(self, request, *args, **kwargs):
-        form = BranchCreationForm(request.POST, problem=self.problem)
+        form = BranchCreationForm(request.POST, problem=self.problem, user=request.user)
         if form.is_valid():
             branch = form.save()
-            branch.get_or_create_working_copy(request.user)
-            messages.success(request, _("Successfully created and locked branch. "
-                                        "Others will not be able to change this branch "
-                                        "until you commit or discard your changes."))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": branch.get_slug(),
@@ -69,42 +73,39 @@ class CreateBranchView(ProblemObjectView):
 
 
 class BranchControlView(ProblemObjectView):
-    def dispatch(self, *args, **kwargs):
-        if self.branch is None:
+    def dispatch(self, request, *args, **kwargs):
+        if self.branch is None or self.branch.creator != request.user:
             raise Http404
         else:
-            return super(BranchControlView, self).dispatch(*args, **kwargs)
+            return super(BranchControlView, self).dispatch(request, *args, **kwargs)
 
 
-def assert_no_working_copy(func):
+def assert_not_changed_working_copy(func):
     def wrapper(self, request, *args, **kwargs):
-        if self.branch.has_working_copy():
+        if self.branch.working_copy_has_changed():
             messages.error(
                 request,
-                _("{user} is working on this branch.").format(
-                    user=self.branch.working_copy.author
-                )
+                _("Commit or discard your changes first.")
             )
-            return HttpResponseRedirect(reverse("problems:overview", kwargs={
+            return HttpResponseRedirect(reverse("problems:commit", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": self.revision_slug,
             }))
         else:
             return func(self, request, *args, **kwargs)
-
     return wrapper
 
 
 class PullBranchView(BranchControlView):
 
-    @assert_no_working_copy
+    @assert_not_changed_working_copy
     def get(self, request, *args, **kwargs):
         form = ChooseBranchForm(problem=self.problem)
         return render(request, "problems/pull_branch.html", {
             "form": form,
         })
 
-    @assert_no_working_copy
+    @assert_not_changed_working_copy
     def post(self, request, *args, **kwargs):
         form = ChooseBranchForm(request.POST, problem=self.problem)
         if form.is_valid():
@@ -115,39 +116,32 @@ class PullBranchView(BranchControlView):
                 "revision_slug": self.branch.get_slug(),
             }))
         return render(request, "problems/pull_branch.html", {
-            "form":form
+            "form": form
         })
-
-
-class CreateWorkingCopy(BranchControlView):
-
-    @assert_no_working_copy
-    def post(self, request, problem_id, revision_slug):
-
-        self.branch.get_or_create_working_copy(request.user)
-        messages.success(request, _("Successfully locked branch. "
-                                    "Others will not be able to change this branch "
-                                    "until you commit or discard your changes."))
-        return HttpResponseRedirect(reverse("problems:overview", kwargs={
-            "problem_id": self.problem.id,
-            "revision_slug": self.branch.get_slug()
-        }))
 
 
 class CommitWorkingCopy(BranchControlView):
 
     def post(self, request, problem_id, revision_slug):
+        if settings.DISABLE_BRANCHES:
+            commit_form_class = CommitForm
+        else:
+            commit_form_class = CommitFormPullChoice
         if self.branch.has_working_copy() and self.revision == self.branch.working_copy:
-            commit_form = CommitForm(request.POST, instance=self.branch.working_copy)
+
+            commit_form = commit_form_class(request.POST, instance=self.branch.working_copy)
             if commit_form.is_valid():
                 commit_form.save()
                 self.branch.set_working_copy_as_head()
-                if commit_form.cleaned_data["pull_from_master"]:
+                if settings.DISABLE_BRANCHES:
+                    if branch_pull(request, source=self.problem.get_master_branch(), destination=self.branch):
+                        self.problem.get_master_branch().set_as_head(self.branch.head)
+                elif commit_form.cleaned_data["pull_from_master"]:
                     branch_pull(request, source=self.problem.get_master_branch(), destination=self.branch)
 
                 messages.success(request, _("Committed successfully"))
 
-                if "create_merge_request" in request.POST:
+                if "create_merge_request" in request.POST and not settings.DISABLE_BRANCHES:
                     return HttpResponseRedirect(reverse("problems:create_merge_request", kwargs={
                         "problem_id": self.problem.id,
                         "revision_slug": self.branch.get_slug()
@@ -172,17 +166,28 @@ class CommitWorkingCopy(BranchControlView):
                 }))
 
     def get(self, request, problem_id, revision_slug):
-        if not self.branch.has_working_copy():
+        if settings.DISABLE_BRANCHES:
+            commit_form_class = CommitForm
+        else:
+            commit_form_class = CommitFormPullChoice
+        if not self.branch.working_copy_has_changed():
             messages.error(request, _("Nothing to commit"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": self.revision_slug,
             }))
-        commit_form = CommitForm(instance=self.branch.working_copy)
-
         # TODO: Optimize the process of calculating changes
 
         changes = get_revision_difference(self.branch.head, self.revision)
+
+        if len(changes) == 1:
+            initial_commit_message = changes[0][0]
+        else:
+            initial_commit_message = ""
+
+        commit_form = commit_form_class(instance=self.branch.working_copy, initial={
+            "commit_message": initial_commit_message
+        })
 
         return render(request, "problems/confirm_commit.html", context={
             "changes": changes,
@@ -314,6 +319,12 @@ class MergeRequestList(ProblemObjectView):
         })
 
 
+class BranchesListView(ProblemObjectView):
+    def get(self, request, *args, **kwargs):
+        return render(request, "problems/branches.html", context={
+            "branches": self.problem.branches.all(),
+        })
+
 class MergeRequestDiscussionView(ProblemObjectView):
 
     def get(self, request, problem_id, revision_slug, merge_request_id):
@@ -394,11 +405,6 @@ class MergeRequestChangesView(ProblemObjectView):
 class DiscardWorkingCopy(BranchControlView):
     def get(self, request, *args, **kwargs):
         if self.branch.has_working_copy() and self.revision == self.branch.working_copy:
-            differences = get_revision_difference(
-                base=self.branch.head,
-                new=self.revision,
-
-            )
             changes = get_revision_difference(self.branch.head, self.revision)
             return render(request, "problems/confirm_discard.html", context={
                 "changes": changes,
@@ -423,7 +429,7 @@ class DiscardWorkingCopy(BranchControlView):
 
 
 class DeleteBranchView(BranchControlView):
-    @assert_no_working_copy
+    @assert_not_changed_working_copy
     def get(self, request, *args, **kwargs):
         if self.branch == self.problem.get_master_branch():
             messages.error(request, _("Cannot delete master branch"))
@@ -436,7 +442,7 @@ class DeleteBranchView(BranchControlView):
             "not_merged_changes": diverged_from_master
         })
 
-    @assert_no_working_copy
+    @assert_not_changed_working_copy
     def post(self, request, *args, **kwargs):
         if self.branch == self.problem.get_master_branch():
             messages.error(request, _("Cannot delete master branch"))

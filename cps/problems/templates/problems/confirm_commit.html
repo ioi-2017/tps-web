@@ -15,9 +15,11 @@
                     <div class="form-group ">
                         <input type="submit" class="form-control btn btn-primary" value="{% trans 'Commit' %}" />
                     </div>
+                    {% if not branches_disabled %}
                     <div class="form-group">
                         <input type="submit" class="form-control btn btn-success" name="create_merge_request" value="{% trans 'Commit & Create Merge Request' %}" />
                     </div>
+                    {% endif %}
                 </div>
             </form>
 

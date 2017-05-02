@@ -8,8 +8,6 @@ from django.utils.translation import ugettext as _
 
 class CommitForm(forms.ModelForm):
 
-    pull_from_master = forms.BooleanField(label=_("pull from master after this commit"), initial=True)
-
     class Meta:
         model = ProblemRevision
         fields = ["commit_message"]
@@ -20,10 +18,18 @@ class CommitForm(forms.ModelForm):
         return self.instance
 
 
+class CommitFormPullChoice(CommitForm):
+
+    pull_from_master = forms.BooleanField(label=_("pull from master after this commit"), initial=True)
+
+    class Meta(CommitForm.Meta):
+        pass
+
+
 class BranchCreationForm(forms.ModelForm):
     class Meta:
         model = ProblemBranch
-        fields = ["name", "problem"]
+        fields = ["name", "problem", "creator"  ]
         error_messages = {
             NON_FIELD_ERRORS: {
                  'unique_together': "Branch already exists",
@@ -32,9 +38,11 @@ class BranchCreationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.problem = kwargs.pop("problem")
+        self.user = kwargs.pop("user")
         super(BranchCreationForm, self).__init__(*args, **kwargs)
 
         self.fields["problem"] = AutoFilledField(initial=self.problem)
+        self.fields["creator"] = AutoFilledField(initial=self.user)
 
         self.fields["source_branch"] = forms.ModelChoiceField(
             label=_("Source branch"),

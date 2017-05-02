@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class Problem(models.Model):
 
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"), related_name='+')
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
     files = models.ManyToManyField(FileModel, verbose_name=_("problem files"))
 
@@ -89,6 +89,7 @@ class Problem(models.Model):
 
 class ProblemBranch(models.Model):
     name = models.CharField(max_length=30, verbose_name=_("name"), validators=[RegexValidator(r'^\w{1,30}$')])
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"), related_name='+', null=True)
     problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="branches")
     head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+', on_delete=models.PROTECT)
     working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True, on_delete=models.SET_NULL)
@@ -112,16 +113,20 @@ class ProblemBranch(models.Model):
             self.save()
 
     def get_or_create_working_copy(self, user):
-        if not self.has_working_copy():
-            self.working_copy = self.head.clone()
-            self.working_copy.author = user
-            self.working_copy.save()
-            self.save()
+        if not self.editable(user):
+            raise AssertionError("This user isn't allowed to "
+                                 "create a working copy on this branch")
+        self.working_copy = self.head.clone()
+        self.working_copy.author = user
+        self.working_copy.save()
+        self.save()
         return self.working_copy
 
-    def get_working_copy_or_head(self, user):
+    def get_branch_revision_for_user(self, user):
         if self.has_working_copy() and self.working_copy.author == user:
             return self.working_copy
+        elif self.editable(user):
+            return self.get_or_create_working_copy(user)
         else:
             return self.head
 
@@ -135,9 +140,9 @@ class ProblemBranch(models.Model):
     def editable(self, user):
         if not user.has_perm("problems.change_problem", obj=self.problem):
             return False
-        if self.name == "master":
+        if self.creator is None:
             return False
-        return not self.has_working_copy() or self.working_copy.author == user
+        return self.creator == user
 
     def set_working_copy_as_head(self):
         self.set_as_head(self.working_copy, commit=False)
@@ -157,12 +162,17 @@ class ProblemBranch(models.Model):
             return False
 
     def merge(self, another_revision):
-        if self.has_working_copy():
+        if self.working_copy_has_changed():
             raise AssertionError("Impossible to merge a revision with a branch with working copy")
         if not another_revision.committed():
             raise AssertionError("Impossible to merge with an uncommitted revision")
         self.working_copy = self.head.merge(another_revision)
         self.save()
+
+    def working_copy_has_changed(self):
+        if not self.has_working_copy():
+            return False
+        return len(self.head.find_differed_pairs(self.working_copy)) > 0
 
 
 class ProblemJudgeInitialization(CeleryTask):
@@ -335,6 +345,14 @@ class ProblemRevision(models.Model):
         for attr in self.USER_REVISION_OBJECTS:
             res = res + getattr(self, attr).find_matches(getattr(another_revision, attr))
         return res
+
+    def find_differed_pairs(self, another_revision):
+        result = []
+        for base_object, new_object in self.find_matching_pairs(another_revision):
+            not_none_obj = new_object if new_object is not None else base_object
+            if not_none_obj.differ(base_object, new_object):
+                result.append((base_object, new_object))
+        return result
 
     def merge(self, another_revision):
         if not self.committed():

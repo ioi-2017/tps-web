@@ -59,11 +59,12 @@ class MergeRequest(models.Model):
         ordering = ("-id", )
 
     def can_be_merged(self):
-        if self.source_branch.has_working_copy():
+        if self.source_branch.working_copy_has_changed():
             return False, self.MERGE_ERROR_MESSAGES["branch_has_working_copy"].format(branch=self.source_branch)
-        if self.destination_branch.has_working_copy():
+        if self.destination_branch.working_copy_has_changed():
             return False, self.MERGE_ERROR_MESSAGES["branch_has_working_copy"].format(branch=self.destination_branch)
         if not self.source_branch.head.child_of(self.destination_branch.head):
+            # TODO: Try to pull automatically
             return False, self.MERGE_ERROR_MESSAGES["branch_not_updated"].format(
                 base=self.destination_branch,
                 new=self.source_branch
@@ -81,6 +82,7 @@ class MergeRequest(models.Model):
         merge_commit.author = merger
         merge_commit.save()
         self.destination_branch.set_as_head(merge_commit)
+        self.destination_branch.discard_working_copy()
         self.status = MergeRequest.MERGED
         self.closed_by = merger
         self.save()

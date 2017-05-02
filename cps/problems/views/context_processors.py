@@ -1,10 +1,10 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 
 from problems.models import MergeRequest
 from problems.models.enums import SolutionVerdict
 from .utils import extract_revision_data
-
-
 
 
 def revision_data(request):
@@ -14,13 +14,6 @@ def revision_data(request):
     revision_slug = request.resolver_match.kwargs["revision_slug"]
     problem, branch, revision = extract_revision_data(problem_id, revision_slug, request.user)
     revision_editable = revision.editable(request.user)
-    master = revision.problem.get_master_branch()
-    if revision.committed and branch is not None and branch != master:
-        can_be_merged_with_master = revision.child_of(master.head)
-        should_be_updated_from_master = not can_be_merged_with_master
-    else:
-        can_be_merged_with_master = False
-        should_be_updated_from_master = False
 
     errors = {}
     errors["testcase"] = revision.testcase_set.all().count()
@@ -45,13 +38,7 @@ def revision_data(request):
     errors["discussion"] = problem.discussions.filter(closed=False).count()
     errors["merge_requests"] = problem.merge_requests.filter(status=MergeRequest.OPEN).count()
 
-
-    def get_url_for_slug(view_name, slug, problem_id, revision_slug, *args, **kwargs):
-        kwargs["revision_slug"] = slug
-        kwargs["problem_id"] = problem_id
-        return reverse(view_name, args=args, kwargs=kwargs)
-
-    branches = problem.branches.all()
+    branches = problem.branches.filter(Q(creator=request.user) | Q(name='master'))
     return {
         "problem": problem,
         "revision": revision,
@@ -60,5 +47,6 @@ def revision_data(request):
         "revision_slug": revision_slug,
         "revision_editable": revision_editable,
         "branch_editable": branch is not None and branch.editable(request.user),
+        "branches_disabled": getattr(settings, "DISABLE_BRANCHES", False),
         "errors": errors
     }

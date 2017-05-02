@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.views.generic import View
@@ -14,7 +15,10 @@ class ProblemsListView(View):
     def get(self, request):
         problems = Problem.objects.all()
 
-        return render(request, "problems/problems_list.html", context={"problems": problems})
+        return render(request, "problems/problems_list.html", context={
+            "problems": problems,
+            "branches_disabled": getattr(settings, "DISABLE_BRANCHES", False),
+        })
 
 
 class ProblemAddView(View):
