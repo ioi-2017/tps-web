@@ -10,7 +10,7 @@
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
         tex2jax: {
-          inlineMath: [ ["\\(","\\)"] ],
+          inlineMath: [ ["\\(","\\)"], ["$", "$"] ],
           processEscapes: true
         }
       });
@@ -56,11 +56,22 @@
     <script src="{% static 'js/showdown.min.js' %}"></script>
     <script>
 
+        var sync_wait_interval = 100;
+
+        var typingTimer = null;
+
         function sync_editor() {
             var converter = new showdown.Converter();
-            $('#preview')[0].innerHTML = converter.makeHtml($('#id_statement')[0].value)
+            var preview_element = $("#preview")[0];
+            preview_element.innerHTML = converter.makeHtml($('#id_statement')[0].value);
+            MathJax.Hub.queue.Push(["Typeset", MathJax.Hub, preview_element]);
         }
-        $('#id_statement')[0].oninput = sync_editor;
+        $('#id_statement').on("keyup", function() {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(sync_editor, sync_wait_interval);
+        }).on("keydown", function() {
+            clearTimeout(typingTimer);
+        });
         sync_editor();
     </script>
 
