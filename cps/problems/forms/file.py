@@ -39,5 +39,5 @@ class FileEditForm(ProblemObjectModelForm):
 
 
 class FileAddForm(FileEditForm):
-    file = forms.FileField(label=_("Solution"), required=True)
-    name = forms.CharField(label=_("Name"), required=True)
+    file = forms.FileField(label=_("File"), required=True)
+    name = forms.CharField(label=_("Name"), required=False)
