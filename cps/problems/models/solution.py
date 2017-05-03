@@ -1,5 +1,4 @@
 # Amir Keivan Mohtashami
-import json
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -9,10 +8,10 @@ from file_repository.models import FileModel
 from problems.models import RevisionObject, CloneableMixin
 from problems.models.enums import SolutionVerdict
 from problems.models.file import FileNameValidator, get_valid_name
-from problems.models.problem import ProblemRevision
-from problems.models.testdata import TestCase, Subtask
+from problems.models.testdata import Subtask
+from problems.models.version_control import MatchableMixin
 
-__all__ = ["Solution", "SolutionSubtaskExpectedScore", "SolutionTestExpectedScore", "SolutionSubtaskExpectedVerdict"]
+__all__ = ["Solution", "SolutionSubtaskExpectedVerdict"]
 
 
 class Solution(RevisionObject):
@@ -61,45 +60,8 @@ class Solution(RevisionObject):
 
         super(Solution, self).save(*args, **kwargs)
 
-    def clone_relations(self, cloned_instances):
-        super(Solution, self).clone_relations(cloned_instances)
-        CloneableMixin.clone_queryset(self.tests_scores, cloned_instances=cloned_instances)
-        CloneableMixin.clone_queryset(self.subtask_verdicts, cloned_instances=cloned_instances)
-        CloneableMixin.clone_queryset(self.subtask_scores, cloned_instances=cloned_instances)
 
-
-class SolutionSubtaskExpectedScore(models.Model, CloneableMixin):
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"),related_name="subtask_scores")
-    subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
-    score = models.FloatField(verbose_name=_("score"))
-
-    class Meta:
-        unique_together = (
-            ("solution", "subtask")
-        )
-
-    def _clean_for_clone(self, cloned_instances):
-        super(SolutionSubtaskExpectedScore, self)._clean_for_clone(cloned_instances)
-        self.solution = cloned_instances[self.solution]
-        self.subtask = cloned_instances[self.subtask]
-
-
-class SolutionTestExpectedScore(models.Model, CloneableMixin):
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="tests_scores")
-    testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"))
-    score = models.FloatField(verbose_name=_("score"))
-
-    class Meta:
-        unique_together = (
-            ("solution", "testcase")
-        )
-
-    def _clean_for_clone(self, cloned_instances):
-        super(SolutionTestExpectedScore, self)._clean_for_clone(cloned_instances)
-        self.solution = cloned_instances[self.solution]
-        self.testcase = cloned_instances[self.testcase]
-
-class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin):
+class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin, MatchableMixin):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdicts")
@@ -115,3 +77,31 @@ class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin):
         super(SolutionSubtaskExpectedVerdict, self)._clean_for_clone(cloned_instances)
         self.solution = cloned_instances[self.solution]
         self.subtask = cloned_instances[self.subtask]
+
+    def get_value_as_dict(self):
+        return {
+            "solution": str(self.solution),
+            "subtask": str(self.subtask),
+            "verdict": str(self.verdict)
+        }
+
+    def get_match(self, other_revision):
+        try:
+            other_solution = self.solution.get_match(other_revision)
+            other_subtask = self.subtask.get_match(other_revision)
+            return other_solution.subtask_verdicts.get(subtask=other_subtask)
+        except Solution.DoesNotExist:
+            return None
+        except Subtask.DoesNotExist:
+            return None
+        except SolutionSubtaskExpectedVerdict.DoesNotExist:
+            return None
+
+    def matches_with(self, other_object):
+        return \
+            self.solution.matches_with(other_object.solution) and \
+            self.subtask.matches_with(other_object.subtask)
+
+
+    def __str__(self):
+        return "{solution} on {subtask}".format(solution=self.solution, subtask=self.subtask)

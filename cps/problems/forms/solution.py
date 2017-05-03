@@ -3,7 +3,7 @@ from django import forms
 from core.fields import EnumChoiceField
 from file_repository.models import FileModel
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import SourceFile, Solution, SolutionSubtaskExpectedScore, SolutionSubtaskExpectedVerdict
+from problems.models import SourceFile, Solution, SolutionSubtaskExpectedVerdict
 from django.utils.translation import ugettext as _
 
 from problems.models.enums import SolutionVerdict

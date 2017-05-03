@@ -109,9 +109,7 @@ class CloneableMixin(object):
     def clone_model(obj, cloned_instances, previous_object=None):
         new_object = type(obj).objects.get(pk=obj.pk)
         new_object.pk = None if previous_object is None else previous_object.pk
-        print(str(new_object.pk) + " X E " + str(new_object))
         new_object._clean_for_clone(cloned_instances=cloned_instances)
-        print(str(new_object.pk) + " X E " + str(new_object))
         new_object.save(force_update=(previous_object is not None))
         return new_object
 
@@ -120,7 +118,35 @@ class AbstractModelMeta(ABCMeta, type(models.Model)):
     pass
 
 
-class RevisionObject(models.Model, CloneableMixin, metaclass=AbstractModelMeta):
+class MatchableMixin(object):
+    def get_match(self, other_revision):
+        raise NotImplementedError
+
+    def matches_with(self, other_object):
+        """
+        returns a boolean determining whether this matches another_version.
+        """
+        raise NotImplementedError
+
+    def get_value_as_dict(self):
+        raise NotImplementedError
+
+    def diverged_from(self, other_object):
+        return self.get_value_as_dict() != other_object.get_value_as_dict()
+
+    @staticmethod
+    def differ(version_a, version_b):
+        a_none = version_a is None
+        b_none = version_b is None
+        if a_none != b_none:
+            return True
+        elif a_none is False:
+            return version_a.diverged_from(version_b)
+        else:
+            return False
+
+
+class RevisionObject(models.Model, MatchableMixin, CloneableMixin, metaclass=AbstractModelMeta):
 
     objects = RevisionObjectManager.from_queryset(RevisionObjectQuerySet)()
 
@@ -158,17 +184,6 @@ class RevisionObject(models.Model, CloneableMixin, metaclass=AbstractModelMeta):
 
     def diverged_from(self, other_object):
         return self.get_value_as_dict() != other_object.get_value_as_dict()
-
-    @staticmethod
-    def differ(version_a, version_b):
-        a_none = version_a is None
-        b_none = version_b is None
-        if a_none != b_none:
-            return True
-        elif a_none is False:
-            return version_a.diverged_from(version_b)
-        else:
-            return False
 
     class Meta:
         abstract = True

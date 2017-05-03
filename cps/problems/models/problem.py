@@ -278,7 +278,16 @@ class ProblemRevision(models.Model):
             cloned_instances = CloneableMixin.clone_queryset(getattr(self, queryset),
                                                              cloned_instances=cloned_instances,
                                                              replace_objects=replace_objects)
-        cloned_instances = self.problem_data.clone(cloned_instances=cloned_instances)
+        for solution in self.solution_set.all():
+            for verdict in solution.subtask_verdicts.all():
+                verdict.clone(
+                    cloned_instances=cloned_instances,
+                    replace_objects=replace_objects
+                )
+        cloned_instances = self.problem_data.clone(
+            cloned_instances=cloned_instances,
+            replace_objects=replace_objects
+        )
 
         self.problem_data.clone_relations(cloned_instances=cloned_instances)
         for queryset in self.USER_REVISION_OBJECTS:
@@ -347,6 +356,13 @@ class ProblemRevision(models.Model):
         res = [(self.problem_data, another_revision.problem_data)]
         for attr in self.USER_REVISION_OBJECTS:
             res = res + getattr(self, attr).find_matches(getattr(another_revision, attr))
+        for solution in self.solution_set.all():
+            for verdict in solution.subtask_verdicts.all():
+                res.append((verdict, verdict.get_match(another_revision)))
+        for solution in another_revision.solution_set.all():
+            for verdict in solution.subtask_verdicts.all():
+                if verdict.get_match(self) is None:
+                    res.append((None, verdict))
         return res
 
     def find_differed_pairs(self, another_revision):
