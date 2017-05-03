@@ -34,6 +34,11 @@
 		{% else %}
 			{% bootstrap_form form layout='readonly' %}
 		{% endif %}
+
+        <div id="preview">
+
+        </div>
+
 		{% if revision_editable %}
 			<div class="form-group">
 				<button type="submit" class="form-control btn btn-success">
@@ -45,34 +50,18 @@
     </div>
 {% endblock %}
 
-{% block css %}
-	{{ block.super }}
-
-    <link rel="stylesheet" href="{% static 'css/editor.css' %}">
-{% endblock %}
 
 {% block foot_js %}
     {{ block.super }}
-    <script src="{% static 'js/editor.js' %}"></script>
-
+    <script src="{% static 'js/showdown.min.js' %}"></script>
     <script>
-        $(document).ready(function () {
-            {% if revision_editable %}
-                var editor = new SimpleMDE({
-                    element: document.getElementById("id_statement"),
-                    autofocus: true,
-                    hideIcons: ["guide", "heading"],
-                    placeholder: "Type the problem statement here..."
-                });
-            {% else %}
-                var editor_fixed = new SimpleMDE({
-                    element: document.getElementById("id_statement"),
-                    autofocus: true,
-                    toolbar: false
-                });
-                SimpleMDE.togglePreview(editor_fixed);
-            {% endif %}
-        });
 
+        function sync_editor() {
+            var converter = new showdown.Converter();
+            $('#preview')[0].innerHTML = converter.makeHtml($('#id_statement')[0].value)
+        }
+        $('#id_statement')[0].oninput = sync_editor;
+        sync_editor();
     </script>
+
 {% endblock %}
