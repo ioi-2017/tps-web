@@ -87,7 +87,7 @@ class CheckerEditView(ProblemObjectEditView):
 
 class CheckerDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Checker, id=kwargs.get('checker_id')).file
+        return get_object_or_404(Checker, id=kwargs.get('checker_id')).file.file
 
     def get_name(self, request, *args, **kwargs):
         return get_object_or_404(Checker, id=kwargs.get('checker_id')).name

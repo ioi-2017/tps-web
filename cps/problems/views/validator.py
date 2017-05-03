@@ -73,7 +73,7 @@ class ValidatorShowSourceView(ProblemObjectShowSourceView):
 
 class ValidatorDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Validator, id=kwargs.get('validator_id')).file
+        return get_object_or_404(Validator, id=kwargs.get('validator_id')).file.file
 
     def get_name(self, request, *args, **kwargs):
         return get_object_or_404(Validator, id=kwargs.get('validator_id')).name
