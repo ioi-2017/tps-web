@@ -2,25 +2,48 @@
 {% load i18n %}
 {% load problems_tags %}
 {% load staticfiles %}
+{% load bootstrap3 %}
 
-{% block css %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static "highlightjs/styles/default.css" %}" type="text/css" />
-{% endblock %}
-{% block head_js %}
-    {{ block.super }}
-    <script src="{% static "highlightjs/highlight.pack.js" %}"></script>
-{% endblock %}
 
 {% block problem_content %}
-    <pre class="source-code"><code lang="{{lang}}">{{code}}</code></pre>
-    <a href="{{ next_url }}" class="btn btn-success btn-block">
-        {% trans "Back" %}
-    </a>
+    <div id="source-code" style="height:560px;"></div>
+    <br />
+    {% if revision_editable %}
+        {% if form %}
+            {% bootstrap_form_errors form %}
+        {% endif %}
+    <form method="post" id="source_code_form">
+        {% csrf_token %}
+    {% endif %}
+        <textarea id="id_source_code" name="source_code" class="hidden">{{code|safe}}</textarea>
+    {% if revision_editable %}
+        <button class="btn btn-success" type="submit">{% trans "Save" %}</button>
+    {% endif %}
+        <a href="{{ next_url }}" class="btn btn-primary">
+            {% trans "Back" %}
+        </a>
+    {% if revision_editable %}
+    </form>
+    {% endif %}
+
 {% endblock %}
 
 {% block foot_js %}
     {{ block.super }}
+    <script src="{% static "monaco-editor/min/vs/loader.js" %}"></script>
 
-    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+        require.config({ paths: { 'vs': '{% static "monaco-editor/min/vs/" %}' }});
+        require(['vs/editor/editor.main'], function() {
+            window.editor = monaco.editor.create(document.getElementById("source-code"), {
+                value: $("#id_source_code").val(),
+                readOnly: {% if not revision_editable %}true{% else %}false{% endif %},
+                language: "cpp"
+            });
+        });
+        $("#source_code_form").submit(function() {
+            $("#id_source_code").val(window.editor.getValue())
+        })
+    </script>
+
 {% endblock %}

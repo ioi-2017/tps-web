@@ -1,13 +1,17 @@
 from functools import update_wrapper
 
+from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.base import ContentFile
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import classonlymethod
 from django.views.generic import View
 
+from file_repository.models import FileModel
 from problems.views.utils import extract_revision_data
+from django.utils.translation import ugettext as _
 
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
@@ -197,10 +201,34 @@ class ProblemObjectShowSourceView(RevisionObjectView):
     language_field_name = None
     code_field_name = None
 
+    def post(self, request, problem_id, revision_slug, **kwargs):
+        instance_pk = kwargs.get(self.instance_slug)
+        instance = self.model.objects.get(pk=instance_pk)
+        code_file = getattr(instance, self.code_field_name)
+        if "source_code" in request.POST:
+            new_file = FileModel()
+            new_file.file.save(code_file.name, ContentFile(request.POST["source_code"]))
+            setattr(instance, self.code_field_name, new_file)
+            instance.save()
+            messages.success(request, _("Saved successfully"))
+            return HttpResponseRedirect(request.get_full_path())
+        else:
+            code = code_file.file.read()
+            lang = getattr(instance, self.language_field_name)
+            title = str(instance)
+            return render(request, self.template_name, context={
+                "code": code,
+                "lang": lang,
+                "title": title,
+                "next_url": self.get_next_url(request, problem_id, revision_slug, instance)
+            })
+
     def get(self, request, problem_id, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
         instance = self.model.objects.get(pk=instance_pk)
-        code = getattr(instance, self.code_field_name).file.read()
+        code_file = getattr(instance, self.code_field_name)
+        code_file.file.open()
+        code = code_file.file.read()
         lang = getattr(instance, self.language_field_name)
         title = str(instance)
         return render(request, self.template_name, context={
