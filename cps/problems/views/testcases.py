@@ -123,7 +123,7 @@ class TestCaseInputDownloadView(RevisionObjectView):
         })
         if not testcase.input_file_generated():
             raise Http404()
-        return FileResponse(testcase.input_file, content_type="txt")
+        return FileResponse(testcase.input_file.file, content_type="txt")
 
 class TestCaseOutputDownloadView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, testcase_id):
@@ -133,5 +133,5 @@ class TestCaseOutputDownloadView(RevisionObjectView):
         })
         if not testcase.output_file_generated():
             raise Http404()
-        return FileResponse(testcase.output_file, content_type="txt")
+        return FileResponse(testcase.output_file.file, content_type="txt")
 
