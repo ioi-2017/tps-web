@@ -6,7 +6,7 @@
             <h2> {% trans 'Problems' %} </h2>
         </div>
         <div class="row">
-            <a href="/problem/add/" class="btn btn-success">
+            <a href="{% url "problems:add_problem" %}" class="btn btn-success">
                 <i class="fa fa-plus"></i> {% trans 'Add a problem' %}
             </a>
         </div>
