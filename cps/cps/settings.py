@@ -189,7 +189,7 @@ SANDBOX_TEMP_DIR = "/tmp"
 SANDBOX_KEEP = True
 SANDBOX_USE_CGROUPS = True
 SANDBOX_MAX_FILE_SIZE = 1048576
-
+SANDBOX_BOX_ID_OFFSET = 0
 # isolate
 ISOLATE_PATH = os.path.join(BASE_DIR, "../isolate/isolate")
 

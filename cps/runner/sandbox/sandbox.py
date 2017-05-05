@@ -450,7 +450,7 @@ class IsolateSandbox(SandboxBase):
         # on the same computer
         # FIXME: current_process is internal
 
-        box_id = (current_process().index * 3 + IsolateSandbox.next_id % 3) % 100
+        box_id = (settings.SANDBOX_BOX_ID_OFFSET + current_process().index * 3 + IsolateSandbox.next_id % 3) % 100
         IsolateSandbox.next_id += 1
 
         # We create a directory "tmp" inside the outer temporary directory,
