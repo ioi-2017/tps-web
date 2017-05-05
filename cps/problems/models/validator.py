@@ -122,7 +122,7 @@ class Validator(SourceFile):
 
     def get_value_as_dict(self):
         d = super(Validator, self).get_value_as_dict()
-        d["subtasks"] = [str(s) for s in self.subtasks]
+        d["subtasks"] = ','.join([str(s) for s in self.subtasks])
         return d
 
     @property

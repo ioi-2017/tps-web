@@ -92,7 +92,7 @@ class InputGenerator(SourceFile):
         return {
             "code": self.file.get_value_as_string(),
             "data": self.text_data,
-            "enabled": self.is_enabled
+            "enabled": str(self.is_enabled),
         }
 
 
