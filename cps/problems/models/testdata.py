@@ -88,6 +88,13 @@ class InputGenerator(SourceFile):
         self.is_enabled = False
         self.save()
 
+    def get_value_as_dict(self):
+        return {
+            "code": self.file.get_value_as_string(),
+            "data": self.text_data,
+            "enabled": self.is_enabled
+        }
+
 
 class TestCaseInputGeneration(CeleryTask):
 

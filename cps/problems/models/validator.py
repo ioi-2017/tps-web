@@ -120,6 +120,11 @@ class Validator(SourceFile):
         help_text=_("if marked, it validates all subtasks")
     )
 
+    def get_value_as_dict(self):
+        d = super(Validator, self).get_value_as_dict()
+        d["subtasks"] = [str(s) for s in self.subtasks]
+        return d
+
     @property
     def subtasks(self):
         if self.global_validator:
