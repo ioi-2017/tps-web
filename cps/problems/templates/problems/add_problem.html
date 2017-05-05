@@ -9,7 +9,7 @@
         <div class="col-sm-5"></div>
         <div class="col-sm-3">
             <h1>{% trans 'Add a problem' %}</h1>
-            <form class="form-horizontal" method="post" action="/problem/add/" enctype="multipart/form-data">
+            <form class="form-horizontal" method="post" action="{% url "problems:add_problem" %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form form %}
                 <div class="form-group">
