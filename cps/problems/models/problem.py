@@ -479,6 +479,8 @@ class ProblemData(RevisionObject):
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
     memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
 
+    description = models.TextField(verbose_name=_("description"), blank=True)
+
     objects = ProblemDataManager.from_queryset(ProblemDataQuerySet)()
 
     @property
