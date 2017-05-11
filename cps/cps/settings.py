@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # Vendor Apps
     'bootstrap3',
     'import_export',
+    'debug_toolbar',
 
     # CPS Apps
     'core',
@@ -77,7 +78,8 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'cps.middlewares.middleware.LoginRequiredMiddleware'
+    'cps.middlewares.middleware.LoginRequiredMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'cps.urls'
@@ -227,6 +229,13 @@ CELERY_MAX_RETRIES = None
 
 DISABLE_BRANCHES = False
 
+
+def SHOW_TOOLBAR(request):
+    return request.user.is_staff
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': SHOW_TOOLBAR,
+}
 
 try:
     from .local_settings import *
