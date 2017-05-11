@@ -130,7 +130,7 @@ class Validator(SourceFile):
         if self.global_validator:
             return self.problem.subtasks.all()
         else:
-            return self._subtasks
+            return self._subtasks.all()
 
     @property
     def testcases(self):
