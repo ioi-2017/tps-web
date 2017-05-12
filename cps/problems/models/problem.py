@@ -5,6 +5,7 @@ import heapq
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -405,6 +406,8 @@ class ProblemRevision(models.Model):
         current_new = self.find_matching_pairs(new_revision)
         current_new_dict = {a: b for a, b in current_new if a is not None}
 
+        remove_matches = []
+
         for base, ours, theirs in matched_triples:
             not_none_object = next(a for a in [base, ours, theirs] if a is not None)
             base_ours = not_none_object.differ(base, ours)
@@ -417,7 +420,7 @@ class ProblemRevision(models.Model):
                         conflicts.append((ours, theirs))
                     if theirs is not None:
                         if ours is None:
-                            theirs_ignored[theirs] = None
+                            remove_matches.append(theirs)
                         else:
                             theirs_ignored[theirs] = current_new_dict[ours]
                 else:
@@ -430,6 +433,16 @@ class ProblemRevision(models.Model):
         theirs_ignored[another_revision] = new_revision
 
         another_revision.clone(cloned_instances=theirs_ignored, replace_objects=ours_ignored)
+        theirs_match = another_revision.find_matching_pairs(new_revision)
+        theirs_match_dict = {a: b for a, b in theirs_match if a is not None}
+        for obj in remove_matches:
+            try:
+                theirs_match_dict[obj].delete()
+            except ObjectDoesNotExist as e:
+                pass
+            except Exception as e:
+                logger.error(e, e)
+
         for ours, theirs in conflicts:
             if ours is None:
                 current = None
