@@ -416,7 +416,10 @@ class ProblemRevision(models.Model):
                     if base_theirs:
                         conflicts.append((ours, theirs))
                     if theirs is not None:
-                        theirs_ignored[theirs] = current_new_dict[ours]
+                        if ours is None:
+                            theirs_ignored[theirs] = None
+                        else:
+                            theirs_ignored[theirs] = current_new_dict[ours]
                 else:
                     if ours is not None:
                         ours_ignored[theirs] = current_new_dict[ours]
