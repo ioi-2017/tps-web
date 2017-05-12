@@ -20,7 +20,7 @@ class CommitForm(forms.ModelForm):
 
 class CommitFormPullChoice(CommitForm):
 
-    pull_from_master = forms.BooleanField(label=_("pull from master after this commit"), initial=True)
+    pull_from_master = forms.BooleanField(label=_("pull from master after this commit"), initial=True, required=False)
 
     class Meta(CommitForm.Meta):
         pass
