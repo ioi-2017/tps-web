@@ -173,6 +173,8 @@ class ProblemBranch(models.Model):
     def working_copy_has_changed(self):
         if not self.has_working_copy():
             return False
+        if self.working_copy.has_conflicts():
+            return True
         return len(self.head.find_differed_pairs(self.working_copy)) > 0
 
 
@@ -240,6 +242,13 @@ class ProblemRevision(models.Model):
 
     def __str__(self):
         return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)
+
+    def has_conflicts(self):
+        try:
+            if self.merge_result.conflicts.exists():
+                return True
+        except Merge.DoesNotExist:
+            pass
 
     def commit(self, message):
         self.commit_message = message
@@ -425,10 +434,13 @@ class ProblemRevision(models.Model):
                             theirs_ignored[theirs] = current_new_dict[ours]
                 else:
                     if ours is not None:
-                        ours_ignored[theirs] = current_new_dict[ours]
+                        if theirs is None:
+                            current_new_dict[ours].delete()
+                        else:
+                            ours_ignored[theirs] = current_new_dict[ours]
             else:
                 if ours is not None:
-                    ours_ignored[theirs] = current_new_dict[ours]
+                    theirs_ignored[theirs] = current_new_dict[ours]
 
         theirs_ignored[another_revision] = new_revision
 

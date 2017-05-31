@@ -64,6 +64,8 @@ def get_revision_difference(base, new):
             "{} {} - {}".format(operation, type(not_none_obj)._meta.verbose_name, str(not_none_obj)),
             diff_dict(base_dict, new_dict)
         ))
+    if new.has_conflicts():
+        result.append(("Resolved conflicts", ""))
     return result
 
 

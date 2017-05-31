@@ -127,8 +127,13 @@ class CommitWorkingCopy(BranchControlView):
             commit_form_class = CommitForm
         else:
             commit_form_class = CommitFormPullChoice
-        if self.branch.has_working_copy() and self.revision == self.branch.working_copy:
-
+        if self.branch.working_copy_has_changed() and self.revision == self.branch.working_copy:
+            if self.branch.working_copy.has_unresolved_conflicts():
+                messages.error(request, _("You must resolve all conflicts"))
+                return HttpResponseRedirect(reverse("problems:conflicts", kwargs={
+                    "problem_id": self.problem.id,
+                    "revision_slug": self.branch.get_slug()
+                }))
             commit_form = commit_form_class(request.POST, instance=self.branch.working_copy)
             if commit_form.is_valid():
                 commit_form.save()
@@ -175,6 +180,12 @@ class CommitWorkingCopy(BranchControlView):
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": self.problem.id,
                 "revision_slug": self.revision_slug,
+            }))
+        if self.branch.working_copy.has_unresolved_conflicts():
+            messages.error(request, _("You must resolve all conflicts"))
+            return HttpResponseRedirect(reverse("problems:conflicts", kwargs={
+                "problem_id": self.problem.id,
+                "revision_slug": self.branch.get_slug()
             }))
         # TODO: Optimize the process of calculating changes
 
