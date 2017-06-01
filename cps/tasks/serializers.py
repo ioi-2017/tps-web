@@ -51,7 +51,10 @@ class DjangoPKSerializer(object):
 
     @staticmethod
     def model_decode(data):
-        return json.loads(data.decode('utf-8'), cls=DjangoPKJSONDecoder)
+        if isinstance(data, bytes):
+            return json.loads(data.decode('utf-8'), cls=DjangoPKJSONDecoder)
+        else:
+            return json.loads(data, cls=DjangoPKJSONDecoder)
 
     @classmethod
     def register(cls):
