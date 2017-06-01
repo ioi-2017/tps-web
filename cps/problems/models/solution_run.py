@@ -95,6 +95,7 @@ def report_failed_on_exception(func):
             func(self, *args, **kwargs)
         except Exception as e:
             self.verdict = SolutionRunVerdict.judge_failed
+            self.execution_message = str(e)
             self.save()
             raise e
     return wrapper

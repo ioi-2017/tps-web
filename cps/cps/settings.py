@@ -226,6 +226,8 @@ JUDGE_HANDLERS = {
 }
 
 CELERY_MAX_RETRIES = None
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 DISABLE_BRANCHES = False
 

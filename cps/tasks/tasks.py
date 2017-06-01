@@ -3,6 +3,7 @@ import logging
 import celery
 from celery import current_app
 from celery.app.task import _reprtask
+from celery.exceptions import Retry
 from celery.local import Proxy
 from celery.task.base import _CompatShared
 from celery.utils import gen_task_name
@@ -90,6 +91,7 @@ class CeleryTask(celery.Task, metaclass=TaskType):
 
     serializer = DjangoPKSerializer.name
     DEPENDENCY_WAIT_TIME = 3
+    MAX_DEPENDENCY_WAIT_TIME = 120
     track_started = True
     abstract = True
     max_retries = None
@@ -104,13 +106,24 @@ class CeleryTask(celery.Task, metaclass=TaskType):
     def execute_child_tasks(self, *args, **kwargs):
         pass
 
+    def retry_countdown(self):
+        return min(self.MAX_DEPENDENCY_WAIT_TIME, self.DEPENDENCY_WAIT_TIME * self.request.retries)
+
     def run(self, *args, **kwargs):
-        result = self.validate_dependencies(*args, **kwargs)
-        if result is None:
-            self.retry(countdown=self.DEPENDENCY_WAIT_TIME)
-        elif result is True:
-            self.execute(*args, **kwargs)
-            self.execute_child_tasks(*args, **kwargs)
+        try:
+            result = self.validate_dependencies(*args, **kwargs)
+            if result is None:
+                self.retry(countdown=self.retry_countdown())
+            elif result is True:
+                self.execute(*args, **kwargs)
+                self.execute_child_tasks(*args, **kwargs)
+            else:
+                logger.error("Dependencies failed to meet. Not executing")
+        except Retry as e:
+            raise e
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            self.retry(countdown=self.retry_countdown())
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError

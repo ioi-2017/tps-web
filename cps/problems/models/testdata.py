@@ -2,6 +2,7 @@
 import json
 import logging
 
+from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -28,7 +29,7 @@ __all__ = ["TestCase", "Subtask", "InputGenerator"]
 class InputGenerator(SourceFile):
     text_data = models.TextField(blank=True, null=False)
     is_enabled = models.BooleanField(default=False)
-    
+
     @classmethod
     def get_generation_parameters_from_script_line(cls, problem, input_line):
         line_split = shlex.split(input_line)
@@ -240,6 +241,12 @@ class TestCase(RevisionObject):
             self.generator = cloned_instances[self.generator]
 
     def initialize_in_judge(self):
+        if self.judge_initialization_task_id:
+            if not self.judge_initialization_successful:
+                result = AsyncResult(self.judge_initialization_task_id)
+                if result.failed() or result.successful():
+                    self.judge_initialization_task_id = None
+                    self.save()
         if not self.judge_initialization_task_id:
             self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
             self.save()
@@ -563,7 +570,7 @@ class TestCase(RevisionObject):
         return self.input_generation_task_id is not None
 
     def being_generated(self):
-        return not self.testcase_generation_completed() and self.generation_started()
+        return (not self.testcase_generation_completed()) and self.generation_started()
 
     def __str__(self):
         return self.name

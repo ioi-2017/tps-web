@@ -3,6 +3,7 @@
 import hashlib
 import heapq
 
+from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -222,6 +223,12 @@ class ProblemRevision(models.Model):
         self.save()
 
     def initialize_in_judge(self):
+        if self.judge_initialization_task_id:
+            if not self.judge_initialization_successful:
+                result = AsyncResult(self.judge_initialization_task_id)
+                if result.failed() or result.successful():
+                    self.judge_initialization_task_id = None
+                    self.save()
         if not self.judge_initialization_task_id:
             self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
             self.save()
