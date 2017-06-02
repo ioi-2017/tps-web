@@ -601,7 +601,9 @@ class Subtask(RevisionObject):
     def validators(self):
         return self.problem.validator_set.filter(Q(global_validator=True) | Q(_subtasks=self))
 
-    def clone_relations(self, cloned_instances):
+    def clone_relations(self, cloned_instances, ignored_instances):
+        if self in ignored_instances:
+            return
         testcases = []
         for testcase in self.testcases.all():
             testcases.append(cloned_instances[testcase])

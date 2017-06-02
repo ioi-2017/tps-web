@@ -85,9 +85,9 @@ class CloneableMixin(object):
         return cloned_instances
 
     @staticmethod
-    def clone_queryset_relations(queryset, cloned_instances):
+    def clone_queryset_relations(queryset, cloned_instances, ignored_instances):
         for obj in queryset.all():
-            obj.clone_relations(cloned_instances=cloned_instances)
+            obj.clone_relations(cloned_instances=cloned_instances, ignored_instances=ignored_instances)
         return cloned_instances
 
     def _clean_for_clone(self, cloned_instances):
@@ -102,7 +102,7 @@ class CloneableMixin(object):
             cloned_instances[self] = self.clone_model(self, cloned_instances, replace_objects.get(self, None))
         return cloned_instances
 
-    def clone_relations(self, cloned_instances):
+    def clone_relations(self, cloned_instances, ignored_instances):
         pass
 
     @staticmethod

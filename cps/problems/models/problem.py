@@ -288,6 +288,7 @@ class ProblemRevision(models.Model):
             cloned_instances = {}
         if not replace_objects:
             replace_objects = {}
+        ignored_instances = cloned_instances.copy()
         if self not in cloned_instances:
             cloned_instances[self] = CloneableMixin.clone_model(self, cloned_instances)
         cloned_instances[self].parent_revisions.add(self)
@@ -306,10 +307,11 @@ class ProblemRevision(models.Model):
             replace_objects=replace_objects
         )
 
-        self.problem_data.clone_relations(cloned_instances=cloned_instances)
+        self.problem_data.clone_relations(cloned_instances=cloned_instances, ignored_instances=ignored_instances)
         for queryset in self.USER_REVISION_OBJECTS:
             CloneableMixin.clone_queryset_relations(getattr(self, queryset),
-                                                                       cloned_instances=cloned_instances)
+                                                    cloned_instances=cloned_instances,
+                                                    ignored_instances=ignored_instances)
 
         return cloned_instances[self]
 
