@@ -35,7 +35,7 @@
 			{% bootstrap_form form layout='readonly' %}
 		{% endif %}
 
-        <div id="preview">
+        <div id="preview" class="markdown-body">
 
         </div>
 
@@ -61,7 +61,9 @@
         var typingTimer = null;
 
         function sync_editor() {
-            var converter = new showdown.Converter();
+            var converter = new showdown.Converter({
+                'tables': true
+            });
             var preview_element = $("#preview")[0];
             preview_element.innerHTML = converter.makeHtml($('#id_statement')[0].value);
             MathJax.Hub.queue.Push(["Typeset", MathJax.Hub, preview_element]);
