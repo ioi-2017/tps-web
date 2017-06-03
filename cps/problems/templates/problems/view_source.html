@@ -35,15 +35,16 @@
     <script>
         require.config({ paths: { 'vs': '{% static "monaco-editor/min/vs/" %}' }});
         require(['vs/editor/editor.main'], function() {
-            window.editor = monaco.editor.create(document.getElementById("source-code"), {
+            var editor = monaco.editor.create(document.getElementById("source-code"), {
                 value: $("#id_source_code").val(),
                 readOnly: {% if not revision_editable %}true{% else %}false{% endif %},
                 language: "cpp"
             });
+            $("#source_code_form").submit(function() {
+                $("#id_source_code").val(editor.getValue())
+            });
         });
-        $("#source_code_form").submit(function() {
-            $("#id_source_code").val(window.editor.getValue())
-        })
+
     </script>
 
 {% endblock %}
