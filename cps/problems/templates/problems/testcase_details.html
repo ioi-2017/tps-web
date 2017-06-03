@@ -122,7 +122,7 @@
                         {% endfor %}
                     <tr>
                         <td colspan="3">
-                            <pre> {{ testcase.input_file.get_truncated_content }} </pre>
+                            <pre>{{ testcase.input_file.get_truncated_content }}</pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_input" testcase.pk %}">
                                     {% trans 'Download' %}
@@ -163,7 +163,7 @@
                     <tr>
                         <td> {% trans 'Generation log' %} </td>
                         {% if testcase.output_generation_successful != None %}
-                            <td><pre> {{ testcase.output_generation_log }} </pre></td>
+                            <td><pre>{{ testcase.output_generation_log }}</pre></td>
                         {% else %}
                             <td>
                                 {% trans 'Not generated' %}
@@ -173,7 +173,7 @@
                     {% if testcase.output_generation_successful %}
                     <tr>
                         <td colspan="3">
-                            <pre> {{ testcase.output_file.get_truncated_content }} </pre>
+                            <pre>{{ testcase.output_file.get_truncated_content }}</pre>
                             <br />
                             <a href="{% problem_url "problems:testcase_output" testcase.pk %}">
                                     {% trans 'Download' %}
