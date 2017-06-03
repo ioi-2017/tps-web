@@ -106,7 +106,7 @@ class SolutionRunExecutionTask(CeleryTask):
     def validate_dependencies(self, run):
         result = True
         if run.testcase.testcase_generation_completed():
-            if not run.testcase.output_generation_successful:
+            if not run.testcase.output_file_generated():
                 run.verdict = SolutionRunVerdict.invalid_testcase
                 run.execution_message = "Testcase generation failed"
                 run.save()
