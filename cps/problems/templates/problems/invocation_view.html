@@ -28,8 +28,10 @@
                             {% if result.validate == False %}
                                 <td class="alert alert-danger force-bgcolor" data-toggle="tooltip" title="{% for subtask,expected_verdict in failed_subtasks %}{% if subtask %}{{ subtask }} {% else %} {% trans 'Global' %}{% endif %}: Expected {{ expected_verdict }} got {{ result.get_short_name_for_verdict }}
 {% endfor %}">
+                            {% elif result.score == 1 %}
+                                <td class="alert alert-success force-bgcolor">
                             {% else %}
-                                <td>
+				<td>
                             {% endif %}
                             <a href="{% problem_url "problems:view_invocation_result" invocation.id result.id %}">
                                 {{ result.get_short_name_for_verdict }}
