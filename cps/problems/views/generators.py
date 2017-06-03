@@ -1,28 +1,32 @@
+import logging
+
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.utils.translation import ugettext_lazy as _
 
-from problems.forms.files import SourceFileEditForm
 from problems.forms.generator import GeneratorAddForm, GeneratorEditForm
-from problems.forms.testcases import TestCaseAddForm
 from problems.models import InputGenerator
-from problems.models import TestCase
 from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, \
     ProblemObjectShowSourceView, ProblemObjectEditView
+
 
 __all__ = ["GeneratorsListView", "GeneratorEditView", "GeneratorAddView",
            "GeneratorDeleteView", "GeneratorShowSourceView", "GeneratorEnableView",
            "GeneratorDisableView"]
+logger = logging.getLogger(__name__)
+
 
 class GeneratorsListView(RevisionObjectView):
-
     def get(self, request, problem_id, revision_slug):
         generators = self.revision.inputgenerator_set.all()
         resources = self.revision.resource_set.all()
 
         return render(request, "problems/generator_list.html", context={
             "generators": generators,
-            "resources": resources
+            "resources": resources,
         })
 
 
@@ -75,18 +79,24 @@ class GeneratorShowSourceView(ProblemObjectShowSourceView):
 
 
 class GeneratorEnableView(RevisionObjectView):
-
     def post(self, request, *args, **kwargs):
         generator = get_object_or_404(InputGenerator, pk=kwargs['generator_id'])
-        generator.enable()
+
+        try:
+            generator.enable()
+        except ValidationError as e:
+            messages.error(request, "\n".join(e.messages))
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            messages.error(request, _("Error occurred while generating!"))
+
         return HttpResponseRedirect(reverse("problems:generators", kwargs={
             "problem_id": self.problem.id,
-            "revision_slug": self.revision_slug
+            "revision_slug": self.revision_slug,
         }))
 
 
 class GeneratorDisableView(RevisionObjectView):
-
     def post(self, request, *args, **kwargs):
         generator = get_object_or_404(InputGenerator, pk=kwargs['generator_id'])
         generator.disable()

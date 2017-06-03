@@ -1,6 +1,7 @@
 # Amir Keivan Mohtashami
-import json
 import logging
+import shlex
+import django
 
 from celery.result import AsyncResult
 from django.conf import settings
@@ -10,15 +11,12 @@ from django.db.models import Max, Q
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel
-from judge import Judge
 from judge.results import JudgeVerdict
 from problems.models import RevisionObject, SourceFile
-from problems.models.problem import ProblemRevision
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from tasks.tasks import CeleryTask
-import shlex
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +27,58 @@ __all__ = ["TestCase", "Subtask", "InputGenerator"]
 class InputGenerator(SourceFile):
     text_data = models.TextField(blank=True, null=False)
     is_enabled = models.BooleanField(default=False)
+
+    @staticmethod
+    def text_data_validator(problem, text):
+        names = set()
+
+        def line_valid(line_id, line):
+            line_split = shlex.split(line)
+
+            if '>' not in line_split:
+                raise ValidationError({
+                    'text_data': ValidationError(_("line #%(line)s doesn't contains '>'."), code='invalid',
+                                                 params={'line': line_id})
+                })
+
+            test_name_separator_index = line_split.index(">")
+
+            if line_split[test_name_separator_index+1] in names:
+                raise ValidationError({
+                    'text_data': ValidationError(_("line #%(line)s's name is duplicated!"), code='invalid',
+                                                 params={'line': i})
+                })
+            names.add(line_split[test_name_separator_index+1])
+
+            for seperator_index in range(test_name_separator_index + 2, len(line_split), 2):
+                if line_split[seperator_index] != '|':
+                    raise ValidationError({
+                        'text_data': ValidationError(_("in line #%(line)s, subtasks are not separated by '|'"),
+                                                     code='invalid',
+                                                     params={'line': line_id})
+                    })
+
+            for subtask_index in range(test_name_separator_index + 3, len(line_split), 2):
+                subtask_name = line_split[subtask_index]
+                if not problem.subtasks.filter(name=subtask_name).exists():
+                    raise ValidationError({
+                        'text_data': ValidationError(_("in line #%(line)s, subtask %(subtask)s doesn't exist."),
+                                                     code='invalid',
+                                                     params={'line': line_id, 'subtask': subtask_name})
+                    })
+
+        for i, line in enumerate(text.split("\n")):
+            line_valid(i, line)
+
+    def clean(self):
+        try:
+            InputGenerator.text_data_validator(self.problem, self.text_data)
+        except ValidationError as v:
+            raise v
+        except Exception as e:
+            raise ValidationError({
+                'text_data': ValidationError(_("data format is incorrect!\ncorrect format: [params] > name | subtask1 | subtask2 | ..."))
+            })
 
     @classmethod
     def get_generation_parameters_from_script_line(cls, problem, input_line):
@@ -42,11 +92,11 @@ class InputGenerator(SourceFile):
         subtask_names = [
             line_split[subtask_index] for subtask_index in
             range(test_name_separator_index + 3, len(line_split), 2)
-        ]
+            ]
         data["subtasks"] = [
             problem.subtasks.get(name=name)
             for name in subtask_names
-        ]
+            ]
 
         data["_input_generation_parameters"] = " ".join(
             shlex.quote(line) for line in line_split[0:test_name_separator_index]
@@ -59,12 +109,12 @@ class InputGenerator(SourceFile):
         subtasks = data.pop("subtasks")
 
         test_case = TestCase(
-                    problem=self.problem,
-                    generator=self,
-                    _input_generator_name=self.name,
-                    input_static=False,
-                    output_static=False,
-                    **data)
+            problem=self.problem,
+            generator=self,
+            _input_generator_name=self.name,
+            input_static=False,
+            output_static=False,
+            **data)
 
         test_case.save()
         test_case.subtasks.add(*subtasks)
@@ -74,15 +124,32 @@ class InputGenerator(SourceFile):
 
     def generate_testcases(self):
         self.delete_testcases()
+
         for command in self.text_data.split("\n"):
             command = command.strip()
             if command:
-                self._create_test(command)
+                try:
+                    self._create_test(command)
+                except django.db.utils.IntegrityError as e:
+                    data = self.get_generation_parameters_from_script_line(self.problem, command)
+                    raise ValidationError({
+                        'text_data': ValidationError(_("A testcase with name {} already exist!".format(data['name'])))
+                    })
 
     def enable(self):
-        self.generate_testcases()
+        try:
+            self.clean()
+            self.generate_testcases()
+        except ValidationError as e:
+            self.disable()
+            raise e
+        except Exception as e:
+            self.disable()
+            raise e
+
         self.is_enabled = True
         self.save()
+        return False
 
     def disable(self):
         self.delete_testcases()
@@ -98,7 +165,6 @@ class InputGenerator(SourceFile):
 
 
 class TestCaseInputGeneration(CeleryTask):
-
     def validate_dependencies(self, testcase):
         if not testcase.input_static:
             if testcase._input_generator.compilation_finished:
@@ -147,7 +213,6 @@ class TestCaseOutputGeneration(CeleryTask):
 
 
 class TestCaseJudgeInitialization(CeleryTask):
-
     def validate_dependencies(self, testcase):
 
         if testcase.problem.judge_initialization_completed():
@@ -211,7 +276,8 @@ class TestCase(RevisionObject):
     input_generation_task_id = models.CharField(verbose_name=_("input generation task id"), max_length=128, null=True)
 
     # Output-related fields
-    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True, related_name='+', blank=True)
+    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True,
+                                              related_name='+', blank=True)
 
     _output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
     output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
@@ -233,7 +299,8 @@ class TestCase(RevisionObject):
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     class Meta:
-        ordering = ("problem", "name", )
+        ordering = ("problem", "name",)
+        unique_together = ("problem", "name",)
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
@@ -411,7 +478,7 @@ class TestCase(RevisionObject):
         global_validators = Q(global_validator=True)
         validators_for_subtasks = Q(_subtasks__in=self.subtasks.all())
         return self.problem.validator_set.filter(
-                global_validators | validators_for_subtasks
+            global_validators | validators_for_subtasks
         ).distinct().all()
 
     def validate_input_file(self):
@@ -559,12 +626,12 @@ class TestCase(RevisionObject):
         if self.input_generation_successful is False:
             return True
 
-        input_validation_tried =  \
+        input_validation_tried = \
             self.validation_results.filter(valid__isnull=False).count() == len(self.validators)
 
         return self.input_generation_completed() and \
-            self.output_generation_completed() and \
-            input_validation_tried
+               self.output_generation_completed() and \
+               input_validation_tried
 
     def generation_started(self):
         return self.input_generation_task_id is not None
@@ -581,7 +648,6 @@ class Subtask(RevisionObject):
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
-
 
     @staticmethod
     def get_matching_fields():
