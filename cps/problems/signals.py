@@ -3,11 +3,18 @@ from django.dispatch import receiver
 
 from problems.models import *
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def skip_signal_if_required(func):
     def wrapper(sender, instance, **kwargs):
         if not getattr(instance, "skip_signals", False):
-            func(sender, instance, **kwargs)
+            try:
+                func(sender, instance, **kwargs)
+            except Exception as e:
+                logger.error(e, e)
     return wrapper
 
 @receiver(post_save, sender=Solution, dispatch_uid="invalidate_testcase_solution")

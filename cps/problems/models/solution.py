@@ -88,7 +88,11 @@ class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin, MatchableMixi
     def get_match(self, other_revision):
         try:
             other_solution = self.solution.get_match(other_revision)
+            if other_solution is None:
+                return None
             other_subtask = self.subtask.get_match(other_revision)
+            if other_subtask is None:
+                return None
             return other_solution.subtask_verdicts.get(subtask=other_subtask)
         except Solution.DoesNotExist:
             return None

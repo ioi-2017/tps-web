@@ -355,6 +355,8 @@ class TestCase(RevisionObject):
             data["output"] = self.output_file.get_value_as_string()
         else:
             data["output"] = "Generated using {}".format(self.solution)
+        if self.generator:
+            data["generator"] = self.generator.name
         return data
 
     def clean(self):
@@ -450,8 +452,8 @@ class TestCase(RevisionObject):
                     "This issue must be resolved by a system administrator"
                 self.input_generation_successful = False
             elif not execution_success:
-                self.input_generation_log = "Generation failed. Generator exited with exit code {}.".format(
-                    sandbox_datas[0]["exit_code"]
+                self.input_generation_log = "Generation failed. {}.".format(
+                    str(sandbox_datas[0])
                 )
                 self.input_generation_successful = False
             else:
@@ -672,6 +674,7 @@ class Subtask(RevisionObject):
             return
         testcases = []
         for testcase in self.testcases.all():
-            testcases.append(cloned_instances[testcase])
+            if testcase in cloned_instances:
+                testcases.append(cloned_instances[testcase])
         if len(testcases) > 0:
             cloned_instances[self].testcases.add(*testcases)
