@@ -4,7 +4,7 @@ from django.test import TestCase
 from mock import mock
 from model_mommy import mommy
 from file_repository.models import FileModel
-from problems.models import Problem, ProblemRevision, ProblemBranch, Resource, ProblemData
+from problems.models import Problem, ProblemRevision, ProblemBranch, Resource, ProblemData, Validator, Subtask
 
 
 class VersionControlTests(TestCase):
@@ -166,6 +166,30 @@ class VersionControlTests(TestCase):
 
         self.assertIsNone(self.problem_branch1.working_copy)
 
+    def test_validator_subtask_merge1(self, *args, **kwargs):
+        self.problem_branch2.set_as_head(self.problem_branch1.head)
+        r = self.problem_branch1.head
+        s = mommy.make(Subtask, problem=r, name="t")
+        v = mommy.make(Validator, problem=r, global_validator=False)
+        v._subtasks.add(s)
+        r2 = self.problem_branch2.get_or_create_working_copy(self.problem.creator)
+        r2.validator_set.all()[0]._subtasks.clear()
+        r2.commit("Committed")
+        self.problem_branch2.set_working_copy_as_head()
+        self.problem_branch2.pull_from_branch(self.problem_branch1)
+        self.assertEqual(len(self.problem_branch2.head.validator_set.all()[0].subtasks), 0)
+
+    def test_validator_subtask_merge2(self, *args, **kwargs):
+        self.problem_branch2.set_as_head(self.problem_branch1.head)
+        r = self.problem_branch1.head
+        s = mommy.make(Subtask, problem=r, name="t")
+        v = mommy.make(Validator, problem=r, global_validator=False)
+        r2 = self.problem_branch2.get_or_create_working_copy(self.problem.creator)
+        r2.validator_set.all()[0]._subtasks.add(r2.subtasks.all()[0])
+        r2.commit("Committed")
+        self.problem_branch2.set_working_copy_as_head()
+        self.problem_branch1.pull_from_branch(self.problem_branch2)
+        self.assertEqual(len(self.problem_branch1.head.validator_set.all()[0].subtasks), 1)
 
 
 
