@@ -1,6 +1,7 @@
 # Amir Keivan Mohtashami
 import logging
 import json
+import os
 
 from django.conf import settings
 from django.db import models
@@ -97,7 +98,7 @@ def report_failed_on_exception(func):
             self.verdict = SolutionRunVerdict.judge_failed
             self.execution_message = str(e)
             self.save()
-            raise e
+            logger.error(e, exc_info=True)
     return wrapper
 
 
@@ -218,11 +219,17 @@ class SolutionRunResult(models.Model):
 
         task_type = problem.get_task_type()
 
+
         evaluation_result = task_type.generate_output(
             problem_code,
             testcase_code,
             self.solution.language,
-            (self.solution.name, self.solution.code),
+            (
+                problem.problem_data.code_name +
+                os.path.splitext(self.solution.name)[1],
+                self.solution.code
+            )
+            ,
         )
         self.solution_output, solution_execution_success, \
         self.solution_execution_time, self.solution_memory_usage, \

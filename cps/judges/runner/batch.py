@@ -33,17 +33,24 @@ class Batch(TaskType):
                    if any([grader.name.endswith(x) for x in get_valid_extensions(language)])
                    ]
         name, file = solution_file
-        code_name = name
+        code_name = revision.problem_data.code_name
         compiled_file_name = "code.out"
+        normal_names = [name]
+        prioritized_names = []
+        for grader_name, _ in graders:
+            if grader_name.startswith("grader"):
+                prioritized_names.append(grader_name)
+            else:
+                normal_names.append(grader_name)
         compile_commands = get_compilation_commands(
             language,
-            [code_name] + [name for name, _ in graders],
+            prioritized_names + normal_names,
             compiled_file_name
         )
 
         action = ActionDescription(
             commands=compile_commands,
-            files=[(code_name, file)] + graders,
+            files=[(name, file)] + graders,
             output_files=[compiled_file_name],
             time_limit=self.judge.compile_time_limit,
             memory_limit=self.judge.compile_memory_limit,
@@ -65,12 +72,18 @@ class Batch(TaskType):
             )
 
         compiled = outputs[compiled_file_name]
-
-        execution_command = get_execution_command(language, "compiled")
+        if language == "java":
+            if "grader.java" in [name for name, _ in graders]:
+                main = "grader"
+            else:
+                main = code_name
+        else:
+            main = None
+        execution_command = get_execution_command(language, compiled_file_name, main=main)
         stdout_redirect = "output.txt"
         action = ActionDescription(
             commands=[execution_command],
-            executables=[("compiled", compiled)],
+            executables=[(compiled_file_name, compiled)],
             files=[("input.txt", testcase.input_file)],
             stdin_redirect="input.txt",
             stdout_redirect=stdout_redirect,
@@ -81,7 +94,10 @@ class Batch(TaskType):
         success, execution_success, outputs, execution_sandbox_datas = execute_with_input(action)
 
         if not success:
-            evaluation_success = False
+            return EvaluationResult(
+                success=False,
+                verdict=JudgeVerdict.invalid_submission
+            )
         else:
             evaluation_success = True
 

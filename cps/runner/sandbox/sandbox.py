@@ -502,7 +502,7 @@ class IsolateSandbox(SandboxBase):
         self.stack_space = None  # -k
         self.address_space = None  # -m
         self.stdout_file = None  # -o
-        self.max_processes = 1  # -p
+        self.max_processes = 1000  # -p
         self.stderr_file = None  # -r
         self.timeout = None  # -t
         self.verbosity = 0  # -v
@@ -513,6 +513,12 @@ class IsolateSandbox(SandboxBase):
         # Specifically needed by Python, that searches the home for
         # packages.
         self.set_env["HOME"] = "./"
+
+        # Needed on Ubuntu by PHP (and more, ) that
+        # have in /usr/bin only a symlink to one out of many
+        # alternatives.
+        if os.path.isdir("/etc/alternatives"):
+            self.add_mapped_directories(["/etc/alternatives"])
 
         # Tell isolate to get the sandbox ready.
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
