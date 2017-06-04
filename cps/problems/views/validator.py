@@ -60,7 +60,7 @@ ValidatorDeleteView = ProblemObjectDeleteView.as_view(
 
 class ValidatorShowSourceView(ProblemObjectShowSourceView):
     model = Validator
-    code_field_name = "source_file"
+    code_field_name = "file"
     language_field_name = "source_language"
     instance_slug = "validator_id"
 

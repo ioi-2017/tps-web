@@ -59,7 +59,7 @@ CheckerDeleteView = ProblemObjectDeleteView.as_view(
 
 class CheckerShowSourceView(ProblemObjectShowSourceView):
     model = Checker
-    code_field_name = "source_file"
+    code_field_name = "file"
     language_field_name = "source_language"
     instance_slug = "checker_id"
 

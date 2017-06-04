@@ -17,6 +17,9 @@ __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
            "ProblemObjectShowSourceView", "ProblemObjectDownloadView", ]
 
+import magic
+
+
 
 class ProblemObjectView(View):
     @classonlymethod
@@ -227,8 +230,9 @@ class ProblemObjectShowSourceView(RevisionObjectView):
         instance_pk = kwargs.get(self.instance_slug)
         instance = self.model.objects.get(pk=instance_pk)
         code_file = getattr(instance, self.code_field_name)
-        code_file.file.open()
-        code = code_file.file.read()
+        file_ = code_file.file
+        file_.open()
+        code = file_.read()
         lang = getattr(instance, self.language_field_name)
         title = str(instance)
         return render(request, self.template_name, context={
@@ -251,9 +255,12 @@ class ProblemObjectDownloadView(RevisionObjectView):
     def get_name(self, request, *args, **kwargs):
         raise NotImplementedError("Must be implemented in subclasses")
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         file = self.get_file(request, *args, **kwargs)
-        response = HttpResponse(file, content_type='application/file')
+        file.open()
+        content_type = magic.from_buffer(file.read(1024), mime=True)
+        file.open()
+        response = HttpResponse(file, content_type=content_type)
         response['Content-Disposition'] = 'attachment; filename=%s' % self.get_name(request, *args, **kwargs)
 
         return response

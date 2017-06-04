@@ -67,7 +67,7 @@ GeneratorDeleteView = ProblemObjectDeleteView.as_view(
 
 class GeneratorShowSourceView(ProblemObjectShowSourceView):
     model = InputGenerator
-    code_field_name = "source_file"
+    code_field_name = "file"
     language_field_name = "source_language"
     instance_slug = "generator_id"
 
