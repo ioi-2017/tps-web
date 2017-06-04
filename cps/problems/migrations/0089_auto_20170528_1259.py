@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(unique_testcases),
+        migrations.RunPython(unique_testcases, migrations.RunPython.noop),
 
         migrations.AlterUniqueTogether(
             name='testcase',
