@@ -10,3 +10,5 @@ django-import-export
 gnupg
 django-debug-toolbar
 redis
+python-magic
+

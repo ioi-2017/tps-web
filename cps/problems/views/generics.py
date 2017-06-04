@@ -1,9 +1,11 @@
 from functools import update_wrapper
 
+import magic
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import classonlymethod
@@ -13,12 +15,11 @@ from file_repository.models import FileModel
 from problems.views.utils import extract_revision_data
 from django.utils.translation import ugettext as _
 
+from django.db.models import ObjectDoesNotExist
+
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
            "ProblemObjectShowSourceView", "ProblemObjectDownloadView", ]
-
-import magic
-
 
 
 class ProblemObjectView(View):
@@ -171,7 +172,10 @@ class ProblemObjectEditView(RevisionObjectView):
         })
 
     def post(self, request, problem_id, revision_slug, *args, **kwargs):
-        instance = self.get_instance(request, *args, **kwargs)
+        try:
+            instance = self.get_instance(request, *args, **kwargs)
+        except ObjectDoesNotExist:
+            raise Http404
         form = self.model_form(request.POST, request.FILES,
                                problem=self.problem,
                                revision=self.revision,
@@ -183,7 +187,11 @@ class ProblemObjectEditView(RevisionObjectView):
         return self._show_form(request, form, instance)
 
     def get(self, request, problem_id, revision_slug, *args, **kwargs):
-        instance = self.get_instance(request, *args, **kwargs)
+        try:
+            instance = self.get_instance(request, *args, **kwargs)
+        except ObjectDoesNotExist:
+            raise Http404
+
         form = self.model_form(problem=self.problem,
                                revision=self.revision,
                                owner=request.user,
@@ -206,7 +214,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
 
     def post(self, request, problem_id, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
-        instance = self.model.objects.get(pk=instance_pk)
+        instance = get_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
         if "source_code" in request.POST:
             new_file = FileModel()
@@ -214,21 +222,11 @@ class ProblemObjectShowSourceView(RevisionObjectView):
             setattr(instance, self.code_field_name, new_file)
             instance.save()
             messages.success(request, _("Saved successfully"))
-            return HttpResponseRedirect(request.get_full_path())
-        else:
-            code = code_file.file.read()
-            lang = getattr(instance, self.language_field_name)
-            title = str(instance)
-            return render(request, self.template_name, context={
-                "code": code,
-                "lang": lang,
-                "title": title,
-                "next_url": self.get_next_url(request, problem_id, revision_slug, instance)
-            })
+        return HttpResponseRedirect(request.get_full_path())
 
     def get(self, request, problem_id, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
-        instance = self.model.objects.get(pk=instance_pk)
+        instance = get_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
         file_ = code_file.file
         file_.open()
@@ -255,12 +253,12 @@ class ProblemObjectDownloadView(RevisionObjectView):
     def get_name(self, request, *args, **kwargs):
         raise NotImplementedError("Must be implemented in subclasses")
 
-    def get(self, request, *args, **kwargs):
-        file = self.get_file(request, *args, **kwargs)
-        file.open()
-        content_type = magic.from_buffer(file.read(1024), mime=True)
-        file.open()
-        response = HttpResponse(file, content_type=content_type)
+    def post(self, request, *args, **kwargs):
+        file_ = self.get_file(request, *args, **kwargs)
+        file_.open()
+        content_type = magic.from_buffer(file_.read(1024), mime=True)
+        file_.open()
+        response = HttpResponse(file_, content_type=content_type)
         response['Content-Disposition'] = 'attachment; filename=%s' % self.get_name(request, *args, **kwargs)
 
         return response
