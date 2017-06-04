@@ -366,7 +366,7 @@ class SandboxBase(object):
         file_.close()
         return file_model
 
-    def get_file_to_string(self, path, maxlen=1024):
+    def get_file_to_string(self, path, maxlen=None):
         """Return the content of a file in the sandbox given its
         relative path.
 
