@@ -17,23 +17,9 @@ def unique_object_name(objects):
 
 
 def unique_graders_and_solutions(apps, schema_editor):
-    from problems.models import InputGenerator, ProblemRevision
+    from problems.models import ProblemRevision
 
-    disabled_generators = []
-
-    print("disabling generators...")
-    total = InputGenerator.objects.count()
-
-    for i, generator in enumerate(InputGenerator.objects.all()):
-
-        if i == 0 or 100 * (i - 1) // total != 100 * i // total:
-            print("{}%".format(100 * i // total))
-
-        if generator.is_enabled:
-            generator.disable()
-            disabled_generators.append(generator)
-
-    print("renaming duplicate testcases!")
+    print("renaming duplicate objects!")
     total = ProblemRevision.objects.count()
 
     for i, problemRevision in enumerate(ProblemRevision.objects.all()):
@@ -41,17 +27,6 @@ def unique_graders_and_solutions(apps, schema_editor):
             print("{}%".format(100 * i // total))
         unique_object_name(problemRevision.subtasks.all())
         unique_object_name(problemRevision.grader_set.all())
-
-    print('enabling disabled generators...')
-    total = len(disabled_generators)
-
-    for i, generator in enumerate(disabled_generators):
-        if i == 0 or 100*(i-1)//total != 100*i//total:
-            print("{}%".format(100*i//total))
-        try:
-            generator.enable()
-        except:
-            pass
 
 
 class Migration(migrations.Migration):
