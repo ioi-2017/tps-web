@@ -253,7 +253,7 @@ class ProblemObjectDownloadView(RevisionObjectView):
     def get_name(self, request, *args, **kwargs):
         raise NotImplementedError("Must be implemented in subclasses")
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         file_ = self.get_file(request, *args, **kwargs)
         file_.open()
         content_type = magic.from_buffer(file_.read(1024), mime=True)
