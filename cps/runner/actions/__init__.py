@@ -1,5 +1,7 @@
 import logging
 
+from runner.sandbox.sandbox import SandboxBase
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,6 +74,8 @@ def run_compilation_commands(sandbox, commands,
         stderrs.append(stderr)
         if not execution_result:
             return False, stdouts, stderrs
+        if sandbox.get_exit_status() != SandboxBase.EXIT_OK:
+            return True, stdouts, stderrs
         idx += 1
     return True, stdouts, stderrs
 
