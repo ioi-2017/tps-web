@@ -301,6 +301,7 @@ class TestCase(RevisionObject):
     class Meta:
         ordering = ("problem", "name",)
         unique_together = ("problem", "name",)
+        index_together = ("problem", "name",)
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
@@ -650,6 +651,11 @@ class Subtask(RevisionObject):
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
+
+    class Meta:
+        ordering = ("problem", "name",)
+        unique_together = ("problem", "name",)
+        index_together = ("problem", "name",)
 
     @staticmethod
     def get_matching_fields():

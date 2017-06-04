@@ -15,6 +15,10 @@ class Grader(RevisionObject):
     code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
 
+    class Meta:
+        unique_together = ("problem", "name", )
+        index_together = ("problem", "name", )
+
     def __str__(self):
         return self.name
 

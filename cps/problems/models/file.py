@@ -68,6 +68,7 @@ class ResourceBase(RevisionObject):
     class Meta:
         abstract = True
         unique_together = ("problem", "name")
+        index_together = ("problem", "name",)
 
     def __str__(self):
         return self.name
