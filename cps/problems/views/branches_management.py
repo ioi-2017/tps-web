@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -430,6 +432,12 @@ class DiscardWorkingCopy(BranchControlView):
     def post(self, request, *args, **kwargs):
         if self.branch.has_working_copy() and self.revision == self.branch.working_copy:
             self.branch.working_copy.delete()
+            if settings.DISABLE_BRANCHES:
+                self.branch.refresh_from_db()
+                new_name = self.branch.name + "_old_" + str(datetime.datetime.now().timestamp());
+                self.branch.name = new_name[:30]
+                self.branch.save()
+
             messages.success(request, _("Discarded successfully"))
         else:
             messages.error(request, _("Nothing to discard"))
