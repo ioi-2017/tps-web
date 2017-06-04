@@ -41,7 +41,7 @@
             {% if lang == "c++" %}
                 language: "cpp"
             {% elif lang %}
-                language: {{ lang }}
+                language: "{{ lang }}"
             {% endif %}
             });
             $("#source_code_form").submit(function() {
