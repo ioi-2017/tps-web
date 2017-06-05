@@ -21,7 +21,7 @@ class JSONExporter(BaseExporter):
     VALIDATOR_DIR_NAME = "validators"
     SUBTASKS_DIR_NAME = "subtasks"
     CHECKER_DIR_NAME = "checker"
-    GRADER_DIR_NAME = "grader"
+    GRADER_DIR_NAME = "graders"
     OTHER_FILES_DIR_NAME = "others"
 
     def __init__(self, revision):
@@ -59,7 +59,7 @@ class JSONExporter(BaseExporter):
             })
 
         self.write_to_file(
-            "{problem_code}.json".format(problem_code=problem_data.code_name),
+            "problem.json".format(problem_code=problem_data.code_name),
             json.dumps(problem_data_dict)
         )
 
@@ -130,10 +130,14 @@ class JSONExporter(BaseExporter):
                     subtask_name=subtask.name,
                 ),
                 json.dumps(
-                    [
-                        generate_clean_name(t.name)
-                        for t in subtask.testcases.all()
-                    ]
+                    {
+                        "score": subtask.score,
+                        "testcases":
+                            [
+                                generate_clean_name(t.name)
+                                for t in subtask.testcases.all()
+                            ]
+                    }
                 )
             )
 
