@@ -195,7 +195,7 @@ class ProblemRevision(models.Model):
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
 
     judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
-    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"))
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"), default=None)
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     USER_REVISION_OBJECTS = [

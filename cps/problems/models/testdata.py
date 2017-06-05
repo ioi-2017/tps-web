@@ -682,5 +682,6 @@ class Subtask(RevisionObject):
         for testcase in self.testcases.all():
             if testcase in cloned_instances:
                 testcases.append(cloned_instances[testcase])
+        cloned_instances[self].testcases.clear()
         if len(testcases) > 0:
             cloned_instances[self].testcases.add(*testcases)
