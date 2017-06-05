@@ -22,6 +22,7 @@ class JSONExporter(BaseExporter):
     SUBTASKS_DIR_NAME = "subtasks"
     CHECKER_DIR_NAME = "checker"
     GRADER_DIR_NAME = "grader"
+    OTHER_FILES_DIR_NAME = "others"
 
     def __init__(self, revision):
         super().__init__(revision)
@@ -61,6 +62,23 @@ class JSONExporter(BaseExporter):
             "{problem_code}.json".format(problem_code=problem_data.code_name),
             json.dumps(problem_data_dict)
         )
+
+        self.write_to_file(
+            "statement.md",
+            problem_data.statement
+        )
+
+        # Exporting problem files
+        self.create_directory(self.OTHER_FILES_DIR_NAME)
+        for file in self.revision.problem.files.all():
+            self.extract_from_storage_to_path(
+                file,
+                os.path.join(
+                    self.OTHER_FILES_DIR_NAME,
+                    file.name
+                )
+            )
+
 
         # Exporting testcases
 
