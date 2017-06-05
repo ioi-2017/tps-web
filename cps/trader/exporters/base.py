@@ -17,7 +17,7 @@ class BaseExporter(object):
 
         self.temp_dir = tempfile.TemporaryDirectory()
         self.outer_temp_path = self.temp_dir.name
-        self.path = os.path.join(self.outer_temp_path, "problem_data")
+        self.path = os.path.join(self.outer_temp_path, revision.problem_data.code_name)
         self.archives_path = os.path.join(self.outer_temp_path, "archives")
         os.mkdir(self.path)
         os.mkdir(self.archives_path)
@@ -64,7 +64,9 @@ class BaseExporter(object):
 
         full_name = os.path.join(self.archives_path, name)
 
-        archive_name = shutil.make_archive(full_name, format, root_dir=self.path)
+        archive_name = shutil.make_archive(full_name, format,
+                                           root_dir=self.outer_temp_path,
+                                           base_dir=self.revision.problem_data.code_name)
 
         archive_ = open(archive_name, "rb")
 
@@ -84,4 +86,4 @@ class BaseExporter(object):
 
     def create_directory(self, path):
         absolute_path = self.get_absolute_path(path)
-        os.makedirs(absolute_path)
+        os.makedirs(absolute_path, exist_ok=True)

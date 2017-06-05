@@ -29,28 +29,41 @@ class ExportPackage(models.Model):
     export_format = models.CharField(max_length=20, choices=EXPORT_FORMAT_CHOICES, verbose_name=_("export format"), default="zip")
     archive = models.ForeignKey(FileModel, verbose_name=_("archive"), null=True, editable=False)
 
+    creation_task_id = models.CharField(verbose_name=_("creation task id"), max_length=128, null=True)
+    creation_successful = models.NullBooleanField(verbose_name=_("creation success"))
+
+    class Meta:
+        ordering = ('-creation_date', )
+
     def _create_archive(self):
         exporter_class = get_exporter(self.exporter)
         with exporter_class(self.revision) as exporter_obj:
-            exporter_obj.do_export()
-            self.archive = exporter_obj.extract_archive_to_storage(
-                self.revision.problem_data.code_name,
-                format=self.export_format
-            )
+            try:
+                exporter_obj.do_export()
+                self.archive = exporter_obj.extract_archive_to_storage(
+                    self.revision.problem_data.code_name,
+                    format=self.export_format
+                )
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                self.creation_successful = False
+            else:
+                self.creation_successful = True
             self.save()
 
     def create_archive(self):
-        if self.creation_task_id is not None:
+        if not self.being_created:
+            self.creation_successful = None
             self.creation_task_id = ExportPackageCreationTask().delay(self).id
             self.save()
 
     @property
     def is_ready(self):
-        return self.archive is not None
+        return self.creation_successful
 
     @property
     def being_created(self):
-        return not self.is_ready and self.creation_task_id is not None
+        return self.creation_successful is None and self.creation_task_id is not None
 
 
 class ExportPackageCreationTask(CeleryTask):

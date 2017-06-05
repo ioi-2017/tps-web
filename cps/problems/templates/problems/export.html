@@ -41,12 +41,18 @@
                             <td>
                                 {{ exp.export_format }}
                             </td>
-                            {% if exp.is_ready %}
+                            {% if exp.creation_successful %}
                                 <td>
-                                    <a href="{% problem_url "problems:export_download" exp.pk %}" class="btn btn-success"> {% trans "Download" %}</a>
+                                    <a href="{% problem_url "problems:export_download" exp.pk %}" class="btn btn-success"> {% trans "Download" %}</a> <br/>
+                                    <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Regenerate" %}</a>
                                 </td>
                             {% elif exp.being_created %}
                                 <td> {% trans "Please Wait" %} <br> {% trans "Generating" %}</td>
+                            {% elif exp.creation_successful == False %}
+                                <td>
+                                    {% trans "Failed" %} <br />
+                                    <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Retry" %}</a>
+                                </td>
                             {% else %}
                                 <td>
                                     <a data-method="post" href="{% problem_url "problems:export_start" exp.pk %}" class="btn btn-warning"> {% trans "Generate" %}</a>
@@ -68,18 +74,13 @@
             <div class="row">
                 <h2> {% trans 'Create Export Package' %} </h2>
             </div>
-            {% if is_master %}
-                <div>
-                    {% trans "You can only create export package in Master!" %}
-                </div>
-            {% else %}
-                <div class="col-md-4">
-                    <form method="POST" class="">
-                        {% bootstrap_form form %}
-                        {% csrf_token %}
-                        <button class="btn btn-primary" type="submit">{% trans "Create" %}</button>
-                    </form>
-                </div>
-            {% endif %}
+            <div class="col-md-4">
+                <form method="POST" class="">
+                    {% bootstrap_form form %}
+                    {% csrf_token %}
+                    <button class="btn btn-primary" type="submit">{% trans "Create" %}</button>
+                </form>
+            </div>
+
         </div>
 {% endblock %}
