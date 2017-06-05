@@ -37,48 +37,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(unique_graders_and_solutions, migrations.RunPython.noop),
-        migrations.AlterModelOptions(
-            name='subtask',
-            options={'ordering': ('problem', 'name')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='grader',
-            unique_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterUniqueTogether(
-            name='subtask',
-            unique_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='checker',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='grader',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='inputgenerator',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='resource',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='solution',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='subtask',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='testcase',
-            index_together=set([('problem', 'name')]),
-        ),
-        migrations.AlterIndexTogether(
-            name='validator',
-            index_together=set([('problem', 'name')]),
-        ),
+
     ]
