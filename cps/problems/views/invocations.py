@@ -9,7 +9,7 @@ from judge.results import JudgeVerdict
 from problems.forms.invocation import InvocationAddForm
 from problems.forms.solution import SolutionAddForm
 from problems.models import Solution, SolutionRun, SolutionRunResult, SolutionSubtaskExpectedVerdict
-from problems.models.enums import SolutionVerdict
+from problems.models.enums import SolutionVerdict, SolutionRunVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
 
 __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView",
@@ -19,7 +19,7 @@ __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "Inv
 
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug):
-        invocations = self.revision.solutionrun_set.all()
+        invocations  = self.revision.solutionrun_set.all()
         return render(request, "problems/invocations_list.html", context={
             "invocations": invocations
         })
@@ -177,7 +177,7 @@ class InvocationOutputDownloadView(RevisionObjectView):
             "id": result_id,
             "solution_run__problem": self.revision,
         })
-        if not obj.checker_execution_success:
+        if obj.verdict in [SolutionRunVerdict.ok, SolutionRunVerdict.checker_failed]:
             raise Http404()
         response = HttpResponse(obj.solution_output.file, content_type='application/file')
         name = "attachment; filename=solution.out"

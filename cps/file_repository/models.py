@@ -42,9 +42,9 @@ class FileModel(models.Model):
     def get_value_as_string(self):
         self.file.open()
         try:
-            return self.file.file.read().decode("utf-8")
+            return self.file.read().decode("utf-8")
         except UnicodeDecodeError:
-            return self.file.get_file_hash()
+            return self.get_file_hash()
 
     def get_truncated_content(self, len=255):
         content = self.file.read(len)

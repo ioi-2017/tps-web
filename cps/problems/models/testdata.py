@@ -186,7 +186,7 @@ class TestCaseInputGeneration(CeleryTask):
 
     def execute_child_tasks(self, testcase):
         for validator in testcase.validators:
-            validator.validate_testcase(testcase)
+            validator.validate_testcase(testcase, force_recreate=True)
         testcase.output_generation_task_id = TestCaseOutputGeneration().delay(testcase)
         testcase.save()
 
