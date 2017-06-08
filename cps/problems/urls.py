@@ -46,7 +46,7 @@ problem_urls = ([
         url(r'^resource/(?P<object_id>\d+)/delete/$', ResourceDeleteView.as_view(), name="delete_resource"),
         url(r'^resource/(?P<object_id>\d+)/download/$', ResourceDownloadView.as_view(), name="download_resource"),
 
-        url(r'^solutions/$', SolutionsListView.as_view(), name="solutions"),
+        url(r'^solutions/$', GSolutionsListView.as_view(), name="solutions"),
         url(r'^solution/add/$', SolutionAddView.as_view(), name="add_solution"),
         url(r'^solution/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
         url(r'^solution/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),

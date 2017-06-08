@@ -10,9 +10,15 @@ from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
     ProblemObjectShowSourceView, ProblemObjectDownloadView
 
+from problems.models.solution_git import GSolution
+
 __all__ = ["SolutionAddView", "SolutionDeleteView",
            "SolutionEditView", "SolutionsListView", "SolutionShowSourceView",
-           "SolutionDownloadView", ]
+           "SolutionDownloadView",
+
+           # Git related testings
+           "GSolutionsListView",
+           ]
 
 
 class SolutionsListView(RevisionObjectView):
@@ -21,6 +27,16 @@ class SolutionsListView(RevisionObjectView):
         solutions = self.revision.solution_set.all()
 
         return render(request, "problems/solutions_list.html", context={
+            "solutions": solutions
+        })
+
+
+class GSolutionsListView(RevisionObjectView):
+
+    def get(self, request, problem_id, revision_slug):
+        solutions = GSolution.objects.all()
+
+        return render(request, "problems/solutions_list_git.html", context={
             "solutions": solutions
         })
 

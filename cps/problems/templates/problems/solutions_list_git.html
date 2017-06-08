@@ -1,0 +1,51 @@
+    {% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Solutions' %} </h2>
+    </div>
+    {% if revision_editable %}
+    <div class="row">
+        <a href="{% problem_url "problems:add_solution" %}" class="btn btn-success">
+            <i class="fa fa-plus"></i> {% trans 'Add a solution' %}
+        </a>
+    </div>
+    {% endif %}
+    <br />
+    <div class="row">
+        {% if solutions %}
+            {% if errors.solution > 0 %}
+                <h4 class="alert alert-danger">
+                    {% trans 'No model solution specified' %}
+                </h4>
+            {% endif %}
+            <table class="table table-bordered table-responsive table-striped">
+                <thead>
+                    <tr>
+                        <th class="col-md-1">#</th>
+                        <th class="col-md-6">{% trans 'Source Code' %}</th>
+                        <th class="col-md-1">{% trans 'Language' %}</th>
+                        <th class="col-md-3">{% trans 'Verdict' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+            {% for solution in solutions %}
+                    <tr>
+                        <td> {{ forloop.counter }} </td>
+                        <td> {{ solution.pk  }} </td>
+                        <td> {{ solution.get_language_representation }} </td>
+                        <td> {{ solution.verdict }} </td>
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h4 class="alert alert-danger">
+                {% trans 'No solution exists' %}
+            </h4>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'bootstrap3',
     'import_export',
     'debug_toolbar',
+    'django_extensions',
 
     # CPS Apps
     'core',
@@ -229,7 +230,13 @@ CELERY_MAX_RETRIES = None
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
-DISABLE_BRANCHES = False
+DISABLE_BRANCHES = True
+
+# GIT ORM
+from git_orm import set_repository, set_branch
+
+set_repository(os.path.join(BASE_DIR, 'repo'))
+set_branch('master')
 
 
 def SHOW_TOOLBAR(request):

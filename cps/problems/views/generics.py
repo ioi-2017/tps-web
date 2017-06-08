@@ -50,6 +50,8 @@ class ProblemObjectView(View):
             self.problem, self.branch, self.revision = \
                 extract_revision_data(problem_id, revision_slug, request.user)
 
+            #  TODO: set git repo path here
+
             return self.dispatch(request, problem_id, revision_slug, *args, **kwargs)
 
         view.view_class = cls
