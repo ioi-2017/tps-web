@@ -12,6 +12,7 @@ from django.utils.decorators import classonlymethod
 from django.views.generic import View
 
 from file_repository.models import FileModel
+from problems.models import SourceFile
 from problems.views.utils import extract_revision_data
 from django.utils.translation import ugettext as _
 
@@ -221,6 +222,8 @@ class ProblemObjectShowSourceView(RevisionObjectView):
             new_file.file.save(code_file.name, ContentFile(request.POST["source_code"]))
             setattr(instance, self.code_field_name, new_file)
             instance.save()
+            if isinstance(self, SourceFile):
+                self.invalidate_compilation()
             messages.success(request, _("Saved successfully"))
         return HttpResponseRedirect(request.get_full_path())
 
