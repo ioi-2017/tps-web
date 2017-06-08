@@ -35,9 +35,17 @@
             {% for solution in solutions %}
                     <tr>
                         <td> {{ forloop.counter }} </td>
-                        <td> {{ solution.pk  }} </td>
+                        <td> {{ solution.pk }} </td>
                         <td> {{ solution.get_language_representation }} </td>
                         <td> {{ solution.verdict }} </td>
+                        {% if revision_editable %}
+                            <td>
+                                <a class="text-primary"
+                                   href='{% problem_url "problems:edit_solution_git" %}?pk={{ solution.pk }}'>
+                                    <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i>
+                                </a>
+                            </td>
+                        {% endif %}
                     </tr>
             {% endfor %}
                 </tbody>

@@ -41,5 +41,11 @@ class GSolution(models.Model):
                 return repr
         return "Not supported"
 
+    def full_clean(self, exclude=None, validate_unique=True):
+        pass
+
+    def validate_unique(self, exclude=None):
+        pass
+
     def delete(self):
         pass

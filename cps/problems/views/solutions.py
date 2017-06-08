@@ -11,13 +11,15 @@ from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObj
     ProblemObjectShowSourceView, ProblemObjectDownloadView
 
 from problems.models.solution_git import GSolution
+from problems.forms.solution_git import GSolutionAddForm, GSolutionEditForm
 
 __all__ = ["SolutionAddView", "SolutionDeleteView",
            "SolutionEditView", "SolutionsListView", "SolutionShowSourceView",
            "SolutionDownloadView",
 
            # Git related testings
-           "GSolutionsListView",
+           "GSolutionAddView",
+           "GSolutionEditView", "GSolutionsListView",
            ]
 
 
@@ -53,6 +55,18 @@ class SolutionAddView(ProblemObjectAddView):
         })
 
 
+class GSolutionAddView(ProblemObjectAddView):
+    template_name = "problems/add_solution_git.html"
+    model_form = GSolutionAddForm
+    permissions_required = ["add_solution"]
+
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return reverse("problems:solutions", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
+        })
+
+
 class SolutionEditView(ProblemObjectEditView):
     template_name = "problems/edit_solution.html"
     model_form = SolutionEditForm
@@ -66,6 +80,22 @@ class SolutionEditView(ProblemObjectEditView):
 
     def get_instance(self, request, *args, **kwargs):
         return self.revision.solution_set.get(pk=kwargs.get("solution_id"))
+
+
+class GSolutionEditView(ProblemObjectEditView):
+    template_name = "problems/edit_solution_git.html"
+    model_form = GSolutionEditForm
+    permissions_required = ["edit_solution"]
+
+    def get_success_url(self, request, problem_id, revision_slug, obj):
+        return reverse("problems:solutions", kwargs={
+            "problem_id": problem_id,
+            "revision_slug": revision_slug
+        })
+
+    def get_instance(self, request, *args, **kwargs):
+        solution_pk = request.GET['pk']
+        return GSolution.objects.get(pk=solution_pk)
 
 
 SolutionDeleteView = ProblemObjectDeleteView.as_view(
