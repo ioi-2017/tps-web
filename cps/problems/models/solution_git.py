@@ -2,18 +2,24 @@
 
 from django.utils.translation import ugettext_lazy as _
 
+from file_repository.git_file import GitFile
 from git_orm import models
 
 __all__ = ["GSolution"]
+
+
+class SolutionFile(GitFile):
+    name = models.TextField(verbose_name=_("name"), primary_key=True)
+
+    class Meta:
+        storage_name = 'solution/sources'
 
 
 class GSolution(models.Model):
     # _VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
 
     name = models.TextField(verbose_name=_("name"), primary_key=True)
-
-    # TODO: After GitFileField implementation
-    # code = models.models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
+    # code = models.ForeignKey(SolutionFile, verbose_name=_("code"), null=False)
 
     # TODO: Should we validate the language here as well?
     language = models.TextField(verbose_name=_("language"))

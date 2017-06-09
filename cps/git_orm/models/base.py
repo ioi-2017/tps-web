@@ -6,9 +6,17 @@ from git_orm.models.fields import ForeignKey
 from git_orm.models.queryset import QuerySet
 
 
-class DoesNotExist(Exception): pass
-class MultipleObjectsReturned(Exception): pass
-class InvalidObject(Exception): pass
+class DoesNotExist(Exception):
+    pass
+
+
+class MultipleObjectsReturned(Exception):
+    pass
+
+
+class InvalidObject(Exception):
+    pass
+
 
 MODEL_EXCEPTIONS = (DoesNotExist, MultipleObjectsReturned, InvalidObject)
 

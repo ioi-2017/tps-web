@@ -1,6 +1,6 @@
 from functools import update_wrapper
 
-import magic
+# import magic
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile

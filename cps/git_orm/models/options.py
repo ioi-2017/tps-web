@@ -24,7 +24,9 @@ class Options(DjangoOptions):
 
     def add_field(self, field):
         self.fields.append(field)
+        print("here @addfield", self, field, self.model.__name__)
         if not self.pk and field.primary_key:
+            print("here pk set to ", field)
             self.pk = field
 
     def get_field(self, name):
@@ -40,8 +42,10 @@ class Options(DjangoOptions):
 
     def _prepare(self):
         if not self.pk:
+            print("fucked up", self.model.__name__)
             id_field = TextField(
                 primary_key=True, hidden=True, default=lambda: uuid4().hex)
+                # primary_key=True, default=lambda: uuid4().hex)
             self.model.add_to_class('id', id_field)
             self.fields.insert(0, self.fields.pop())
         fieldnames = [f.name for f in self.fields]
