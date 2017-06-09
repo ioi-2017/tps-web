@@ -94,8 +94,7 @@ class GSolutionEditView(ProblemObjectEditView):
         })
 
     def get_instance(self, request, *args, **kwargs):
-        solution_pk = request.GET['pk']
-        return GSolution.objects.get(pk=solution_pk)
+        return GSolution.objects.get(pk=kwargs.get("solution_id"))
 
 
 SolutionDeleteView = ProblemObjectDeleteView.as_view(

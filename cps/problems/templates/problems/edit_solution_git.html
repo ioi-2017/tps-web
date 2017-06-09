@@ -9,7 +9,8 @@
         <div class="col-sm-4"></div>
         <div class="col-sm-6">
             <h1>{% trans 'Edit solution' %}</h1>
-            <form class="form-horizontal" method="post" action="{% problem_url "problems:edit_solution_git" %}?pk={{ instance.pk }}" enctype="multipart/form-data">
+            <form class="form-horizontal" method="post" action="{% problem_url "problems:edit_solution" instance.pk %}"
+                  enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form form %}
                 <div class="form-group">

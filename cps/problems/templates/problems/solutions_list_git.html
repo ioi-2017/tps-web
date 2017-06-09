@@ -41,7 +41,7 @@
                         {% if revision_editable %}
                             <td>
                                 <a class="text-primary"
-                                   href='{% problem_url "problems:edit_solution_git" %}?pk={{ solution.pk }}'>
+                                   href='{% problem_url "problems:edit_solution" solution.pk %}'>
                                     <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i>
                                 </a>
                             </td>

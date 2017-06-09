@@ -48,8 +48,7 @@ problem_urls = ([
 
         url(r'^solutions/$', GSolutionsListView.as_view(), name="solutions"),
         url(r'^solution/add/$', GSolutionAddView.as_view(), name="add_solution"),
-        url(r'^solution/(?P<solution_id>\d+)/edit/$', SolutionEditView.as_view(), name="edit_solution"),
-        url(r'^solution/edit/$', GSolutionEditView.as_view(), name="edit_solution_git"),
+        url(r'^solution/(?P<solution_id>.+)/edit/$', GSolutionEditView.as_view(), name="edit_solution"),
         url(r'^solution/(?P<solution_id>\d+)/delete/$', SolutionDeleteView, name="delete_solution"),
         url(r'^solution/(?P<solution_id>\d+)/source/$', SolutionShowSourceView.as_view(), name="solution_source"),
         url(r'^solution/(?P<solution_id>\d+)/download/$', SolutionDownloadView.as_view(), name="download_solution"),
