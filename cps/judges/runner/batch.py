@@ -38,7 +38,9 @@ class Batch(TaskType):
         normal_names = [name]
         prioritized_names = []
         for grader_name, _ in graders:
-            if grader_name.startswith("grader"):
+            if len(get_valid_extensions(language)) > 0 and \
+                grader_name == "grader.{ext}".format(
+                    ext=get_valid_extensions(language)[0]):
                 prioritized_names.append(grader_name)
             else:
                 normal_names.append(grader_name)
@@ -96,7 +98,8 @@ class Batch(TaskType):
         if not success:
             return EvaluationResult(
                 success=False,
-                verdict=JudgeVerdict.invalid_submission
+                verdict=JudgeVerdict.invalid_submission,
+                message="Sandbox error"
             )
         else:
             evaluation_success = True
