@@ -57,3 +57,11 @@ class TaskType(object):
         :return EvaluationResult: The output and the details of execution of solution
         """
         raise NotImplementedError
+
+    def get_parameters_form(self):
+        """
+
+        :return:
+        """
+        # TODO: write the doc string
+        raise NotImplementedError

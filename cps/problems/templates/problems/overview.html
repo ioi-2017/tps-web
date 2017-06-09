@@ -14,9 +14,19 @@
                 {% csrf_token %}
             {% endif %}
             {% if revision_editable %}
-                {% bootstrap_form form%}
+                {% bootstrap_form form %}
+                {% for tt_name, params_form in params_forms.items %}
+                    <div id="{{ tt_name }}-form" hidden="hidden">
+                        {% bootstrap_form params_form %}
+                    </div>
+                {% endfor %}
             {% else %}
                 {% bootstrap_form form layout='readonly'%}
+                {% for tt_name, params_form in params_forms.items %}
+                    <div id="{{ tt_name }}-form" hidden="hidden">
+                        {% bootstrap_form params_form layout='readonly' %}
+                    </div>
+                {% endfor %}
             {% endif %}
             {% if revision_editable %}
                 <div class="form-group">
@@ -28,4 +38,25 @@
             {% endif %}
         </div>
     </div>
+
+    <script type="application/javascript">
+        var task_type = document.getElementById('id_task_type');
+
+        function hide_and_seek() {
+            var form_id;
+            var form;
+            {% for x in params_forms %}
+                form_id = "{{ x }}-form";
+                form = document.getElementById(form_id);
+                form.hidden = true;
+            {% endfor %}
+
+            form_id = task_type.value + "-form";
+            form = document.getElementById(form_id);
+            form.hidden = false;
+        }
+
+        task_type.onchange = hide_and_seek;
+        hide_and_seek();
+    </script>
 {% endblock %}

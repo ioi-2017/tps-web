@@ -5,6 +5,7 @@ from runner import get_compilation_commands, get_execution_command, get_valid_ex
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
 from runner.actions.execute_with_input import execute_with_input
+from django import forms
 
 
 class Batch(TaskType):
@@ -116,3 +117,10 @@ class Batch(TaskType):
                 execution_memory=sum(int(sandbox["execution_memory"]) for sandbox in execution_sandbox_datas) / 1024,
                 verdict=self.judge.get_verdict_from_exit_status(execution_sandbox_datas[0]["exit_status"]),
         )
+
+    def get_parameters_form(self):
+        class ParamsForm(forms.Form):
+            def save(self):
+                pass
+
+        return ParamsForm
