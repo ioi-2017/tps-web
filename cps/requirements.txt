@@ -11,4 +11,6 @@ gnupg
 django-debug-toolbar
 redis
 python-magic
+pygit2
+django-extensions
 

@@ -7,7 +7,9 @@ _branch = 'git-orm'
 _remote = 'origin'
 
 
-class GitError(Exception): pass
+class GitError(Exception):
+    pass
+
 
 def set_repository(value):
     from pygit2 import discover_repository, Repository
@@ -21,6 +23,7 @@ def set_repository(value):
         raise GitError('no repository found in "{}"'.format(value))
     _repository = Repository(path)
 
+
 def get_repository():
     return _repository
 
@@ -29,6 +32,7 @@ def set_branch(value):
     global _branch
     _branch = value
 
+
 def get_branch():
     return _branch
 
@@ -36,6 +40,7 @@ def get_branch():
 def set_remote(value):
     global _remote
     _remote = value
+
 
 def get_remote():
     return _remote
