@@ -39,7 +39,7 @@ class Batch(TaskType):
         prioritized_names = []
         for grader_name, _ in graders:
             if len(get_valid_extensions(language)) > 0 and \
-                grader_name == "grader.{ext}".format(
+                grader_name == "grader{ext}".format(
                     ext=get_valid_extensions(language)[0]):
                 prioritized_names.append(grader_name)
             else:
@@ -63,7 +63,7 @@ class Batch(TaskType):
         testcase = TestCase.objects.get(problem_id=problem_code, name=testcase_code)
 
         success, compilation_success, outputs, stdout, stderr, compilation_sandbox_data = compile_source(action)
-        if not success or not compilation_success:
+        if not success or not compilation_success or outputs[compiled_file_name] is None:
             compilation_message = "Compilation not successful"
             compilation_message += "Standard output:\n" + stdout
             compilation_message += "Standard error:\n" + stderr
