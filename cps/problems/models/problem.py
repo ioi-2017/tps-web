@@ -237,6 +237,9 @@ class ProblemRevision(models.Model):
         self.judge_initialization_task_id = None
         self.judge_initialization_successful = None
         self.save()
+        testcases = self.testcase_set.all()
+        for testcase in testcases:
+            testcase.invalidate()
 
     def judge_initialization_completed(self):
         return self.judge_initialization_successful is not None
