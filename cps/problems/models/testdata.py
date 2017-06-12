@@ -33,6 +33,9 @@ class InputGenerator(SourceFile):
         names = set()
 
         def line_valid(line_id, line):
+            line = line.strip()
+            if len(line) == 0:
+                return
             line_split = shlex.split(line)
 
             if '>' not in line_split:
@@ -67,7 +70,7 @@ class InputGenerator(SourceFile):
                                                      params={'line': line_id, 'subtask': subtask_name})
                     })
 
-        for i, line in enumerate(text.split("\n")):
+        for i, line in enumerate(text.split("\n"), start=1):
             line_valid(i, line)
 
     def clean(self):
