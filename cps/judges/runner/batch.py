@@ -120,7 +120,7 @@ class Batch(TaskType):
 
     def get_parameters_form(self):
         class ParamsForm(forms.Form):
-            def save(self):
+            def save(self, *args, **kwargs):
                 pass
 
         return ParamsForm

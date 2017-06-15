@@ -15,19 +15,10 @@
             {% endif %}
             {% if revision_editable %}
                 {% bootstrap_form form %}
-                {% for tt_name, params_form in params_forms.items %}
-                    <div id="{{ tt_name }}-form" hidden="hidden">
-                        {% bootstrap_form params_form %}
-                    </div>
-                {% endfor %}
             {% else %}
                 {% bootstrap_form form layout='readonly'%}
-                {% for tt_name, params_form in params_forms.items %}
-                    <div id="{{ tt_name }}-form" hidden="hidden">
-                        {% bootstrap_form params_form layout='readonly' %}
-                    </div>
-                {% endfor %}
             {% endif %}
+                <div id="task-type-params"></div>
             {% if revision_editable %}
                 <div class="form-group">
                     <button type="submit" class="form-control btn btn-success">
@@ -36,6 +27,17 @@
                 </div>
             </form>
             {% endif %}
+
+            {% for tt_name, params_form in params_forms.items %}
+                <div id="{{ tt_name }}-form" hidden="hidden">
+                    {% if revision_editable %}
+                        {% bootstrap_form params_form %}
+                    {% else %}
+                        {% bootstrap_form params_form layout='readonly' %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+
         </div>
     </div>
 
@@ -43,17 +45,10 @@
         var task_type = document.getElementById('id_task_type');
 
         function hide_and_seek() {
-            var form_id;
-            var form;
-            {% for x in params_forms %}
-                form_id = "{{ x }}-form";
-                form = document.getElementById(form_id);
-                form.hidden = true;
-            {% endfor %}
-
-            form_id = task_type.value + "-form";
-            form = document.getElementById(form_id);
-            form.hidden = false;
+            var params_form_id = task_type.value + "-form";
+            var params_form = document.getElementById(params_form_id);
+            var params_div = document.getElementById('task-type-params');
+            params_div.innerHTML = params_form.innerHTML;
         }
 
         task_type.onchange = hide_and_seek;

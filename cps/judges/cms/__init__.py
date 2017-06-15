@@ -6,48 +6,41 @@ To use this judge, add the following commands into local_settings.py:
 
 JUDGE_DEFAULT_NAME = 'cms'
 
-CMS_API_ADDRESS = '<the-api-address-with-trailing-slash>'
-
 JUDGE_HANDLERS = {
     'cms': {
         'class': 'judges.cms.CMS',
-        'parameters': {}
+        'parameters': {
+            'api_address': '<the-api-address-with-trailing-slash>',
+        }
     }
 }
 """
 
 
 from judge import Judge
-from judge.results import JudgeVerdict
 from .batch import Batch
 from .communication import Communication
 from .output_only import OutputOnly
 from .two_steps import TwoSteps
-import requests
-import json
-from django.conf import settings
 
 
 class CMS(Judge):
-    def __init__(self):
+    def __init__(self, api_address):
         self.task_types = {
             "Batch": Batch,
             "Communication": Communication,
             "OutputOnly": OutputOnly,
             "TwoSteps": TwoSteps
         }
+        self.api_address = api_address
 
     def get_task_types(self):
-        response = requests.get(settings.CMS_API_ADDRESS + 'tasktypes/')
-        if response.status_code != 200:
-            raise ConnectionError("Cannot connect to CMS API")
-        return json.loads(response.text)
+        return list(self.task_types.keys())
 
     def get_supported_languages(self):
-        response = requests.get(settings.CMS_API_ADDRESS + 'languages')
-        if response.status_code != 200:
-            raise ConnectionError("Cannot connect to CMS API")
-        return json.loads(response.text) + ['text']
+        return ["C++11 / g++", "C11 / gcc", "Haskell / ghc",
+                "Java 1.4 / gcj", "Java / JDK", "Pascal / fpc", "PHP",
+                "Python 2 / CPython", 'text']
 
     def get_task_type(self, name, fallback_to_default=True):
         if name not in self.task_types:

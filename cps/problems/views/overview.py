@@ -48,7 +48,7 @@ class Overview(RevisionObjectView):
                     obj = form.save()
                     params_form.save(self.revision)
                     return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
-        return self._show_form(request, form, params_form, instance)
+        return self._show_form(request, form, {new_task_type: params_form}, instance)
 
     def get(self, request, problem_id, revision_slug, *args, **kwargs):
         instance = self.get_instance(request, *args, **kwargs)

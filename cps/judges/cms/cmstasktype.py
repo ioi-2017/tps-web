@@ -1,11 +1,11 @@
 # coding=utf-8
+import re
 
 from judge.tasktype import TaskType
 import json
 import base64
 import requests
 import time
-from django.conf import settings
 from judge.results import EvaluationResult, JudgeVerdict
 from file_repository.models import FileModel
 from django.core.files.base import ContentFile
@@ -26,18 +26,21 @@ def FileModel_to_base64(filemodel):
     return base64.b64encode(text).decode('utf-8')
 
 
-def get_judge_verdict_from_cms(status, compiled):
-    if compiled == '["Compilation failed"]':
+def get_judge_verdict_from_cms(status, compiled, output):
+    if compiled[0] != "Compilation succeeded":
         return False, JudgeVerdict.compilation_failed
-    if status == '["Execution completed successfully"]':
-        return True, JudgeVerdict.ok
-    if status == '["Execution timed out"]':
+
+    if status[0] == "Execution timed out" or \
+            status[0] == "Execution timed out (wall clock limit exceeded)":
         return False, JudgeVerdict.time_limit_exceeded
-    # FIXME: not so specific
-    return False, JudgeVerdict.runtime_error
+
+    if output is None:
+        return False, JudgeVerdict.runtime_error
+
+    return True, JudgeVerdict.ok
 
 
-def create_evaluation_result(problem_code='', submission_id='', failed=False, evalres=None, message=''):
+def create_evaluation_result(failed=False, evalres=None, message=''):
     if failed:
         return EvaluationResult(
             success=False,
@@ -48,25 +51,18 @@ def create_evaluation_result(problem_code='', submission_id='', failed=False, ev
             message=message
         )
 
-    success, verdict = get_judge_verdict_from_cms(evalres['evalres'], evalres['compiled'])
+    success, verdict = \
+        get_judge_verdict_from_cms(evalres['evalres'], evalres['compiled'], evalres['output'])
 
     output_file = None
+    execution_memory = 0
     if success:
-        response = requests.get(settings.CMS_API_ADDRESS + 'task/'
-                                + problem_code + '/test/' + submission_id
-                                + '/output')
-        if response.status_code != 200:
-            return create_evaluation_result(failed=True,
-                                            message='%d Error' % response.status_code)
-        result = json.loads(response.text)
-        output_body = base64.b64decode(result['message']).decode('utf-8')
-
+        output_body = base64.b64decode(evalres['output']).decode('utf-8')
         output_file = FileModel()
-        output_file.file.save('output_' + problem_code + '_' + submission_id,
-                              ContentFile(output_body))
+        output_file.file.save('output', ContentFile(output_body))
         output_file.save()
 
-    execution_memory = float(evalres['memory']) / 1024 / 1024
+        execution_memory = float(evalres['memory']) / 1024 / 1024
 
     return EvaluationResult(
         success=success,
@@ -79,9 +75,8 @@ def create_evaluation_result(problem_code='', submission_id='', failed=False, ev
 
 
 def _should_continue(evalres):
-    if evalres['evalres'] is None:
-        return True
-    return False
+    return evalres['result'] is None or \
+        evalres['compiled'][0] == "Compilation succeeded" and evalres['evalres'] is None
 
 
 class CMSTaskType(TaskType):
@@ -98,14 +93,6 @@ class CMSTaskType(TaskType):
         """See TaskType.initialize_problem
            task_type is a string containing the name of the task type
         """
-        def send_request():
-            response = requests.post(settings.CMS_API_ADDRESS + 'tasks/add',
-                                     data=payload)
-            if response.status_code != 200:
-                return False, "%d Error" % response.status_code
-            result = json.loads(response.text)
-            return result
-
         problem_code = str(problem_code)
 
         managers = dict()
@@ -131,11 +118,16 @@ class CMSTaskType(TaskType):
                    'submission_format': '["solution.%l"]'}
         payload.update(tt_params)
 
-        result = send_request()
+        response = requests.post(self.judge.api_address + 'tasks/add',
+                                 data=payload)
+        if response.status_code != 200:
+            return False, "%d Error" % response.status_code
+        result = json.loads(response.text)
 
         if result['status'] is False and result['message'] == \
                 'A problem with this name already exists':
-            response = requests.get(settings.CMS_API_ADDRESS + 'task/'
+            logger.warning('Task with this name found. Deleting it now...')
+            response = requests.get(self.judge.api_address + 'task/'
                                     + problem_code + '/remove')
             if response.status_code != 200:
                 return False, "%d Error while deleting" % response.status_code
@@ -143,20 +135,15 @@ class CMSTaskType(TaskType):
             if result['status'] is False:
                 return False, result['message']
 
-            result = send_request()
-
-        return result['status'], result['message']
-
-    def add_testcase(self, problem_code, testcase_code, input_file):
-        def send_request():
-            response = requests.post(settings.CMS_API_ADDRESS + 'task/'
-                                     + problem_code + '/testcases/add',
+            response = requests.post(self.judge.api_address + 'tasks/add',
                                      data=payload)
             if response.status_code != 200:
                 return False, "%d Error" % response.status_code
             result = json.loads(response.text)
-            return result
 
+        return result['status'], result['message']
+
+    def add_testcase(self, problem_code, testcase_code, input_file):
         # testcase code name should not contain sapces
         testcase_code = problem_code + '_' + testcase_code.replace(' ', '_')
 
@@ -166,11 +153,17 @@ class CMSTaskType(TaskType):
                    'input': input_encoded,
                    'output': output_encoded}
 
-        result = send_request()
+        response = requests.post(self.judge.api_address + 'task/'
+                                 + problem_code + '/testcases/add',
+                                 data=payload)
+        if response.status_code != 200:
+            return False, "%d Error" % response.status_code
+        result = json.loads(response.text)
 
         if result['status'] is False and result['message'] == \
                 'A testcase with this code already exists':
-            response = requests.get(settings.CMS_API_ADDRESS + 'task/'
+            logger.warning('Testcase with this name found. Deleting it now...')
+            response = requests.get(self.judge.api_address + 'task/'
                                     + problem_code + '/testcase/'
                                     + testcase_code + '/delete')
             if response.status_code != 200:
@@ -179,7 +172,12 @@ class CMSTaskType(TaskType):
             if result['status'] is False:
                 return False, result['message']
 
-            result = send_request()
+            response = requests.post(self.judge.api_address + 'task/'
+                                     + problem_code + '/testcases/add',
+                                     data=payload)
+            if response.status_code != 200:
+                return False, "%d Error" % response.status_code
+            result = json.loads(response.text)
 
         return result['status'], result['message']
 
@@ -204,7 +202,7 @@ class CMSTaskType(TaskType):
 
         payload = {'files': files_json,
                    'language': language}
-        response = requests.post(settings.CMS_API_ADDRESS + 'task/'
+        response = requests.post(self.judge.api_address + 'task/'
                                  + problem_code + '/testcase/'
                                  + testcase_code + '/run', data=payload)
         if response.status_code != 200:
@@ -216,10 +214,9 @@ class CMSTaskType(TaskType):
         else:
             submission_id = str(result['message'])
 
-        evalres = None
         while True:
             time.sleep(5)
-            response = requests.get(settings.CMS_API_ADDRESS + 'task/'
+            response = requests.get(self.judge.api_address + 'task/'
                                     + problem_code + '/test/' + submission_id
                                     + '/result')
             if response.status_code != 200:
@@ -233,9 +230,4 @@ class CMSTaskType(TaskType):
                 continue
             break
 
-        if evalres is None:
-            return create_evaluation_result(failed=True,
-                                            message='No evaluation result for submission %s' % submission_id)
-        return create_evaluation_result(problem_code=problem_code,
-                                        submission_id=submission_id,
-                                        evalres=evalres)
+        return create_evaluation_result(evalres=evalres)
