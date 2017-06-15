@@ -79,6 +79,14 @@ def _should_continue(evalres):
         evalres['compiled'][0] == "Compilation succeeded" and evalres['evalres'] is None
 
 
+def test_connection(api_address):
+    try:
+        requests.get(api_address)
+    except Exception:
+        return False
+    return True
+
+
 class CMSTaskType(TaskType):
 
     def init_problem(
@@ -93,6 +101,9 @@ class CMSTaskType(TaskType):
         """See TaskType.initialize_problem
            task_type is a string containing the name of the task type
         """
+        if not test_connection(self.judge.api_address):
+            return False, 'No connection to CMS'
+
         problem_code = str(problem_code)
 
         managers = dict()
@@ -144,6 +155,9 @@ class CMSTaskType(TaskType):
         return result['status'], result['message']
 
     def add_testcase(self, problem_code, testcase_code, input_file):
+        if not test_connection(self.judge.api_address):
+            return False, 'No connection to CMS'
+
         # testcase code name should not contain sapces
         testcase_code = problem_code + '_' + testcase_code.replace(' ', '_')
 
@@ -192,6 +206,10 @@ class CMSTaskType(TaskType):
                 verdict=JudgeVerdict.ok,
                 message='The output is the input!',
             )
+
+        if not test_connection(self.judge.api_address):
+            return create_evaluation_result(failed=True,
+                                            message='No connection to CMS')
 
         # testcase code name should not contain sapces
         testcase_code = problem_code + '_' + testcase_code.replace(' ', '_')
