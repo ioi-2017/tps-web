@@ -49,6 +49,7 @@ class Transaction:
 
     def get_blob(self, path):
         *path, filename = map(quote_filename, path)
+        print("get_blob", path, filename)
         memory_tree = self.get_memory_tree(path)
         content = None
         if filename in memory_tree.blobs:

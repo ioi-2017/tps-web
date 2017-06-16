@@ -12,6 +12,7 @@ class Options(DjangoOptions):
         self.fields = []
         self.pk = None
         self.storage_name = None
+        self.json_db_name = None
 
     def contribute_to_class(self, cls, name):
         setattr(cls, name, self)
@@ -21,6 +22,8 @@ class Options(DjangoOptions):
         if self.meta:
             if hasattr(self.meta, 'storage_name'):
                 self.storage_name = self.meta.storage_name
+            if hasattr(self.meta, 'json_db_name'):
+                self.json_db_name = self.meta.json_db_name
 
     def add_field(self, field):
         self.fields.append(field)

@@ -1,26 +1,60 @@
+import json
+import logging
+
 from functools import reduce
 
 from git_orm import transaction, GitError
 from git_orm.models.query import Q
 
 
+logger = logging.getLogger(__name__)
+
+
 class ObjCache:
     def __init__(self, model):
         self.model = model
         self.cache = {}
-        pks = transaction.current().list_blobs([model._meta.storage_name])
+
+        # TODO: Refactor with writing JSONQueryset
+        trans = transaction.current()
+
+        print("ajab kharie", model._meta.json_db_name)
+        if model._meta.json_db_name is not None:
+            try:
+                raw_data = trans.get_blob([model._meta.json_db_name])
+                print("khar raw data: ", raw_data)
+                pks = json.loads(raw_data).keys()
+            except (ValueError, GitError):
+                logger.warning("Invalid JSON loading {} or file not found".format(model._meta.json_db_name))
+
+                # TODO : just for testing:
+                print("Invalid JSON loading {} or file not found".format(model._meta.json_db_name))
+
+                pks = list()
+        else:
+            pks = trans.list_blobs([model._meta.storage_name])
+
+        print("checking pks", pks)
+
         self.pks = set(map(model._meta.pk.loads, pks))
         self.pk_names = ('pk', model._meta.pk.attname)
 
     def __getitem__(self, pk):
         if not pk in self.cache:
             obj = self.model(pk=pk)
+            trans = transaction.current()
+
             try:
-                trans = transaction.current()
-                content = trans.get_blob(obj.path).decode('utf-8')
-            except GitError:
+                json_db_name = self.model._meta.json_db_name
+                if json_db_name is not None:
+                    raw_data = trans.get_blob([json_db_name])
+                    content = json.loads(raw_data)[pk]
+                else:
+                    content = trans.get_blob(obj.path).decode('utf-8')
+            except (GitError, KeyError):
                 raise self.model.DoesNotExist(
                     'object with pk {} does not exist'.format(pk))
+
             obj.loads(content)
             self.cache[pk] = obj
         return self.cache[pk]

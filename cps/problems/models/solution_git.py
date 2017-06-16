@@ -27,6 +27,7 @@ class GSolution(models.Model):
 
     class Meta:
         storage_name = 'code'
+        json_db_name = 'solutions.json'
 
     def __str__(self):
         return self.name
