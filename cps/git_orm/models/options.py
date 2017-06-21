@@ -1,22 +1,26 @@
 from uuid import uuid4
 
+from django.utils.text import camel_case_to_spaces
+
 from git_orm.models.fields import TextField, CreatedAtField, UpdatedAtField
 
 from django.db.models.options import Options as DjangoOptions
 
 
 class Options(DjangoOptions):
-    def __init__(self, meta):
-        super(Options, self).__init__(meta)
-        self.meta = meta
+    def __init__(self, meta, app_label=None):
+        super(Options, self).__init__(meta, app_label)
         self.fields = []
-        self.pk = None
         self.storage_name = None
         self.json_db_name = None
+        self.has_custom_queryset = False
 
     def contribute_to_class(self, cls, name):
         setattr(cls, name, self)
         self.model = cls
+        self.object_name = cls.__name__
+        self.model_name = self.object_name.lower()
+        self.verbose_name = camel_case_to_spaces(self.object_name)
         self.storage_name = cls.__name__.lower() + 's'
 
         if self.meta:
@@ -25,11 +29,9 @@ class Options(DjangoOptions):
             if hasattr(self.meta, 'json_db_name'):
                 self.json_db_name = self.meta.json_db_name
 
-    def add_field(self, field):
+    def add_field(self, field, virtual=False):
         self.fields.append(field)
-        print("here @addfield", self, field, self.model.__name__)
         if not self.pk and field.primary_key:
-            print("here pk set to ", field)
             self.pk = field
 
     def get_field(self, name):
@@ -45,10 +47,8 @@ class Options(DjangoOptions):
 
     def _prepare(self):
         if not self.pk:
-            print("fucked up", self.model.__name__)
             id_field = TextField(
-                primary_key=True, hidden=True, default=lambda: uuid4().hex)
-                # primary_key=True, default=lambda: uuid4().hex)
+                primary_key=True, default=lambda: uuid4().hex)
             self.model.add_to_class('id', id_field)
             self.fields.insert(0, self.fields.pop())
         fieldnames = [f.name for f in self.fields]

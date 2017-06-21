@@ -1,73 +1,43 @@
-import json
+import copy
 import logging
 
 from functools import reduce
-
-from git_orm import transaction, GitError
+from git_orm import transaction as git_transaction, GitError
 from git_orm.models.query import Q
-
+from git_orm.transaction import Transaction
 
 logger = logging.getLogger(__name__)
 
 
-class ObjCache:
-    def __init__(self, model):
+class ObjCache(object):
+    def __init__(self, model, transaction):
         self.model = model
+        self.transaction = transaction
         self.cache = {}
-
-        # TODO: Refactor with writing JSONQueryset
-        trans = transaction.current()
-
-        print("ajab kharie", model._meta.json_db_name)
-        if model._meta.json_db_name is not None:
-            try:
-                raw_data = trans.get_blob([model._meta.json_db_name])
-                print("khar raw data: ", raw_data)
-                pks = json.loads(raw_data).keys()
-            except (ValueError, GitError):
-                logger.warning("Invalid JSON loading {} or file not found".format(model._meta.json_db_name))
-
-                # TODO : just for testing:
-                print("Invalid JSON loading {} or file not found".format(model._meta.json_db_name))
-
-                pks = list()
-        else:
-            pks = trans.list_blobs([model._meta.storage_name])
-
-        print("checking pks", pks)
-
-        self.pks = set(map(model._meta.pk.loads, pks))
+        self.pks = set(map(model._meta.pk.to_python, model._get_existing_primary_keys(transaction)))
         self.pk_names = ('pk', model._meta.pk.attname)
 
     def __getitem__(self, pk):
         if not pk in self.cache:
-            obj = self.model(pk=pk)
-            trans = transaction.current()
-
-            try:
-                json_db_name = self.model._meta.json_db_name
-                if json_db_name is not None:
-                    raw_data = trans.get_blob([json_db_name])
-                    content = json.loads(raw_data)[pk]
-                else:
-                    content = trans.get_blob(obj.path).decode('utf-8')
-            except (GitError, KeyError):
-                raise self.model.DoesNotExist(
-                    'object with pk {} does not exist'.format(pk))
-
-            obj.loads(content)
-            self.cache[pk] = obj
+            self.cache[pk] = self.model._get_instance(self.transaction, pk)
         return self.cache[pk]
 
 
-class QuerySet:
+class QuerySet(object):
     REPR_MAXLEN = 10
 
-    def __init__(self, model, query=None):
+    def __init__(self, model, query=None, transaction=None):
         self.model = model
         if query is None:
             query = Q()
         self.query = query
+        self.transaction = transaction
+
+    def get_transaction(self):
+        if self.transaction is not None:
+            return self.transaction
+        return git_transaction.current()
+
 
     def __repr__(self):
         evaluated = list(self[:self.REPR_MAXLEN+1])
@@ -85,37 +55,42 @@ class QuerySet:
         return not self == other
 
     def __or__(self, other):
-        return QuerySet(self.model, self.query | other.query)
+        return QuerySet(self.model, self.query | other.query, self.transaction)
 
     def __and__(self, other):
-        return QuerySet(self.model, self.query & other.query)
+        return QuerySet(self.model, self.query & other.query, self.transaction)
 
     def __invert__(self):
-        return QuerySet(self.model, ~self.query)
+        return QuerySet(self.model, ~self.query, self.transaction)
 
-    @transaction.wrap()
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return QuerySet(self.model, self.query[key])
+            return QuerySet(self.model, self.query[key], self.transaction)
         elif isinstance(key, int):
             try:
                 stop = key + 1
                 if stop == 0:
                     stop = None
-                return QuerySet(self.model, self.query[key:stop]).get()
+                return QuerySet(self.model, self.query[key:stop], self.transaction).get()
             except self.model.DoesNotExist:
                 raise IndexError('index out of range')
         else:
             raise TypeError('indices must be integers')
 
-    @transaction.wrap()
+    def with_transaction(self, transaction):
+        if transaction is None:
+            raise ValueError("transaction cannot be None")
+        if not isinstance(transaction, Transaction):
+            raise ValueError("invalid transaction")
+        return QuerySet(self.model, self.query, transaction)
+
     def __iter__(self):
         pks, obj_cache = self._execute()
         return iter([obj_cache[pk] for pk in pks])
 
     def _execute(self, *args, **kwargs):
         query = self.query & self._filter(*args, **kwargs)
-        obj_cache = ObjCache(self.model)
+        obj_cache = ObjCache(self.model, self.get_transaction())
         return query.execute(obj_cache, obj_cache.pks), obj_cache
 
     def _filter(self, *args, **kwargs):
@@ -126,13 +101,12 @@ class QuerySet:
 
     def filter(self, *args, **kwargs):
         query = self.query & self._filter(*args, **kwargs)
-        return QuerySet(self.model, query)
+        return QuerySet(self.model, query, self.transaction)
 
     def exclude(self, *args, **kwargs):
         query = self.query & ~self._filter(*args, **kwargs)
-        return QuerySet(self.model, query)
+        return QuerySet(self.model, query, self.transaction)
 
-    @transaction.wrap()
     def get(self, *args, **kwargs):
         pks, obj_cache = self._execute(*args, **kwargs)
         try:
@@ -148,7 +122,6 @@ class QuerySet:
                 'multiple objects returned')
         return obj_cache[pk]
 
-    @transaction.wrap()
     def exists(self, *args, **kwargs):
         pks, _ = self._execute(*args, **kwargs)
         try:
@@ -157,13 +130,18 @@ class QuerySet:
             return False
         return True
 
-    @transaction.wrap()
     def count(self, *args, **kwargs):
         pks, _ = self._execute(*args, **kwargs)
         return sum(1 for _ in pks)
 
     def order_by(self, *order_by):
-        return QuerySet(self.model, self.query.order_by(*order_by))
+        return QuerySet(self.model, self.query.order_by(*order_by), self.transaction)
 
     def create(self, *args, **kwargs):
         return self.model.create(*args, **kwargs)
+
+    def _copy_to_model(self, model):
+        assert issubclass(model, self.model)
+        qst = copy.copy(self)
+        qst.model = model
+        return qst

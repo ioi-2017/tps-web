@@ -238,6 +238,9 @@ from git_orm import set_repository, set_branch
 set_repository(os.path.join(BASE_DIR, 'repo'))
 set_branch('master')
 
+GIT_USER_NAME = 'TPS'
+GIT_USER_EMAIL = 'tps@localhost'
+
 
 def SHOW_TOOLBAR(request):
     return request.user.is_staff

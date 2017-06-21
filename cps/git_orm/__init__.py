@@ -12,16 +12,8 @@ class GitError(Exception):
 
 
 def set_repository(value):
-    from pygit2 import discover_repository, Repository
     global _repository
-    if value is None:
-        _repository = None
-        return
-    try:
-        path = discover_repository(value)
-    except KeyError:
-        raise GitError('no repository found in "{}"'.format(value))
-    _repository = Repository(path)
+    _repository = value
 
 
 def get_repository():

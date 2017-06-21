@@ -8,4 +8,4 @@ def dumps(data, comments={}):
 
 
 def loads(serialized):
-    return serialized
+    return json.loads(serialized)
