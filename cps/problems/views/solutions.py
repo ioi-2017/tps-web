@@ -10,16 +10,9 @@ from problems.models.enums import SolutionVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
     ProblemObjectShowSourceView, ProblemObjectDownloadView
 
-from problems.models.solution_git import GSolution
-from problems.forms.solution_git import GSolutionAddForm, GSolutionEditForm
-
 __all__ = ["SolutionAddView", "SolutionDeleteView",
            "SolutionEditView", "SolutionsListView", "SolutionShowSourceView",
            "SolutionDownloadView",
-
-           # Git related testings
-           "GSolutionAddView",
-           "GSolutionEditView", "GSolutionsListView",
            ]
 
 
@@ -33,31 +26,9 @@ class SolutionsListView(RevisionObjectView):
         })
 
 
-class GSolutionsListView(RevisionObjectView):
-
-    def get(self, request, problem_id, revision_slug):
-        solutions = GSolution.objects.all()
-
-        return render(request, "problems/solutions_list_git.html", context={
-            "solutions": solutions
-        })
-
-
 class SolutionAddView(ProblemObjectAddView):
     template_name = "problems/add_solution.html"
     model_form = SolutionAddForm
-    permissions_required = ["add_solution"]
-
-    def get_success_url(self, request, problem_id, revision_slug, obj):
-        return reverse("problems:solutions", kwargs={
-            "problem_id": problem_id,
-            "revision_slug": revision_slug
-        })
-
-
-class GSolutionAddView(ProblemObjectAddView):
-    template_name = "problems/add_solution_git.html"
-    model_form = GSolutionAddForm
     permissions_required = ["add_solution"]
 
     def get_success_url(self, request, problem_id, revision_slug, obj):
@@ -80,21 +51,6 @@ class SolutionEditView(ProblemObjectEditView):
 
     def get_instance(self, request, *args, **kwargs):
         return self.revision.solution_set.get(pk=kwargs.get("solution_id"))
-
-
-class GSolutionEditView(ProblemObjectEditView):
-    template_name = "problems/edit_solution_git.html"
-    model_form = GSolutionEditForm
-    permissions_required = ["edit_solution"]
-
-    def get_success_url(self, request, problem_id, revision_slug, obj):
-        return reverse("problems:solutions", kwargs={
-            "problem_id": problem_id,
-            "revision_slug": revision_slug
-        })
-
-    def get_instance(self, request, *args, **kwargs):
-        return GSolution.objects.get(pk=kwargs.get("solution_id"))
 
 
 SolutionDeleteView = ProblemObjectDeleteView.as_view(
