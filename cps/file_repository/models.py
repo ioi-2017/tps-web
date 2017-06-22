@@ -6,6 +6,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import os
 
+from git_orm import models as git_models
+
 
 def get_file_name(instance, filename):
     filename = os.path.basename(filename)
@@ -54,3 +56,20 @@ class FileModel(models.Model):
         if remained:
             content += "..."
         return content
+
+
+class GitFile(git_models.Model):
+    name = models.CharField(verbose_name=_("name"), max_length=256, blank=True)
+    content = git_models.TextField(verbose_name=_("content"))
+
+    def dump(self, include_hidden=False, include_pk=True):
+        field = self._meta.get_field('content')
+        return field.get_prep_value()
+
+    def load(self, data):
+        field = self._meta.get_field('content')
+        self.content = field.to_python(data)
+
+
+    def __str__(self):
+        return self.name

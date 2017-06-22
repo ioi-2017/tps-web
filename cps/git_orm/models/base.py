@@ -2,6 +2,7 @@ import copy
 from collections import OrderedDict
 
 from django.apps import apps
+from django.utils.encoding import force_text
 
 from git_orm import serializer, transaction, GitError
 from git_orm.models.options import Options
@@ -15,7 +16,11 @@ class InvalidObject(Exception):
     pass
 
 
-MODEL_EXCEPTIONS = (ObjectDoesNotExist, MultipleObjectsReturned, InvalidObject)
+MODEL_EXCEPTIONS = (
+    ("DoesNotExist", ObjectDoesNotExist),
+    ("MultipleObjectsReturned", MultipleObjectsReturned),
+    ("InvalidObject", InvalidObject)
+)
 
 
 class ModelBase(type):
@@ -69,8 +74,7 @@ class ModelBase(type):
             new_class._meta.has_custom_queryset = True
         new_class.add_to_class('objects', objects)
 
-        for exc_class in MODEL_EXCEPTIONS:
-            name = exc_class.__name__
+        for name, exc_class in MODEL_EXCEPTIONS:
             exc_class = type(name, (exc_class,), {'__module__': module})
             new_class.add_to_class(name, exc_class)
 
@@ -113,7 +117,7 @@ class ModelBase(type):
 
 
 class Model(metaclass=ModelBase):
-    _deferred = True # We set this to true to avoid this model from being loaded in making migrations
+    _deferred = True  # We set this to true to avoid this model from being loaded in making migrations
 
     def __init__(self, **kwargs):
         for field in self._meta.writable_fields:
@@ -194,7 +198,7 @@ class Model(metaclass=ModelBase):
         pk = self._meta.pk.get_prep_value(self.pk)
         return [self._meta.storage_name, pk]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         trans = self._transaction
         serialized = self.dump(include_hidden=True, include_pk=False)
         trans.set_blob(self.path, serialized.encode('utf-8'))
@@ -235,3 +239,7 @@ class Model(metaclass=ModelBase):
 
     def validate_unique(self, exclude=None):
         raise NotImplementedError
+
+    def _get_FIELD_display(self, field):
+        value = getattr(self, field.attname)
+        return force_text(dict(field.flatchoices).get(value, value), strings_only=True)

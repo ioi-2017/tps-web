@@ -3,16 +3,29 @@ import json
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from file_repository.models import FileModel
+from file_repository.models import FileModel, GitFile
 from problems.models import RevisionObject, ProblemRevision
+from problems.models.fields import ReadOnlyGitToGitForeignKey
 from problems.models.file import FileNameValidator, get_valid_name
+from problems.models.generic import RecursiveDirectoryModel
+from problems.models.problem import ProblemCommit
 
 
-class Grader(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
+class GraderFile(GitFile, RecursiveDirectoryModel):
+
+    class Meta:
+        storage_name = "graders"
+
+
+class Grader(RecursiveDirectoryModel):
+    problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
-                            blank=True, db_index=True)
-    code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
+                            blank=True, db_index=True, primary_key=True)
+    code = ReadOnlyGitToGitForeignKey(GraderFile, verbose_name=_("code"), related_name='+', )
+
+    @property
+    def get_code_id(self):
+        return self.name
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
 
     class Meta:
@@ -25,6 +38,9 @@ class Grader(RevisionObject):
     @staticmethod
     def get_matching_fields():
         return ["name"]
+
+    def load(self, data):
+        return
 
     def get_value_as_dict(self):
         data = dict()

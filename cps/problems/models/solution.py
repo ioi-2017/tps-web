@@ -1,26 +1,43 @@
 # Amir Keivan Mohtashami
+import os
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from core.fields import EnumField
-from file_repository.models import FileModel
+from file_repository.models import FileModel, GitFile
 from problems.models import RevisionObject, CloneableMixin
 from problems.models.enums import SolutionVerdict
+from problems.models.fields import ReadOnlyGitToGitForeignKey
 from problems.models.file import FileNameValidator, get_valid_name
+from problems.models.generic import JSONModel
+from problems.models.problem import ProblemCommit
 from problems.models.testdata import Subtask
 from problems.models.version_control import MatchableMixin
+
+from git_orm import models as git_models
 
 __all__ = ["Solution", "SolutionSubtaskExpectedVerdict"]
 
 
-class Solution(RevisionObject):
+class SolutionFile(GitFile):
+
+    class Meta:
+        storage_name = "solutions"
+
+
+class Solution(JSONModel):
     _VERDICTS = [(x.name, x.value[0]) for x in list(SolutionVerdict)]
 
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
+    problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
-                            blank=True, db_index=True)
-    code = models.ForeignKey(FileModel, verbose_name=_("code"), related_name='+')
+                            blank=True, db_index=True, primary_key=True)
+    code = ReadOnlyGitToGitForeignKey(SolutionFile, verbose_name=_("code"), related_name='+', )
+
+    @property
+    def get_code_id(self):
+        return self.name
+
 
     # TODO: Should we validate the language here as well?
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
@@ -30,6 +47,7 @@ class Solution(RevisionObject):
         unique_together = ("problem", "name",)
         ordering = ("problem", "name", )
         index_together = ("problem", "name",)
+        json_db_name = "solutions.json"
 
     def __str__(self):
         return self.name
@@ -54,6 +72,13 @@ class Solution(RevisionObject):
                 return repr
         return "Not supported"
 
+    def load(self, *args, **kwargs):
+        super(Solution, self).load(*args, **kwargs)
+        try:
+            self.code
+        except GitFile.DoesNotExist as e:
+            raise self.InvalidObject(e)
+
     def save(self, *args, **kwargs):
         if self.name == "":
             self.name = get_valid_name(self.code.name)
@@ -64,13 +89,13 @@ class Solution(RevisionObject):
 class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin, MatchableMixin):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdicts")
+    #solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdicts")
     subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
     class Meta:
         unique_together = (
-            ("solution", "subtask")
+      #      ("solution", "subtask")
         )
 
     def _clean_for_clone(self, cloned_instances):

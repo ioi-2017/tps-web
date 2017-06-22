@@ -189,7 +189,25 @@ class ProblemJudgeInitialization(CeleryTask):
 
 
 class ProblemCommit(git_models.Model):
-    pass
+
+    @property
+    def problem(self):
+        repository_path = self._transaction.repo.path
+        return Problem.objects.get(repository_path=repository_path)
+
+    @property
+    def problem_data(self):
+        return self.problemdata_set.all()[0]
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        return [0]
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        obj._transaction = transaction
+        return obj
 
 
 class ProblemRevision(models.Model):

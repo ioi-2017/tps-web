@@ -3,6 +3,7 @@ from django.db import transaction
 from django.utils.functional import cached_property
 
 from git_orm.models import GitToGitForeignKey
+from git_orm.models.fields import ReverseForeignKeyDescriptor
 from git_orm.transaction import Transaction
 from problems.models.problem import Problem
 
@@ -22,7 +23,7 @@ def create_git_related_manager(superclass, field):
 
             self.model = field.target
 
-            self.problem = Problem.objects.get(repository_path=instance._transaction.repository_path)
+            self.problem = Problem.objects.get(repository_path=instance._transaction.repo.path)
             self.commit_id = instance._transaction.commit_id
             self.commit_id_field_name = field.commit_id_field_name
             self.problem_field_name = field.problem_field_name
@@ -194,15 +195,14 @@ class ReverseGitManyToOneDescriptor(object):
     class built by ``create_forward_many_to_many_manager()`` defined below.
     """
 
-    def __init__(self, rel):
-        self.rel = rel
-        self.field = rel.field
+    def __init__(self, field):
+        self.field = field
 
     @cached_property
     def related_manager_cls(self):
         return create_git_related_manager(
-            self.rel.related_model._default_manager.__class__,
-            self.rel,
+            self.field.target._default_manager.__class__,
+            self.field,
         )
 
     def __get__(self, instance, instance_type=None):
@@ -239,18 +239,18 @@ class DBToGitForeignKeyDescriptor(object):
         self.field = field
         self.commit_id_field_name = field.commit_id_field_name
         self.problem_field_name = field.problem_field_name
-        self.repository_path = getattr(self.field.model, self.problem_field_name).repository_path
-        self.commit_id = getattr(self.field.model, self.commit_id_field_name)
 
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
+        repository_path = getattr(instance, self.problem_field_name).repo.path
+        commit_id = getattr(instance, self.commit_id_field_name)
         if not hasattr(self, '_cache'):
             pk = getattr(instance, self.field.attname)
             git_transaction = Transaction(
-                repository_path=self.repository_path,
-                commit_id=self.commit_id
+                repository_path=repository_path,
+                commit_id=commit_id
             )
             if pk is None:
                 obj = None
@@ -275,3 +275,30 @@ class DBToGitForeignKeyDescriptor(object):
 class DBToGitForeignKey(GitToGitForeignKey):
     forward_descriptor = DBToGitForeignKeyDescriptor
     reverse_descriptor = ReverseGitManyToOneDescriptor
+
+    def __init__(self, to, problem_field_name, commit_id_field_name, *args, **kwargs):
+        super(DBToGitForeignKey, self).__init__(to, *args, **kwargs)
+        self.problem_field_name = problem_field_name
+        self.commit_id_field_name = commit_id_field_name
+
+
+class ReadOnlyDescriptor(object):
+
+    def __init__(self, attr, default):
+        self.attr = attr
+        self.default = default
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        method_name = "get_{}".format(self.attr)
+        return getattr(instance, method_name, self.default)
+
+    def __set__(self, instance, value):
+        pass
+
+
+class ReadOnlyGitToGitForeignKey(GitToGitForeignKey):
+    def contribute_to_class(self, cls, name, *args, **kwargs):
+        super(ReadOnlyGitToGitForeignKey, self).contribute_to_class(cls, name, *args, **kwargs)
+        setattr(cls, self.attname, ReadOnlyDescriptor(self.attname, self.get_default()))

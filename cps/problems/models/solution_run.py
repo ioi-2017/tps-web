@@ -17,6 +17,8 @@ from problems.models import Solution, RevisionObject, SolutionSubtaskExpectedVer
 from problems.models.testdata import TestCase
 from problems.utils.run_checker import run_checker
 
+from .fields import DBToGitForeignKey
+
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
 logger = logging.getLogger(__name__)
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class SolutionRun(RevisionObject):
     problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
-    solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
+    #solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
     testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
@@ -157,11 +159,18 @@ class SolutionRunResult(models.Model):
 
     solution_run = models.ForeignKey(SolutionRun, verbose_name=_("solution run"), editable=False,
                                      related_name="results")
-    solution = models.ForeignKey(Solution, verbose_name=_("solution"), editable=False)
+    solution = DBToGitForeignKey(Solution, commit_id_field_name="commit_id", problem_field_name="base_problem",
+                                 verbose_name=_("solution"), editable=False)
     testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"), editable=False)
 
-    class Meta:
-        unique_together = ("solution_run", "solution", "testcase")
+    @property
+    def commit_id(self):
+        return self.solution_run.commit_id
+
+    @property
+    def base_problem(self):
+        return self.base_problem
+
 
     verdict = EnumField(
         verbose_name=_("verdict"),

@@ -8,7 +8,7 @@ class InvocationAddForm(ProblemObjectModelForm):
 
     class Meta:
         model = SolutionRun
-        fields = ["solutions", "testcases"]
+        fields = []
 
     def __init__(self, *args, **kwargs):
         super(InvocationAddForm, self).__init__(*args, **kwargs)

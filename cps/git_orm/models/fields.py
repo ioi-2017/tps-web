@@ -114,7 +114,7 @@ class ReverseForeignKeyDescriptor(object):
             return self
 
         return self.target_field.model.objects.filter(**{
-            self.target_field.name: instance.pk})
+            self.target_field.attname: instance.pk})
 
 
 class GitToGitForeignKey(Field):
