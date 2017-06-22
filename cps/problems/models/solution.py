@@ -26,7 +26,6 @@ class Solution(RevisionObject):
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
     verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
-
     class Meta:
         unique_together = ("problem", "name",)
         ordering = ("problem", "name", )

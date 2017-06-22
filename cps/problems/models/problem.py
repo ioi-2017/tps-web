@@ -21,6 +21,8 @@ import logging
 from problems.models.enums import SolutionVerdict
 from tasks.tasks import CeleryTask
 
+import git_orm.models as git_models
+
 __all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemBranch"]
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ class Problem(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"), related_name='+')
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
     files = models.ManyToManyField(FileModel, verbose_name=_("problem files"))
+    repository_path = models.CharField(verbose_name=_("repository path"), max_length=256, blank=True)
 
     def get_master_branch(self):
         return self.branches.get(name="master")
@@ -183,6 +186,10 @@ class ProblemJudgeInitialization(CeleryTask):
 
     def execute(self, problem_revision):
         problem_revision._initialize_in_judge()
+
+
+class ProblemCommit(git_models.Model):
+    pass
 
 
 class ProblemRevision(models.Model):

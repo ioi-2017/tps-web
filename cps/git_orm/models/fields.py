@@ -173,7 +173,8 @@ class GitToGitForeignKey(Field):
 
     def do_related_class(self, other, cls):
         self.set_attributes_from_rel()
-        setattr(other, self.get_accessor_name(), self.reverse_descriptor(self))
+        if self.get_accessor_name() != '+':
+            setattr(other, self.get_accessor_name(), self.reverse_descriptor(self))
 
     def get_prep_value(self, value):
         if not value is None:

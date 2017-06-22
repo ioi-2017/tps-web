@@ -113,6 +113,8 @@ class ModelBase(type):
 
 
 class Model(metaclass=ModelBase):
+    _deferred = True # We set this to true to avoid this model from being loaded in making migrations
+
     def __init__(self, **kwargs):
         for field in self._meta.writable_fields:
             attname = field.attname
