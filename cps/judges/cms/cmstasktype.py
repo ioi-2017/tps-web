@@ -75,8 +75,9 @@ def create_evaluation_result(failed=False, evalres=None, message=''):
 
 
 def _should_continue(evalres):
-    return evalres['result'] is None or \
-        evalres['compiled'][0] == "Compilation succeeded" and evalres['evalres'] is None
+    return evalres['result'] is False or \
+           not evalres['compiled'] or \
+           (evalres['compiled'][0] == "Compilation succeeded" and evalres['evalres'] is None)
 
 
 def test_connection(api_address):
