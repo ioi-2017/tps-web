@@ -138,10 +138,21 @@ class QuerySet(object):
         return QuerySet(self.model, self.query.order_by(*order_by), self.transaction)
 
     def create(self, *args, **kwargs):
-        return self.model.create(*args, **kwargs)
+        return self.model.create(*args, transaction=self.transaction, **kwargs)
 
     def _copy_to_model(self, model):
         assert issubclass(model, self.model)
         qst = copy.copy(self)
         qst.model = model
         return qst
+
+    def get_or_create(self, defaults=None, **kwargs):
+        if defaults:
+            parameters = defaults.copy()
+        else:
+            parameters = {}
+        parameters.update(kwargs)
+        try:
+            return self.get(**kwargs), False
+        except self.model.DoesNotExist:
+            return self.create(**parameters), True

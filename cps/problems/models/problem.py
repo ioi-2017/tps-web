@@ -2,28 +2,25 @@
 # Mohammad Javad Naderi
 import hashlib
 import heapq
+import logging
+import os
 
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
-from django.db import models, transaction
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django_clone.clone import Cloner
-
-from file_repository.models import FileModel
-from judge import Judge
-from problems.models import RevisionObject, Conflict, Merge, CloneableMixin
-
-import logging
-
-from problems.models.enums import SolutionVerdict
-from tasks.tasks import CeleryTask
 
 import git_orm.models as git_models
+from file_repository.models import FileModel
+from git_orm.transaction import Transaction
+from judge import Judge
+from problems.models.fields import ReadOnlyGitToGitForeignKey
+from tasks.tasks import CeleryTask
 
-__all__ = ["Problem", "ProblemRevision", "ProblemData", "ProblemBranch"]
+__all__ = ["Problem", "ProblemRevision", "ProblemBranch", "ProblemCommit"]
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +29,21 @@ class Problem(models.Model):
 
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"), related_name='+')
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
-    files = models.ManyToManyField(FileModel, verbose_name=_("problem files"))
+    files = models.ManyToManyField(FileModel, verbose_name=_("problem files"), blank=True)
     repository_path = models.CharField(verbose_name=_("repository path"), max_length=256, blank=True)
+
+
+    @property
+    def branches(self):
+        transaction = Transaction(repository_path=self.repository_path)
+        return NewProblemBranch.objects.with_transaction(transaction).all()
 
     def get_master_branch(self):
         return self.branches.get(name="master")
 
     @staticmethod
     def get_or_create_template_problem():
-
+        from problems.models.problem_data import ProblemData
         if not Problem.objects.filter(pk=0).exists():
             # FIXME: Maybe it would be better to allow null value for creator
             user = get_user_model().objects.filter(is_superuser=True)[0]
@@ -89,13 +92,61 @@ class Problem(models.Model):
         return problem
 
     def __str__(self):
-        return "{}(#{})".format(str(self.get_master_branch().head.problem_data.title), str(self.pk))
+        return "{}(#{})".format(str(self.repository_path), str(self.pk))
+
+
+class NewProblemBranch(git_models.Model):
+    name = models.CharField(max_length=30, verbose_name=_("name"), validators=[RegexValidator(r'^\w{1,30}$')],
+                            primary_key=True)
+    head = ReadOnlyGitToGitForeignKey("ProblemCommit", verbose_name=_("head"), related_name='+', default=0)
+
+    def __init__(self, *args, **kwargs):
+        if "head" in kwargs:
+            self.inited_head = kwargs["head"]
+        super(NewProblemBranch, self).__init__(*args, **kwargs)
+        self.initial_pk = self.pk
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        return [b for b in transaction.repo.branches.local]
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        if len(transaction.parents) == 0:
+            transaction = Transaction(transaction.repo.path, branch_name=pk)
+        obj._transaction = transaction
+        return obj
+
+    @property
+    def problem(self):
+        return Problem.objects.get(repository_path=self.repository_path)
+
+    def save(self, *args, **kwargs):
+        repository = self._transaction.repo
+        if self.initial_pk is None:
+            current_branch = self._transaction.repo.branches.local.create(
+                self.name,
+                repository[self.inited_head.commit_id]
+            )
+        else:
+            current_branch = self._transaction.repo.branches.local.get(
+                self.name,
+            )
+            if self.initial_pk != self.pk:
+                current_branch.rename(self.pk)
+        self._transaction = Transaction(repository_path=repository.path, branch_name=self.name)
+
+    def get_branch_revision_for_user(self, user):
+        return self.head
+
+
 
 
 class ProblemBranch(models.Model):
     name = models.CharField(max_length=30, verbose_name=_("name"), validators=[RegexValidator(r'^\w{1,30}$')])
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"), related_name='+', null=True)
-    problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="branches")
+    problem = models.ForeignKey(Problem, verbose_name=_("problem"), db_index=True, related_name="+")
     head = models.ForeignKey("ProblemRevision", verbose_name=_("head"), related_name='+', on_delete=models.PROTECT)
     working_copy = models.OneToOneField("ProblemRevision", verbose_name=_("working copy"), related_name='+', null=True, on_delete=models.SET_NULL)
 
@@ -190,24 +241,74 @@ class ProblemJudgeInitialization(CeleryTask):
 
 class ProblemCommit(git_models.Model):
 
+    commit_id = models.CharField(verbose_name=_("commit id"), max_length=256, primary_key=True)
+
+    judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"))
+    judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
+
+    @property
+    def commit_id(self):
+        return str(self._transaction.parents[0])
+
+    @property
+    def repository_path(self):
+        return self._transaction.repo.path
+
     @property
     def problem(self):
-        repository_path = self._transaction.repo.path
-        return Problem.objects.get(repository_path=repository_path)
+        return Problem.objects.get(repository_path=self.repository_path)
 
     @property
     def problem_data(self):
         return self.problemdata_set.all()[0]
 
+    def get_storage_path(self):
+        path = settings.COMMIT_STORAGE_ROOT
+        if isinstance(path, str):
+            path = [path]
+        if len(self.commit_id) < 3:
+            logger.warning("Length of commit id cannot be less than 3")
+            commit_id = "___" + self.commit_id
+        else:
+            commit_id = self.commit_id
+        path = path + [str(self.problem.pk), commit_id[0], commit_id[1], commit_id[2], commit_id[3:]]
+        dir_path = os.path.join(*path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        elif not os.path.isdir(dir_path):
+            raise ValueError("{} should be a directory".format(dir_path))
+
+        return dir_path
+
+    @property
+    def path(self):
+        return os.path.join(self.get_storage_path(), "info.json")
+
     @classmethod
     def _get_existing_primary_keys(cls, transaction):
         return [0]
+
+    def get_judge(self):
+        return Judge.get_judge()
+
+    def get_task_type(self):
+        return self.get_judge().get_task_type(self.problem_data.task_type)
 
     @classmethod
     def _get_instance(cls, transaction, pk):
         obj = cls(pk=pk)
         obj._transaction = transaction
+        if os.path.exists(obj.path):
+            with open(obj.path) as f:
+                content = f.read().decode("utf-8")
+            obj.load(content)
         return obj
+
+    def save(self, *args, **kwargs):
+        serialized = self.dump(include_hidden=True, include_pk=False)
+        with open(self.path, "w") as f:
+            f.write(serialized)
 
 
 class ProblemRevision(models.Model):
@@ -276,6 +377,7 @@ class ProblemRevision(models.Model):
         return "{} - {}: {}({})".format(self.problem, self.author, self.revision_id, self.pk)
 
     def has_conflicts(self):
+        from problems.models import Merge
         try:
             if self.merge_result.conflicts.exists():
                 return True
@@ -309,6 +411,7 @@ class ProblemRevision(models.Model):
         self.commit_message = ""
 
     def clone(self, cloned_instances=None, replace_objects=None):
+        from problems.models import CloneableMixin
         if not cloned_instances:
             cloned_instances = {}
         if not replace_objects:
@@ -344,6 +447,7 @@ class ProblemRevision(models.Model):
         return self.find_merge_base(revision) == revision
 
     def has_merge_result(self):
+        from problems.models import Merge
         try:
             merge_result = self.merge_result
         except Merge.DoesNotExist:
@@ -418,6 +522,7 @@ class ProblemRevision(models.Model):
         return result
 
     def merge(self, another_revision):
+        from problems.models import Merge, Conflict
         if not self.committed():
             raise AssertionError("Commit changes before merge")
 
@@ -519,54 +624,5 @@ class ProblemDataQuerySet(models.QuerySet):
 
         return [(my, other)]
 
-
-class ProblemDataManager(models.Manager):
-    use_for_related_fields = True
-
-
-class ProblemData(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
-    code_name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
-    title = models.CharField(verbose_name=_("title"), max_length=150)
-    statement = models.TextField(verbose_name=_("statement"), default="", blank=True)
-
-    task_type = models.CharField(verbose_name=_("task type"), max_length=150, null=True)
-    task_type_parameters = models.TextField(verbose_name=_("task type parameters"), null=True)
-
-    score_type = models.CharField(verbose_name=_("score type"), max_length=150, null=True)
-    score_type_parameters = models.TextField(verbose_name=_("score type parameters"), null=True)
-
-    checker = models.ForeignKey("Checker", verbose_name=_("checker"), on_delete=models.SET_NULL, null=True, blank=True)
-
-    time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
-    memory_limit = models.IntegerField(verbose_name=_("memory limit"), help_text=_("in megabytes"), default=256)
-
-    description = models.TextField(verbose_name=_("description"), blank=True)
-
-    objects = ProblemDataManager.from_queryset(ProblemDataQuerySet)()
-
-    @property
-    def model_solution(self):
-        try:
-            return self.problem.solution_set.filter(verdict=SolutionVerdict.model_solution.name)[0]
-        except Exception as e:
-            return None
-
-    @staticmethod
-    def get_matching_fields():
-        return []
-
-    def get_value_as_dict(self):
-        json_dict = super(ProblemData, self).get_value_as_dict()
-        json_dict["checker"] = self.checker.name if self.checker else "None"
-        return json_dict
-
-    def __str__(self):
-        return self.title
-
-    def _clean_for_clone(self, cloned_instances):
-        super(ProblemData, self)._clean_for_clone(cloned_instances)
-        if self.checker:
-            self.checker = cloned_instances[self.checker]
 
 

@@ -1,3 +1,4 @@
+import six
 from django.db import router
 from django.db import transaction
 from django.utils.functional import cached_property
@@ -5,7 +6,7 @@ from django.utils.functional import cached_property
 from git_orm.models import GitToGitForeignKey
 from git_orm.models.fields import ReverseForeignKeyDescriptor
 from git_orm.transaction import Transaction
-from problems.models.problem import Problem
+
 
 
 def create_git_related_manager(superclass, field):
@@ -17,6 +18,7 @@ def create_git_related_manager(superclass, field):
 
     class ProblemGitRelatedObjectManager(superclass):
         def __init__(self, instance=None):
+            from problems.models.problem import Problem
             super(ProblemGitRelatedObjectManager, self).__init__()
 
             self.instance = instance
@@ -280,6 +282,19 @@ class DBToGitForeignKey(GitToGitForeignKey):
         super(DBToGitForeignKey, self).__init__(to, *args, **kwargs)
         self.problem_field_name = problem_field_name
         self.commit_id_field_name = commit_id_field_name
+
+    def deconstruct(self):
+        name, path, args, kwargs = super(DBToGitForeignKey, self).deconstruct()
+        if isinstance(self.target, six.string_types):
+            kwargs['to'] = self.target
+        else:
+            kwargs['to'] = "%s.%s" % (
+                self.target._meta.app_label,
+                self.target._meta.object_name,
+            )
+        kwargs["problem_field_name"] = self.problem_field_name
+        kwargs["commit_id_field_name"] = self.commit_id_field_name
+        return name, path, args, kwargs
 
 
 class ReadOnlyDescriptor(object):

@@ -21,7 +21,6 @@ def extract_revision_data(problem_id, revision_slug, user):
                 raise Http404
             branch, _ = problem.branches.get_or_create(
                 name=revision_slug, defaults={
-                    "creator": user,
                     "head": problem.get_master_branch().head
                 }
             )

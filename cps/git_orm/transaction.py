@@ -33,9 +33,8 @@ class Transaction:
             raise ValueError('only one of branch_name and commit_id should be set')
 
         if branch_name is None and commit_id is None:
-            raise ValueError('either branch_name or commit_id should be set')
-
-        if branch_name is not None:
+            parents = []
+        elif branch_name is not None:
             self.branch = branch_name
             branch_reference = get_branch_reference(self.branch)
             try:

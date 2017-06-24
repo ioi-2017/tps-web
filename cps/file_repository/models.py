@@ -70,6 +70,5 @@ class GitFile(git_models.Model):
         field = self._meta.get_field('content')
         self.content = field.to_python(data)
 
-
     def __str__(self):
         return self.name

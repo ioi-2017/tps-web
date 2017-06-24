@@ -7,7 +7,8 @@ from django.views.generic import View
 from django.utils.translation import ugettext as _
 
 from problems.forms.version_control import CommitForm
-from problems.models import Conflict, ProblemRevision, ProblemData, SolutionRun
+from problems.models import Conflict, ProblemRevision, SolutionRun
+from problems.models.problem_data import ProblemData
 from problems.views.generics import RevisionObjectView
 from problems.views.utils import extract_revision_data
 

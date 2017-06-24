@@ -4,7 +4,8 @@ from django.core.files import File
 
 from model_mommy import mommy
 import problems
-from problems.models import SourceFile, ProblemData, ProblemRevision, TestCase, Solution, InputGenerator
+from problems.models import SourceFile, ProblemRevision, TestCase, Solution, InputGenerator
+from problems.models.problem_data import ProblemData
 import mock as mock
 from django.test import TestCase as UnitTestCase
 

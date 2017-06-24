@@ -13,7 +13,9 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from file_repository.models import FileModel
+from file_repository.models import FileModel, GitFile
+from problems.models import ProblemCommit
+from problems.models.fields import ReadOnlyGitToGitForeignKey
 from problems.models.problem import ProblemRevision
 from problems.models.version_control import RevisionObject
 from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
@@ -23,6 +25,7 @@ from runner.actions.compile_source import compile_source
 from runner.sandbox.sandbox import SandboxInterfaceException
 from tasks.tasks import CeleryTask
 import os
+from git_orm import models as git_models
 
 
 __all__ = ["Resource", "SourceFile"]
@@ -52,23 +55,22 @@ def get_valid_name(name):
     return valid_name
 
 
-class ResourceBase(RevisionObject):
-    problem = models.ForeignKey("ProblemRevision", verbose_name=_("problem"))
+class ResourceFile(GitFile):
+
+    @property
+    def path(self):
+        return self.pk
+
+
+class ResourceBase(git_models.Model):
+    problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator],
                             blank=True, db_index=True)
-    file = models.ForeignKey(FileModel, verbose_name=_("file"), related_name="+")
+    file = ReadOnlyGitToGitForeignKey(ResourceFile, verbose_name=_("file"), related_name="+")
 
-    @staticmethod
-    def get_matching_fields():
-        return ["name"]
-
-    def get_value_as_dict(self):
-        return {"code": self.file.get_value_as_string()}
-
-    class Meta:
-        abstract = True
-        unique_together = ("problem", "name")
-        index_together = ("problem", "name",)
+    @property
+    def get_file_id(self):
+        return os.path.join(self._meta.storage_name, self.name)
 
     def __str__(self):
         return self.name
@@ -81,7 +83,8 @@ class ResourceBase(RevisionObject):
 
 
 class Resource(ResourceBase):
-    pass
+    class Meta:
+        storage_name = "resources"
 
 
 # TODO: Source file can have multiple files (e.g. testlib.h)
@@ -91,16 +94,15 @@ class SourceFile(ResourceBase):
         max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
     )
 
-    compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
-                                      related_name="+", null=True, blank=True)
+    #compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
+    #                                 related_name="+", null=True, blank=True)
+
+    compiled_file = property(lambda s: None, lambda s, v: None)
 
     compilation_task_id = models.CharField(verbose_name=_("compilation task id"), max_length=128, null=True)
     compilation_finished = models.BooleanField(verbose_name=_("compilation finished"), default=False)
 
     last_compile_log = models.TextField(verbose_name=_("last compile log"))
-
-    class Meta(ResourceBase.Meta):
-        abstract = True
 
     @property
     def source_file(self):

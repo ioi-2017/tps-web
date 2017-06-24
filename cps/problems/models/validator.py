@@ -60,7 +60,7 @@ class ValidatorResult(models.Model):
     task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
 
     testcase = models.ForeignKey("TestCase", verbose_name=_("testcase"), related_name="validation_results")
-    validator = models.ForeignKey("Validator", verbose_name=_("validator"), related_name="results")
+    validator = models.ForeignKey("self", verbose_name=_("validator"), related_name="results")
 
     class Meta:
         unique_together = ("testcase", "validator")

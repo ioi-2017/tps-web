@@ -23,7 +23,7 @@ __all__ = ["Solution", "SolutionSubtaskExpectedVerdict"]
 class SolutionFile(GitFile):
 
     class Meta:
-        storage_name = "solutions"
+        storage_name = "solution"
 
 
 class Solution(JSONModel):

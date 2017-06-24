@@ -4,7 +4,8 @@ from django.test import TestCase
 from mock import mock
 from model_mommy import mommy
 from file_repository.models import FileModel
-from problems.models import Problem, ProblemRevision, ProblemBranch, Resource, ProblemData, Validator, Subtask
+from problems.models import Problem, ProblemRevision, ProblemBranch, Resource, Validator, Subtask
+from problems.models.problem_data import ProblemData
 
 
 class VersionControlTests(TestCase):

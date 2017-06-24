@@ -69,5 +69,6 @@ target/
 *.sqlite3
 
 storage/
+commits/
 
 .DS_Store

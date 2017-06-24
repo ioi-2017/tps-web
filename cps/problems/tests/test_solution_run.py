@@ -12,7 +12,8 @@ from judge.results import JudgeVerdict
 from .utils import get_resource_as_file_model, create_mommy_valid_testcase
 
 from file_repository.models import FileModel
-from problems.models import ProblemRevision, SolutionRun, Solution, TestCase, Checker, ProblemData
+from problems.models import ProblemRevision, SolutionRun, Solution, TestCase, Checker
+from problems.models.problem_data import ProblemData
 
 
 class SolutionRunMockedTests(UnitTestCase):

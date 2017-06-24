@@ -117,7 +117,7 @@ class ModelBase(type):
 
 
 class Model(metaclass=ModelBase):
-    _deferred = True  # We set this to true to avoid this model from being loaded in making migrations
+    _deferred = False  # We set this to true to avoid this model from being loaded in making migrations
 
     def __init__(self, **kwargs):
         for field in self._meta.writable_fields:
@@ -209,8 +209,9 @@ class Model(metaclass=ModelBase):
         raise NotImplementedError
 
     @classmethod
-    def create(cls, **kwargs):
+    def create(cls, transaction, **kwargs):
         obj = cls(**kwargs)
+        obj._transaction = transaction
         obj.save()
         return obj
 
@@ -243,3 +244,7 @@ class Model(metaclass=ModelBase):
     def _get_FIELD_display(self, field):
         value = getattr(self, field.attname)
         return force_text(dict(field.flatchoices).get(value, value), strings_only=True)
+
+    @classmethod
+    def check(cls, **kwargs):
+        return []

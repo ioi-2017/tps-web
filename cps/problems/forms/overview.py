@@ -1,13 +1,13 @@
 from django import forms
 
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import ProblemData
+from problems.models.problem_data import ProblemData
 
 
 class OverviewForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
-        fields = ['code_name', 'title', 'time_limit', 'memory_limit', 'task_type', 'description']
+        fields = ['name', 'title', 'time_limit', 'memory_limit', 'task_type', 'description']
 
     def __init__(self, *args, **kwargs):
         super(OverviewForm, self).__init__(*args, **kwargs)

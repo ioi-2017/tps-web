@@ -4,7 +4,8 @@ from tempfile import TemporaryDirectory
 from django.test import TestCase
 from model_mommy import mommy
 
-from problems.models import ProblemRevision, Solution, InputGenerator, Checker, ProblemData
+from problems.models import ProblemRevision, Solution, InputGenerator, Checker
+from problems.models.problem_data import ProblemData
 from problems.models.enums import SolutionVerdict
 from problems.tests.utils import get_resource_as_file_model, create_mommy_valid_testcase
 import shutil

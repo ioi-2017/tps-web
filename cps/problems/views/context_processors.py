@@ -13,9 +13,10 @@ def revision_data(request):
     problem_id = request.resolver_match.kwargs["problem_id"]
     revision_slug = request.resolver_match.kwargs["revision_slug"]
     problem, branch, revision = extract_revision_data(problem_id, revision_slug, request.user)
-    revision_editable = revision.editable(request.user)
+    revision_editable = False
 
     errors = {}
+    """
     errors["testcase"] = revision.testcase_set.all().count()
     if revision.solution_set.filter(verdict=SolutionVerdict.model_solution.name).exists():
         errors["solution"] = 0
@@ -37,8 +38,8 @@ def revision_data(request):
         errors["validator"] = 0
     errors["discussion"] = problem.discussions.filter(closed=False).count()
     errors["merge_requests"] = problem.merge_requests.filter(status=MergeRequest.OPEN).count()
-
-    branches = problem.branches.filter(Q(creator=request.user) | Q(name='master'))
+    """
+    branches = problem.branches.all()
     return {
         "problem": problem,
         "revision": revision,
@@ -46,7 +47,7 @@ def revision_data(request):
         "branches": branches,
         "revision_slug": revision_slug,
         "revision_editable": revision_editable,
-        "branch_editable": branch is not None and branch.editable(request.user),
+        "branch_editable": False,
         "branches_disabled": getattr(settings, "DISABLE_BRANCHES", False),
         "errors": errors
     }

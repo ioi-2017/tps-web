@@ -1,7 +1,7 @@
+from problems.models.problem import *
 from problems.models.version_control import *
 from problems.models.discussion import *
 from problems.models.file import *
-from problems.models.problem import *
 from problems.models.solution import *
 from problems.models.solution_run import *
 from problems.models.testdata import *
@@ -11,3 +11,4 @@ from problems.models.export import *
 from problems.models.grader import *
 from problems.models.roles import *
 from problems.models.merge_request import *
+from problems.models.problem_data import *

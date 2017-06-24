@@ -2,7 +2,8 @@ from django import forms
 
 from problems.forms.files import SourceFileAddForm, SourceFileEditForm
 from problems.forms.generic import ProblemObjectModelForm
-from problems.models import SourceFile, ProblemData, Checker
+from problems.models import SourceFile, Checker
+from problems.models.problem_data import ProblemData
 
 
 class CheckerAddForm(SourceFileAddForm):

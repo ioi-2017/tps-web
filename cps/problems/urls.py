@@ -55,10 +55,10 @@ problem_urls = ([
 
         url(r'^graders/$', GradersListView.as_view(), name="graders"),
         url(r'^grader/add/$', GraderAddView.as_view(), name="add_grader"),
-        url(r'^grader/(?P<grader_id>\d+)/edit/$', GraderEditView.as_view(), name="edit_grader"),
-        url(r'^grader/(?P<grader_id>\d+)/delete/$', GraderDeleteView, name="delete_grader"),
-        url(r'^grader/(?P<grader_id>\d+)/source/$', GraderShowSourceView.as_view(), name="grader_source"),
-        url(r'^grader/(?P<grader_id>\d+)/download/$', GraderDownloadView.as_view(), name="download_grader"),
+        url(r'^grader/(?P<grader_id>.+)/edit/$', GraderEditView.as_view(), name="edit_grader"),
+        url(r'^grader/(?P<grader_id>.+)/delete/$', GraderDeleteView, name="delete_grader"),
+        url(r'^grader/(?P<grader_id>.+)/source/$', GraderShowSourceView.as_view(), name="grader_source"),
+        url(r'^grader/(?P<grader_id>.+)/download/$', GraderDownloadView.as_view(), name="download_grader"),
 
 
         url(r'^testcases/$', TestCasesListView.as_view(), name="testcases"),

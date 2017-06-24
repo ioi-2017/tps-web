@@ -177,6 +177,8 @@ STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static")
 MEDIA_ROOT = os.path.join(BASE_DIR, 'storage')
 MEDIA_URL = "/storage/"
 
+COMMIT_STORAGE_ROOT = os.path.join(BASE_DIR, 'commits')
+
 # project settings
 
 # fail-safe time limit in seconds (float)

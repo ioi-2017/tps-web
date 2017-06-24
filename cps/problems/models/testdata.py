@@ -250,7 +250,8 @@ class TestCase(RevisionObject):
     name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
     # FIXME: Better naming for this
-    generator = models.ForeignKey(InputGenerator, null=True, on_delete=models.CASCADE)
+    #generator = models.ForeignKey(InputGenerator, null=True, on_delete=models.CASCADE)
+    generator=None
 
     input_static = models.BooleanField(
         editable=False,

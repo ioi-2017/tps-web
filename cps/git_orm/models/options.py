@@ -22,6 +22,7 @@ class Options(DjangoOptions):
         self.model_name = self.object_name.lower()
         self.verbose_name = camel_case_to_spaces(self.object_name)
         self.storage_name = cls.__name__.lower() + 's'
+        self.original_attrs = {}
 
         if self.meta:
             if hasattr(self.meta, 'storage_name'):

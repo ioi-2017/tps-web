@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(unique_graders_and_solutions, migrations.RunPython.noop),
+        #migrations.RunPython(unique_graders_and_solutions, migrations.RunPython.noop),
         migrations.AlterModelOptions(
             name='subtask',
             options={'ordering': ('problem', 'name')},

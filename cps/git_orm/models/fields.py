@@ -113,7 +113,7 @@ class ReverseForeignKeyDescriptor(object):
         if instance is None:
             return self
 
-        return self.target_field.model.objects.filter(**{
+        return self.target_field.model.objects.with_transaction(instance._transaction).filter(**{
             self.target_field.attname: instance.pk})
 
 
