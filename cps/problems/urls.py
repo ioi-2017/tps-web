@@ -19,6 +19,10 @@ branch_mode_urls = [
 ]
 
 problem_urls = ([
+        url(r'^analysis/$', AnalysisView.as_view(), name="analysis"),
+        url(r'^analysis/generate/$', AnalysisGenerateView.as_view(), name="analysis_generate"),
+        url(r'^analysis/analyze/$', AnalyzeView.as_view(), name="analyze"),
+
         url(r'^export/$', ExportView.as_view(), name="export"),
         url(r'export/(?P<export_id>\d+)/download/$', ExportDownloadView.as_view(), name="export_download"),
         url(r'export/(?P<export_id>\d+)/start/$', ExportPackageStarterView.as_view(), name="export_start"),
