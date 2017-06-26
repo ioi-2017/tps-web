@@ -4,18 +4,22 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404
+
+from git_orm.transaction import Transaction
 from problems.utils.diff_match_patch import diff_match_patch
-from problems.models import Problem, ProblemRevision
+from problems.models import Problem, ProblemRevision, ProblemCommit
 from django.conf import settings
+from git_orm.models.base import ModelBase
 
 
 def extract_revision_data(problem_id, revision_slug, user):
     problem = get_object_or_404(Problem, id=problem_id)
     try:
-        revision = ProblemRevision.objects.get(revision_id=revision_slug,
-                                               problem=problem)
-        branch = None
-    except ProblemRevision.DoesNotExist:
+        transaction = Transaction(
+            repository_path=problem.repository_path,
+            commit_id=revision_slug
+        )
+    except (KeyError, ValueError):
         if getattr(settings, "DISABLE_BRANCHES", False):
             if revision_slug != user.username:
                 raise Http404
@@ -29,7 +33,10 @@ def extract_revision_data(problem_id, revision_slug, user):
                 branch = problem.branches.get(name=revision_slug)
             except ObjectDoesNotExist:
                 raise Http404
-        revision = branch.get_branch_revision_for_user(user)
+        revision = branch.head
+    else:
+        revision = ProblemCommit.objects.with_transaction(transaction).get()
+        branch = None
 
     return problem, branch, revision
 
@@ -68,3 +75,22 @@ def get_revision_difference(base, new):
     return result
 
 
+def get_git_object_or_404(queryset, problem=None, *args, **kwargs):
+    """
+    Uses get() to return an object, or raises a Http404 exception if the object
+    does not exist.
+
+    klass may be a Model, Manager, or QuerySet object. All other passed
+    arguments and keyword arguments are used in the get() query.
+
+    Note: Like with get(), an MultipleObjectsReturned will be raised if more than one
+    object is found.
+    """
+    if isinstance(queryset, ModelBase):
+        if problem is None:
+            raise ValueError("problem should be passed")
+        queryset = queryset.objects.with_transaction(problem._transaction)
+    try:
+        return queryset.get(*args, **kwargs)
+    except queryset.model.DoesNotExist:
+        raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)

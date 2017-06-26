@@ -16,6 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 from file_repository.models import FileModel, GitFile
 from problems.models import ProblemCommit
 from problems.models.fields import ReadOnlyGitToGitForeignKey
+from problems.models.generic import RecursiveDirectoryModel
 from problems.models.problem import ProblemRevision
 from problems.models.version_control import RevisionObject
 from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
@@ -39,6 +40,7 @@ FileNameValidator = RegexValidator(
     inverse_match=False
 )
 
+
 def get_valid_name(name):
     initial_prefix = "prefix_"
     valid_name = initial_prefix
@@ -59,13 +61,14 @@ class ResourceFile(GitFile):
 
     @property
     def path(self):
-        return self.pk
+        return [self.pk]
+
 
 
 class ResourceBase(git_models.Model):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator],
-                            blank=True, db_index=True)
+                            blank=True, db_index=True, primary_key=True)
     file = ReadOnlyGitToGitForeignKey(ResourceFile, verbose_name=_("file"), related_name="+")
 
     @property
@@ -80,6 +83,12 @@ class ResourceBase(git_models.Model):
             self.name = get_valid_name(self.file.name)
 
         super(ResourceBase, self).save(*args, **kwargs)
+
+    def load(self, data):
+        try:
+            self.file
+        except ResourceFile.DoesNotExist as e:
+            raise self.InvalidObject(e)
 
 
 class Resource(ResourceBase):

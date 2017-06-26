@@ -76,3 +76,15 @@ class RecursiveDirectoryModel(GitModel):
     @classmethod
     def _get_existing_primary_keys(cls, transaction):
         return transaction.list_blobs([cls._meta.storage_name], recursive=True)
+
+
+class ManuallyPopulatedModel(GitModel):
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        obj._transaction = transaction
+        obj.load(None)
+        return obj
+
+    def load(self, *args, **kwargs):
+        return

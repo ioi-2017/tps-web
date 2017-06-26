@@ -314,6 +314,7 @@ class ReadOnlyDescriptor(object):
 
 
 class ReadOnlyGitToGitForeignKey(GitToGitForeignKey):
+    # TODO: Make sure this is not written in dump
     def contribute_to_class(self, cls, name, *args, **kwargs):
         super(ReadOnlyGitToGitForeignKey, self).contribute_to_class(cls, name, *args, **kwargs)
         setattr(cls, self.attname, ReadOnlyDescriptor(self.attname, self.get_default()))

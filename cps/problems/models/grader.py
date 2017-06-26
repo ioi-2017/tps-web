@@ -7,7 +7,7 @@ from file_repository.models import FileModel, GitFile
 from problems.models import RevisionObject, ProblemRevision
 from problems.models.fields import ReadOnlyGitToGitForeignKey
 from problems.models.file import FileNameValidator, get_valid_name
-from problems.models.generic import RecursiveDirectoryModel
+from problems.models.generic import RecursiveDirectoryModel, ManuallyPopulatedModel
 from problems.models.problem import ProblemCommit
 
 __all__ = ["Grader"]
@@ -19,7 +19,7 @@ class GraderFile(GitFile, RecursiveDirectoryModel):
         storage_name = "grader"
 
 
-class Grader(RecursiveDirectoryModel):
+class Grader(RecursiveDirectoryModel, ManuallyPopulatedModel):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
                             blank=True, db_index=True, primary_key=True)
@@ -55,6 +55,8 @@ class Grader(RecursiveDirectoryModel):
         return data
 
     def get_language_representation(self):
+        if self.language is None:
+            return "Auto-detect"
         choices = [(a, a) for a in self.problem.get_judge().get_supported_languages()]
         for repr, val in choices:
             if self.language == val:

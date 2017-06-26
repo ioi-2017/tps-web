@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from problems.forms.testcases import TestCaseAddForm, TestCaseEditForm
+from problems.views.utils import get_git_object_or_404
 
 from .generics import ProblemObjectAddView, RevisionObjectView, ProblemObjectDeleteView, ProblemObjectEditView
 from problems.models import TestCase
@@ -65,7 +66,7 @@ class TestCaseEditView(ProblemObjectEditView):
 
 class TestCaseDetailsView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, testcase_id):
-        testcase = get_object_or_404(TestCase, **{
+        testcase = get_git_object_or_404(TestCase, **{
             "problem": self.revision,
             "pk": testcase_id,
         })
@@ -117,21 +118,25 @@ class TestCaseGenerateView(RevisionObjectView):
 
 class TestCaseInputDownloadView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, testcase_id):
-        testcase = get_object_or_404(TestCase, **{
-            "problem_id": self.revision.id,
-            "id": testcase_id
+        testcase = get_git_object_or_404(TestCase, **{
+            "problem": self.revision,
+            "pk": testcase_id
         })
         if not testcase.input_file_generated():
             raise Http404()
-        return FileResponse(testcase.input_file.file, content_type="txt")
+        file_ = testcase.input_file.file
+        file_.open()
+        return FileResponse(file_, content_type="txt")
 
 class TestCaseOutputDownloadView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, testcase_id):
-        testcase = get_object_or_404(TestCase, **{
-            "problem_id": self.revision.id,
-            "id": testcase_id
+        testcase = get_git_object_or_404(TestCase, **{
+            "problem": self.revision,
+            "pk": testcase_id
         })
         if not testcase.output_file_generated():
             raise Http404()
-        return FileResponse(testcase.output_file.file, content_type="txt")
+        file_ = testcase.output_file.file
+        file_.open()
+        return FileResponse(file_, content_type="txt")
 

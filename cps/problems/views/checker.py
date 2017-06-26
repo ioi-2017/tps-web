@@ -7,6 +7,7 @@ from problems.forms.files import SourceFileEditForm
 from problems.models import Checker
 from problems.views.generics import ProblemObjectEditView, RevisionObjectView, ProblemObjectAddView, \
     ProblemObjectDeleteView, ProblemObjectShowSourceView, ProblemObjectDownloadView
+from problems.views.utils import get_git_object_or_404
 
 __all__ = ["CheckerListView", "CheckerActivateView",
            "CheckerAddView", "CheckerDeleteView", "CheckerShowSourceView",
@@ -87,7 +88,7 @@ class CheckerEditView(ProblemObjectEditView):
 
 class CheckerDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Checker, id=kwargs.get('checker_id')).file.file
+        return get_git_object_or_404(self.revision.checker_set, pk=kwargs.get('checker_id')).file.file
 
     def get_name(self, request, *args, **kwargs):
-        return get_object_or_404(Checker, id=kwargs.get('checker_id')).name
+        return get_git_object_or_404(self.revision.checker_set, pk=kwargs.get('checker_id')).name

@@ -147,6 +147,7 @@ class QuerySet(object):
         return qst
 
     def get_or_create(self, defaults=None, **kwargs):
+        # FIXME: This method does not take into account concurrency
         if defaults:
             parameters = defaults.copy()
         else:

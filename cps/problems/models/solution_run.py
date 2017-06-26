@@ -161,7 +161,8 @@ class SolutionRunResult(models.Model):
                                      related_name="results")
     solution = DBToGitForeignKey(Solution, commit_id_field_name="commit_id", problem_field_name="base_problem",
                                  verbose_name=_("solution"), editable=False)
-    testcase = models.ForeignKey(TestCase, verbose_name=_("testcase"), editable=False)
+    testcase = DBToGitForeignKey(TestCase, commit_id_field_name="commit_id", problem_field_name="base_problem",
+                                 verbose_name=_("testcase"), editable=False)
 
     @property
     def commit_id(self):

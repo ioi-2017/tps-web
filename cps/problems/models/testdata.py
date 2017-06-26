@@ -1,5 +1,6 @@
 # Amir Keivan Mohtashami
 import logging
+import os
 import shlex
 import django
 
@@ -10,13 +11,17 @@ from django.db import models
 from django.db.models import Max, Q
 from django.utils.translation import ugettext_lazy as _
 
-from file_repository.models import FileModel
+from file_repository.models import FileModel, FileSystemModel
 from judge.results import JudgeVerdict
-from problems.models import RevisionObject, SourceFile
+from problems.models import RevisionObject, SourceFile, ProblemCommit
+from problems.models.fields import ReadOnlyGitToGitForeignKey
+from problems.models.generic import ManuallyPopulatedModel
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from tasks.tasks import CeleryTask
+
+from git_orm import models as git_models
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +32,9 @@ __all__ = ["TestCase", "Subtask", "InputGenerator"]
 class InputGenerator(SourceFile):
     text_data = models.TextField(blank=True, null=False)
     is_enabled = models.BooleanField(default=False)
+
+    class Meta:
+        storage_name = "gen"
 
     @staticmethod
     def text_data_validator(problem, text):
@@ -245,24 +253,39 @@ class TestCaseJudgeInitialization(CeleryTask):
         testcase._initialize_in_judge()
 
 
-class TestCase(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
-    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True, editable=False, db_index=True)
+class TestCase(ManuallyPopulatedModel):
+    problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
+    name = models.CharField(max_length=20, verbose_name=_("name"),
+                            blank=True, editable=False, db_index=True,
+                            primary_key=True)
     testcase_number = models.IntegerField(verbose_name=_("testcase_number"))
     # FIXME: Better naming for this
-    #generator = models.ForeignKey(InputGenerator, null=True, on_delete=models.CASCADE)
-    generator=None
+    generator = ReadOnlyGitToGitForeignKey(InputGenerator, null=True, default=None)
 
-    input_static = models.BooleanField(
-        editable=False,
-    )
-    output_static = models.BooleanField(
-        editable=False,
-    )
+    #input_static = models.BooleanField(editable=False,)
+    input_static = True
+    #output_static = models.BooleanField(editable=False,)
+    output_static = True
+
+    def get_storage_path(self):
+        dir_path = os.path.join(self.problem.get_storage_path(), "tests")
+        if not os.path.exists(dir_path) or not os.path.isdir(dir_path):
+            # TODO: Consider auto-creation here when support for write is added
+            raise self.InvalidObject("{} should be a directory".format(dir_path))
+        return dir_path
+
+    @property
+    def get__input_uploaded_file_id(self):
+        return os.path.join(self.get_storage_path(), self.pk + ".in")
+
+    @property
+    def get__output_uploaded_file_id(self):
+        return os.path.join(self.get_storage_path(), self.pk + ".out")
 
     # Input-related fields
-    _input_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("input uploaded file"), null=True,
-                                             related_name='+', blank=True)
+    _input_uploaded_file = ReadOnlyGitToGitForeignKey(FileSystemModel,
+                                                      verbose_name=_("input uploaded file"), null=True,
+                                                      related_name='+', blank=True)
 
     _input_generation_parameters = models.TextField(
         verbose_name=_("input generation command"),
@@ -271,16 +294,19 @@ class TestCase(RevisionObject):
         null=True
     )
     _input_generator_name = models.CharField(verbose_name=_("generator"), null=True, blank=True, max_length=256)
-    _input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
+    #_input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
+    _input_generated_file = None
     input_generation_log = models.TextField(verbose_name=_("input generation log"), null=True)
     input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
     input_generation_task_id = models.CharField(verbose_name=_("input generation task id"), max_length=128, null=True)
 
     # Output-related fields
-    _output_uploaded_file = models.ForeignKey(FileModel, verbose_name=_("output uploaded file"), null=True,
-                                              related_name='+', blank=True)
+    _output_uploaded_file = ReadOnlyGitToGitForeignKey(FileSystemModel,
+                                                      verbose_name=_("output uploaded file"), null=True,
+                                                      related_name='+', blank=True)
 
-    _output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
+    #_output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
+    _output_generated_file = None
     output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
     output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
     output_generation_task_id = models.CharField(verbose_name=_("output generation task id"), max_length=128, null=True)
@@ -303,6 +329,25 @@ class TestCase(RevisionObject):
         ordering = ("problem", "name",)
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        problem = ProblemCommit.objects.with_transaction(transaction).get()
+        dir_path = os.path.join(problem.get_storage_path(), "tests")
+        if not os.path.exists(dir_path) or not os.path.isdir(dir_path):
+            return []
+        else:
+            files = os.listdir(dir_path)
+            inputs = []
+            outputs = []
+            for file in files:
+                abs_path = os.path.join(dir_path, file)
+                if os.path.isfile(abs_path):
+                    if file.endswith(".in"):
+                        inputs.append(file[:-3])
+                    elif file.endswith(".out"):
+                        outputs.append(file[:-4])
+            return [key for key in inputs if key in outputs]
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
@@ -367,7 +412,7 @@ class TestCase(RevisionObject):
         if self._input_uploaded_file is not None and self._input_generator_name is not None:
             raise ValidationError("Only one of generator and static input file must be present.")
 
-    def save(self, *args, **kwargs):
+    def deprecated_django_save(self, *args, **kwargs):
         """
         We first determine whether input and output is a static file and then continue saving process normally.
         """
@@ -396,6 +441,9 @@ class TestCase(RevisionObject):
             self.name = "test_{0:3d}".format(self.testcase_number)
 
         super(TestCase, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        return
 
     @property
     def _input_generator(self):
@@ -479,6 +527,8 @@ class TestCase(RevisionObject):
 
     @property
     def validators(self):
+        ### FIXME: Return real list of validators
+        return []
         global_validators = Q(global_validator=True)
         validators_for_subtasks = Q(_subtasks__in=self.subtasks.all())
         return self.problem.validator_set.filter(
@@ -608,6 +658,7 @@ class TestCase(RevisionObject):
         self.save()
 
     def has_errors(self):
+        return False
         input_generation_failed = not self.input_file_generated()
         output_generation_failed = not self.output_file_generated()
         input_validation_failed = not self.input_file_validated()
@@ -626,6 +677,8 @@ class TestCase(RevisionObject):
         return self.output_generation_successful is not None or self.output_static
 
     def testcase_generation_completed(self):
+
+        return True
 
         if self.input_generation_successful is False:
             return True
@@ -651,7 +704,7 @@ class Subtask(RevisionObject):
     problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"), related_name='subtasks')
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
     score = models.IntegerField(verbose_name=_("score"))
-    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
+    testcases = models.ManyToManyField("self", verbose_name=_("testcases"), related_name="subtasks", blank=True)
 
     class Meta:
         ordering = ("problem", "name",)

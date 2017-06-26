@@ -1,6 +1,7 @@
 from functools import update_wrapper
 
 # import magic
+import magic
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
@@ -12,7 +13,7 @@ from django.utils.decorators import classonlymethod
 from django.views.generic import View
 
 from file_repository.models import FileModel
-from problems.views.utils import extract_revision_data
+from problems.views.utils import extract_revision_data, get_git_object_or_404
 from django.utils.translation import ugettext as _
 
 from django.db.models import ObjectDoesNotExist
@@ -216,7 +217,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
 
     def post(self, request, problem_id, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
-        instance = get_object_or_404(self.model, pk=instance_pk, problem=self.revision)
+        instance = get_git_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
         if "source_code" in request.POST:
             new_file = FileModel()
@@ -228,7 +229,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
 
     def get(self, request, problem_id, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
-        instance = get_object_or_404(self.model, pk=instance_pk, problem=self.revision)
+        instance = get_git_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
         file_ = code_file.file
         file_.open()

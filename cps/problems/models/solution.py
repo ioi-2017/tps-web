@@ -66,14 +66,17 @@ class Solution(JSONModel):
         return data
 
     def get_language_representation(self):
+        if self.language is None:
+            return "Auto-detect"
         choices = [(a, a) for a in self.problem.get_judge().get_supported_languages()]
         for repr, val in choices:
             if self.language == val:
                 return repr
         return "Not supported"
 
-    def load(self, *args, **kwargs):
-        super(Solution, self).load(*args, **kwargs)
+    def load(self, data, *args, **kwargs):
+        data.pop("except", None)
+        super(Solution, self).load(data, *args, **kwargs)
         try:
             self.code
         except GitFile.DoesNotExist as e:

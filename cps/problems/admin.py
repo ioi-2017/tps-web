@@ -12,7 +12,7 @@ admin.site.register(Discussion)
 admin.site.register(SolutionRun)
 #admin.site.register(Grader)
 admin.site.register(ProblemBranch)
-admin.site.register(TestCase)
+#admin.site.register(TestCase)
 
 
 @admin.register(ProblemRole)

@@ -78,7 +78,7 @@ class GitToGitForeignKeyDescriptor(object):
             if pk is None:
                 obj = None
             else:
-                obj = self.field.target.objects.with_transaction(instance._transaction).get(pk=pk)
+                obj = self.field.target._get_instance(instance._transaction, pk)
             self._cache = obj
         return self._cache
 

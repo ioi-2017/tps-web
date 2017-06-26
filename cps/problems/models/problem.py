@@ -124,23 +124,20 @@ class NewProblemBranch(git_models.Model):
 
     def save(self, *args, **kwargs):
         repository = self._transaction.repo
-        if self.initial_pk is None:
+        current_branch = self._transaction.repo.branches.local.get(
+            self.initial_pk,
+        )
+        if current_branch is None:
             current_branch = self._transaction.repo.branches.local.create(
                 self.name,
                 repository[self.inited_head.commit_id]
             )
-        else:
-            current_branch = self._transaction.repo.branches.local.get(
-                self.name,
-            )
-            if self.initial_pk != self.pk:
-                current_branch.rename(self.pk)
+        if self.initial_pk != self.pk:
+            current_branch.rename(self.pk)
         self._transaction = Transaction(repository_path=repository.path, branch_name=self.name)
 
     def get_branch_revision_for_user(self, user):
         return self.head
-
-
 
 
 class ProblemBranch(models.Model):
@@ -262,6 +259,10 @@ class ProblemCommit(git_models.Model):
     @property
     def problem_data(self):
         return self.problemdata_set.all()[0]
+
+    def editable(self, user):
+        # TODO: Add editing
+        return False
 
     def get_storage_path(self):
         path = settings.COMMIT_STORAGE_ROOT

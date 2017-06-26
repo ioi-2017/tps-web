@@ -43,7 +43,7 @@ class ProblemData(git_models.Model):
 
     @property
     def get_checker_id(self):
-        for checker in Checker.objects.all():
+        for checker in self.problem.checker_set.all():
             if os.path.splitext(checker.pk)[0] == "checker":
                 return checker.pk
 

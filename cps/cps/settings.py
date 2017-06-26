@@ -245,7 +245,7 @@ GIT_USER_EMAIL = 'tps@localhost'
 
 
 def SHOW_TOOLBAR(request):
-    return request.user.is_staff
+    return request.user.is_superuser and False
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': SHOW_TOOLBAR,
