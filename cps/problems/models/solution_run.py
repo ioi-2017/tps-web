@@ -25,9 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class SolutionRun(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"))
+    base_problem = models.ForeignKey("problems.Problem", verbose_name=_("problem"))
+    commit_id = models.CharField(verbose_name=_("commit id"), max_length=256)
+    problem = DBToGitForeignKey("problems.ProblemCommit", commit_id_field_name="commit_id",
+                                problem_field_name="base_problem",
+                                verbose_name=_("revision"))
     #solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
-    testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
+    #testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
 
@@ -81,15 +85,11 @@ class SolutionRun(RevisionObject):
             assert solution.problem == problem, "All solutions and testcases must be from the same problem"
         for testcase in testcases:
             assert testcase.problem == problem, "All solutions and testcases must be from the same problem"
-        solution_run = cls.objects.create(problem=problem)
+        solution_run = cls.objects.create(base_problem=problem.problem, commit_id=problem.commit_id)
         solution_run.solutions = solutions
         solution_run.testcases = testcases
         solution_run.save()
         return solution_run
-
-    def clone(self, cloned_instances=None):
-        raise NotImplementedError
-
 
 # TODO: This should be removed. exceptions should be handled explicitly
 def report_failed_on_exception(func):
@@ -154,6 +154,7 @@ class SolutionRunExecutionTask(CeleryTask):
     def execute(self, run):
         run._run()
 
+
 class SolutionRunResult(models.Model):
     _VERDICTS = [(x.name, x.value) for x in list(SolutionRunVerdict)]
 
@@ -170,8 +171,7 @@ class SolutionRunResult(models.Model):
 
     @property
     def base_problem(self):
-        return self.base_problem
-
+        return self.solution_run.base_problem
 
     verdict = EnumField(
         verbose_name=_("verdict"),

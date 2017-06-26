@@ -1,6 +1,7 @@
 import json
 
 import logging
+import os
 from collections import OrderedDict
 
 from git_orm import GitError
@@ -88,3 +89,22 @@ class ManuallyPopulatedModel(GitModel):
 
     def load(self, *args, **kwargs):
         return
+
+
+class FileSystemPopulatedModel(GitModel):
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        obj._transaction = transaction
+        if os.path.exists(obj.path):
+            with open(obj.path, "rb") as f:
+                content = f.read().decode("utf-8")
+            obj.load(content)
+        return obj
+
+    def save(self, *args, **kwargs):
+        serialized = self.dump(include_hidden=True, include_pk=False)
+        with open(self.path, "w") as f:
+            f.write(serialized)
+            f.close()

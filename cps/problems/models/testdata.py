@@ -15,7 +15,7 @@ from file_repository.models import FileModel, FileSystemModel
 from judge.results import JudgeVerdict
 from problems.models import RevisionObject, SourceFile, ProblemCommit
 from problems.models.fields import ReadOnlyGitToGitForeignKey
-from problems.models.generic import ManuallyPopulatedModel
+from problems.models.generic import ManuallyPopulatedModel, FileSystemPopulatedModel
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
@@ -253,7 +253,7 @@ class TestCaseJudgeInitialization(CeleryTask):
         testcase._initialize_in_judge()
 
 
-class TestCase(ManuallyPopulatedModel):
+class TestCase(FileSystemPopulatedModel):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(max_length=20, verbose_name=_("name"),
                             blank=True, editable=False, db_index=True,
@@ -282,23 +282,27 @@ class TestCase(ManuallyPopulatedModel):
     def get__output_uploaded_file_id(self):
         return os.path.join(self.get_storage_path(), self.pk + ".out")
 
+    @property
+    def path(self):
+        return os.path.join(self.get_storage_path(), self.pk + ".desc")
+
     # Input-related fields
     _input_uploaded_file = ReadOnlyGitToGitForeignKey(FileSystemModel,
                                                       verbose_name=_("input uploaded file"), null=True,
                                                       related_name='+', blank=True)
 
-    _input_generation_parameters = models.TextField(
-        verbose_name=_("input generation command"),
-        max_length=100,
-        blank=True,
-        null=True
-    )
-    _input_generator_name = models.CharField(verbose_name=_("generator"), null=True, blank=True, max_length=256)
+    #_input_generation_parameters = models.TextField(
+    #    verbose_name=_("input generation command"),
+    #    max_length=100,
+    #    blank=True,
+    #    null=True
+    #)
+    #_input_generator_name = models.CharField(verbose_name=_("generator"), null=True, blank=True, max_length=256)
     #_input_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
-    _input_generated_file = None
-    input_generation_log = models.TextField(verbose_name=_("input generation log"), null=True)
-    input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
-    input_generation_task_id = models.CharField(verbose_name=_("input generation task id"), max_length=128, null=True)
+    #_input_generated_file = None
+    #input_generation_log = models.TextField(verbose_name=_("input generation log"), null=True)
+    #input_generation_successful = models.NullBooleanField(verbose_name=_("successful input generation"))
+    #input_generation_task_id = models.CharField(verbose_name=_("input generation task id"), max_length=128, null=True)
 
     # Output-related fields
     _output_uploaded_file = ReadOnlyGitToGitForeignKey(FileSystemModel,
@@ -306,10 +310,10 @@ class TestCase(ManuallyPopulatedModel):
                                                       related_name='+', blank=True)
 
     #_output_generated_file = models.ForeignKey(FileModel, editable=False, null=True, related_name='+', blank=True)
-    _output_generated_file = None
-    output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
-    output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
-    output_generation_task_id = models.CharField(verbose_name=_("output generation task id"), max_length=128, null=True)
+    #_output_generated_file = None
+    #output_generation_log = models.TextField(verbose_name=_("output generation log"), null=True)
+    #output_generation_successful = models.NullBooleanField(verbose_name=_("successful output generation"))
+    #output_generation_task_id = models.CharField(verbose_name=_("output generation task id"), max_length=128, null=True)
 
     # TODO: Add output_verified: each output must be verified either automatically
     # (e.g. by running checker on the test) or manually.
@@ -441,9 +445,6 @@ class TestCase(ManuallyPopulatedModel):
             self.name = "test_{0:3d}".format(self.testcase_number)
 
         super(TestCase, self).save(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        return
 
     @property
     def _input_generator(self):
@@ -658,6 +659,7 @@ class TestCase(ManuallyPopulatedModel):
         self.save()
 
     def has_errors(self):
+        # FIXME: Actually check for errors
         return False
         input_generation_failed = not self.input_file_generated()
         output_generation_failed = not self.output_file_generated()
@@ -671,13 +673,13 @@ class TestCase(ManuallyPopulatedModel):
         return failed
 
     def input_generation_completed(self):
-        return self.input_generation_successful is not None or self.input_static
+        return self.input_static or self.input_generation_successful is not None
 
     def output_generation_completed(self):
-        return self.output_generation_successful is not None or self.output_static
+        return self.output_static or self.output_generation_successful is not None
 
     def testcase_generation_completed(self):
-
+        # FIXME: Actually check for generation status
         return True
 
         if self.input_generation_successful is False:

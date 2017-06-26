@@ -18,6 +18,7 @@ from file_repository.models import FileModel
 from git_orm.transaction import Transaction
 from judge import Judge
 from problems.models.fields import ReadOnlyGitToGitForeignKey
+from problems.models.generic import FileSystemPopulatedModel
 from tasks.tasks import CeleryTask
 
 __all__ = ["Problem", "ProblemRevision", "ProblemBranch", "ProblemCommit"]
@@ -236,7 +237,7 @@ class ProblemJudgeInitialization(CeleryTask):
         problem_revision._initialize_in_judge()
 
 
-class ProblemCommit(git_models.Model):
+class ProblemCommit(FileSystemPopulatedModel):
 
     commit_id = models.CharField(verbose_name=_("commit id"), max_length=256, primary_key=True)
 
@@ -296,20 +297,38 @@ class ProblemCommit(git_models.Model):
     def get_task_type(self):
         return self.get_judge().get_task_type(self.problem_data.task_type)
 
-    @classmethod
-    def _get_instance(cls, transaction, pk):
-        obj = cls(pk=pk)
-        obj._transaction = transaction
-        if os.path.exists(obj.path):
-            with open(obj.path) as f:
-                content = f.read().decode("utf-8")
-            obj.load(content)
-        return obj
+    def _initialize_in_judge(self):
+        self.judge_initialization_successful, self.judge_initialization_message = \
+            self.get_task_type().initialize_problem(
+                problem_code=str(self.pk),
+                time_limit=self.problem_data.time_limit,
+                memory_limit=self.problem_data.memory_limit,
+                task_type_parameters=self.problem_data.task_type_parameters,
+                helpers=[
+                    (grader.name, grader.code) for grader in self.grader_set.all()
+                ],
+            )
+        self.save()
 
-    def save(self, *args, **kwargs):
-        serialized = self.dump(include_hidden=True, include_pk=False)
-        with open(self.path, "w") as f:
-            f.write(serialized)
+    def initialize_in_judge(self):
+        if self.judge_initialization_task_id:
+            if not self.judge_initialization_successful:
+                result = AsyncResult(self.judge_initialization_task_id)
+                if result.failed() or result.successful():
+                    self.judge_initialization_task_id = None
+                    self.save()
+        if not self.judge_initialization_task_id:
+            self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
+            self.save()
+
+    def invalidate_judge_initialization(self):
+        self.judge_initialization_task_id = None
+        self.judge_initialization_successful = None
+        self.save()
+
+    def judge_initialization_completed(self):
+        return self.judge_initialization_successful is not None
+
 
 
 class ProblemRevision(models.Model):
