@@ -7,7 +7,8 @@ from json import JSONDecoder
 from json import JSONEncoder
 
 from django.db import models
-
+from git_orm import models as git_models
+from git_orm.transaction import Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,15 @@ class DjangoPKJSONEncoder(JSONEncoder):
                 'app_label': o._meta.app_label,
                 'model_name': o._meta.model_name,
                 'pk': o.pk,
+            }
+        elif isinstance(o, git_models.Model):
+            return {
+                'git_pk_encoded': True,
+                'app_label': o._meta.app_label,
+                'model_name': o._meta.model_name,
+                'pk': o.pk,
+                'commit_id': str(o._transaction.parents[0]),
+                'repository_path': o._transaction.repo.path,
             }
         return super(DjangoPKJSONEncoder, self).default(o)
 
@@ -37,6 +47,14 @@ class DjangoPKJSONDecoder(JSONDecoder):
             from django.apps import apps
             model = apps.get_model(json_dict['app_label'], json_dict['model_name'])
             return model.objects.get(pk=json_dict['pk'])
+        elif 'git_pk_encoded' in json_dict:
+            from django.apps import apps
+            model = apps.get_model(json_dict['app_label'], json_dict['model_name'])
+            transaction = Transaction(
+                repository_path=json_dict['repository_path'],
+                commit_id=json_dict['commit_id'],
+            )
+            return model.objects.with_transaction(transaction).get(pk=json_dict['pk'])
         else:
             return json_dict
 
