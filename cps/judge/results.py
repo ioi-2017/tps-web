@@ -9,6 +9,7 @@ class JudgeVerdict(Enum):
     runtime_error = _noop("Runtime error")
     time_limit_exceeded = _noop("Time limit exceeded")
     memory_limit_exceeded = _noop("Memory limit exceeded")
+    judge_failed = _noop("Judge failed")
     ok = _noop("OK")
 
 
@@ -18,8 +19,8 @@ class EvaluationResult(object):
             success,
             verdict,
             output_file=None,
-            execution_time=None, # in seconds
-            execution_memory=None, # in MB
+            execution_time=None,  # in seconds
+            execution_memory=None,  # in MB
             message="",
     ):
         self.success = success

@@ -347,7 +347,7 @@ class ProblemRevision(models.Model):
     depth = models.IntegerField(verbose_name=_("revision depth"), blank=True)
 
     judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
-    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"))
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"), default=None)
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     USER_REVISION_OBJECTS = [
@@ -389,6 +389,9 @@ class ProblemRevision(models.Model):
         self.judge_initialization_task_id = None
         self.judge_initialization_successful = None
         self.save()
+        testcases = self.testcase_set.all()
+        for testcase in testcases:
+            testcase.invalidate()
 
     def judge_initialization_completed(self):
         return self.judge_initialization_successful is not None

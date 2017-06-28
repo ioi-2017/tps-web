@@ -192,5 +192,17 @@ class VersionControlTests(TestCase):
         self.problem_branch1.pull_from_branch(self.problem_branch2)
         self.assertEqual(len(self.problem_branch1.head.validator_set.all()[0].subtasks), 1)
 
+    def test_validator_subtask_merge3(self, *args, **kwargs):
+        self.problem_branch2.set_as_head(self.problem_branch1.head)
+        r = self.problem_branch1.head
+        s = mommy.make(Subtask, problem=r, name="t")
+        v = mommy.make(Validator, problem=r, global_validator=False)
+        v._subtasks.add(s)
+        r2 = self.problem_branch2.get_or_create_working_copy(self.problem.creator)
+        r2.validator_set.all()[0]._subtasks.clear()
+        r2.commit("Committed")
+        self.problem_branch2.set_working_copy_as_head()
+        self.problem_branch1.pull_from_branch(self.problem_branch2)
+        self.assertEqual(len(self.problem_branch1.head.validator_set.all()[0].subtasks), 0)
 
 

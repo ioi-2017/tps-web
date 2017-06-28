@@ -17,6 +17,7 @@ def skip_signal_if_required(func):
                 logger.error(e, e)
     return wrapper
 
+
 @receiver(post_save, sender=Solution, dispatch_uid="invalidate_testcase_solution")
 @receiver(pre_delete, sender=Solution, dispatch_uid="invalidate_testcase_solution_delete")
 @skip_signal_if_required
@@ -26,16 +27,6 @@ def invalidate_testcase_on_solution_change(sender, instance, **kwargs):
     for testcase in testcases:
         if testcase.solution == instance:
             testcase.invalidate()
-
-
-@receiver(post_save, sender=Grader, dispatch_uid="invalidate_testcase_grader")
-@receiver(pre_delete, sender=Grader, dispatch_uid="invalidate_testcase_grader_delete")
-@skip_signal_if_required
-def invalidate_testcase_on_grader_change(sender, instance, **kwargs):
-    problem = instance.problem
-    testcases = problem.testcase_set.all()
-    for testcase in testcases:
-        testcase.invalidate()
 
 
 @receiver(post_save, sender=Validator, dispatch_uid="invalidate_testcase_validator")

@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 
@@ -24,10 +25,15 @@ class ExportView(RevisionObjectView):
         return self.show(request, self.get_form())
 
     def post(self, request, *args, **kwargs):
-        if self.branch != self.problem.get_master_branch():
-            return self.redirect_home()
-
-        form = ExportForm(request.POST, problem=self.problem, revision=self.revision, user=self.request.user)
+        if self.branch is not None:
+            exported_revision = self.branch.head
+        else:
+            exported_revision = self.revision
+        form = ExportForm(request.POST,
+                          problem=self.problem,
+                          revision=exported_revision,
+                          user=self.request.user
+                          )
         if form.is_valid():
             form.save()
             return self.redirect_home()
@@ -35,17 +41,34 @@ class ExportView(RevisionObjectView):
         return self.show(request, form)
 
     def show(self, request, form):
-        is_master = (self.branch != self.problem.get_master_branch())
         return render(request, self.template_name,
-                      {'form': form, 'exports': self.problem.exports.order_by('-pk'), 'is_master': is_master})
+                      {'form': form,
+                       'exports':
+                           self.problem.exports.filter(
+                               creator=request.user
+                           ),
+                       })
 
 
 class ExportDownloadView(ProblemObjectDownloadView):
     def get_name(self, request, *args, **kwargs):
-        return get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem).archive.name
+        return get_object_or_404(
+            ExportPackage,
+            pk=kwargs['export_id'],
+            problem=self.problem,
+            creator=request.user,
+        ).archive.name
 
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(ExportPackage, pk=kwargs['export_id'], problem=self.problem).archive.file
+        file_ = get_object_or_404(
+            ExportPackage,
+            pk=kwargs['export_id'],
+            problem=self.problem,
+            creator=request.user,
+        ).archive
+        if file_ is None:
+            raise Http404
+        return file_.file
 
 
 class ExportPackageStarterView(RevisionObjectView):
@@ -58,7 +81,12 @@ class ExportPackageStarterView(RevisionObjectView):
         }))
 
     def post(self, request, *args, **kwargs):
-        export_package = get_object_or_404(ExportPackage, pk=kwargs['export_id'])
+        export_package = get_object_or_404(
+            ExportPackage,
+            pk=kwargs['export_id'],
+            problem=self.problem,
+            creator=request.user,
+        )
         export_package.create_archive()
 
         return self.redirect_home()

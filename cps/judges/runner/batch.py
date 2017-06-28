@@ -5,6 +5,7 @@ from runner import get_compilation_commands, get_execution_command, get_valid_ex
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
 from runner.actions.execute_with_input import execute_with_input
+from django import forms
 
 
 class Batch(TaskType):
@@ -38,7 +39,9 @@ class Batch(TaskType):
         normal_names = [name]
         prioritized_names = []
         for grader_name, _ in graders:
-            if grader_name.startswith("grader"):
+            if len(get_valid_extensions(language)) > 0 and \
+                grader_name == "grader{ext}".format(
+                    ext=get_valid_extensions(language)[0]):
                 prioritized_names.append(grader_name)
             else:
                 normal_names.append(grader_name)
@@ -61,7 +64,7 @@ class Batch(TaskType):
         testcase = TestCase.objects.get(problem_id=problem_code, name=testcase_code)
 
         success, compilation_success, outputs, stdout, stderr, compilation_sandbox_data = compile_source(action)
-        if not success or not compilation_success:
+        if not success or not compilation_success or outputs[compiled_file_name] is None:
             compilation_message = "Compilation not successful"
             compilation_message += "Standard output:\n" + stdout
             compilation_message += "Standard error:\n" + stderr
@@ -96,7 +99,8 @@ class Batch(TaskType):
         if not success:
             return EvaluationResult(
                 success=False,
-                verdict=JudgeVerdict.invalid_submission
+                verdict=JudgeVerdict.invalid_submission,
+                message="Sandbox error"
             )
         else:
             evaluation_success = True
@@ -113,3 +117,10 @@ class Batch(TaskType):
                 execution_memory=sum(int(sandbox["execution_memory"]) for sandbox in execution_sandbox_datas) / 1024,
                 verdict=self.judge.get_verdict_from_exit_status(execution_sandbox_datas[0]["exit_status"]),
         )
+
+    def get_parameters_form(self):
+        class ParamsForm(forms.Form):
+            def save(self, *args, **kwargs):
+                pass
+
+        return ParamsForm

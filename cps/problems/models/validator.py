@@ -143,7 +143,7 @@ class Validator(SourceFile):
         else:
             mark = set([])
             for subtask in self._subtasks.all():
-                for testcase in subtask.testcases:
+                for testcase in subtask.testcases.all():
                     if not testcase.pk in mark:
                         testcases.append(testcase)
                         mark.update([testcase.pk])
@@ -185,5 +185,6 @@ class Validator(SourceFile):
         subtasks = []
         for subtask in self._subtasks.all():
             subtasks.append(cloned_instances[subtask])
+        cloned_instances[self]._subtasks.clear()
         if len(subtasks) > 0:
             cloned_instances[self]._subtasks.add(*subtasks)

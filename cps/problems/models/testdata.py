@@ -43,6 +43,9 @@ class InputGenerator(SourceFile):
         names = set()
 
         def line_valid(line_id, line):
+            line = line.strip()
+            if len(line) == 0:
+                return
             line_split = shlex.split(line)
 
             if '>' not in line_split:
@@ -77,7 +80,7 @@ class InputGenerator(SourceFile):
                                                      params={'line': line_id, 'subtask': subtask_name})
                     })
 
-        for i, line in enumerate(text.split("\n")):
+        for i, line in enumerate(text.split("\n"), start=1):
             line_valid(i, line)
 
     def clean(self):
@@ -196,7 +199,7 @@ class TestCaseInputGeneration(CeleryTask):
 
     def execute_child_tasks(self, testcase):
         for validator in testcase.validators:
-            validator.validate_testcase(testcase)
+            validator.validate_testcase(testcase, force_recreate=True)
         testcase.output_generation_task_id = TestCaseOutputGeneration().delay(testcase)
         testcase.save()
 
@@ -328,7 +331,7 @@ class TestCase(FileSystemPopulatedModel):
     # which their validators accept it
 
     judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
-    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization finished"), default=False)
+    judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization finished"), default=None)
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     class Meta:
@@ -739,5 +742,6 @@ class Subtask(JSONModel):
         for testcase in self.testcases.all():
             if testcase in cloned_instances:
                 testcases.append(cloned_instances[testcase])
+        cloned_instances[self].testcases.clear()
         if len(testcases) > 0:
             cloned_instances[self].testcases.add(*testcases)
