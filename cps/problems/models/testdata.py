@@ -23,7 +23,7 @@ from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
 from tasks.tasks import CeleryTask
 
-from git_orm import models as git_models
+from git_orm import models as git_models, GitError
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +175,22 @@ class InputGenerator(SourceFile):
             "data": self.text_data,
             "enabled": str(self.is_enabled),
         }
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        ls = super(InputGenerator, cls)._get_existing_primary_keys(transaction)
+        return [pk for pk in ls if not (pk.endswith(".data") and pk[:-5] in ls)]
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = super(InputGenerator, cls)._get_instance(transaction, pk)
+        try:
+            data_path = list(obj.path)
+            data_path[-1] += ".data"
+            obj.text_data = transaction.get_blob(data_path).decode("utf-8")
+        except GitError:
+            pass
+        return obj
 
 
 class TestCaseInputGeneration(CeleryTask):
