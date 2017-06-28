@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from problems.forms.solution import SolutionAddForm, SolutionEditForm
 from problems.models import Solution
 from problems.models.enums import SolutionVerdict
-from problems.views import get_git_object_or_404
+from problems.views.utils import get_git_object_or_404
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
     ProblemObjectShowSourceView, ProblemObjectDownloadView
 
