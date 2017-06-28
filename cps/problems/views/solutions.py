@@ -77,7 +77,7 @@ class SolutionShowSourceView(ProblemObjectShowSourceView):
 
 class SolutionDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_git_object_or_404(Solution, id=kwargs.get('solution_id')).code.file
+        return get_git_object_or_404(Solution, pk=kwargs.get('solution_id'), problem=self.revision).code.file
 
     def get_name(self, request, *args, **kwargs):
-        return get_git_object_or_404(Solution, id=kwargs.get('solution_id')).name
+        return get_git_object_or_404(Solution, pk=kwargs.get('solution_id'), problem=self.revision).name
