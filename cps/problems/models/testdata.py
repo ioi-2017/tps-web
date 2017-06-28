@@ -12,10 +12,12 @@ from django.db.models import Max, Q
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel, FileSystemModel
+from git_orm.models.fields import GitToGitManyToManyField
 from judge.results import JudgeVerdict
 from problems.models import RevisionObject, SourceFile, ProblemCommit
+from problems.models.validator import Validator
 from problems.models.fields import ReadOnlyGitToGitForeignKey
-from problems.models.generic import ManuallyPopulatedModel, FileSystemPopulatedModel
+from problems.models.generic import ManuallyPopulatedModel, FileSystemPopulatedModel, JSONModel
 from runner import get_execution_command
 from runner.actions.action import ActionDescription
 from runner.actions.execute_with_input import execute_with_input
@@ -702,16 +704,19 @@ class TestCase(FileSystemPopulatedModel):
         return self.name
 
 
-class Subtask(RevisionObject):
-    problem = models.ForeignKey("problems.ProblemRevision", verbose_name=_("problem"), related_name='subtasks')
-    name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True)
+class Subtask(JSONModel):
+    problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), related_name="subtasks", default=0)
+    name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True, primary_key=True)
     score = models.IntegerField(verbose_name=_("score"))
-    testcases = models.ManyToManyField("self", verbose_name=_("testcases"), related_name="subtasks", blank=True)
+    testcases = GitToGitManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
+    validators = GitToGitManyToManyField(Validator, verbose_name=_("validators"), related_name="subtasks", blank=True)
+    index = models.IntegerField(verbose_name=_("index"))
 
     class Meta:
         ordering = ("problem", "name",)
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
+        json_db_name = "subtasks.json"
 
     @staticmethod
     def get_matching_fields():
@@ -726,10 +731,6 @@ class Subtask(RevisionObject):
 
     def __str__(self):
         return self.name
-
-    @property
-    def validators(self):
-        return self.problem.validator_set.filter(Q(global_validator=True) | Q(_subtasks=self))
 
     def clone_relations(self, cloned_instances, ignored_instances):
         if self in ignored_instances:

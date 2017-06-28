@@ -4,6 +4,7 @@ from django.views.generic import View
 
 from problems.forms.validator import ValidatorAddForm, ValidatorEditForm
 from problems.models import Validator
+from problems.views.utils import get_git_object_or_404
 from problems.views.generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, \
     ProblemObjectShowSourceView, ProblemObjectEditView, ProblemObjectDownloadView
 
@@ -73,7 +74,7 @@ class ValidatorShowSourceView(ProblemObjectShowSourceView):
 
 class ValidatorDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Validator, id=kwargs.get('validator_id')).file.file
+        return get_git_object_or_404(Validator, pk=kwargs.get('validator_id'), problem=self.revision).file.file
 
     def get_name(self, request, *args, **kwargs):
-        return get_object_or_404(Validator, id=kwargs.get('validator_id')).name
+        return get_git_object_or_404(Validator, pk=kwargs.get('validator_id'), problem=self.revision).name

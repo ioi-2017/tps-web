@@ -47,13 +47,13 @@
                             {{ generator.title }}
                         </td>
                         <td>
-                            <button class="btn btn-primary hide_button{{ generator.id }}" style="display: none">
+                            <button class="btn btn-primary hide_button{{ generator.pk|slugify }}" style="display: none">
                                 Hide
                             </button>
-                            <button class="btn btn-primary show_button{{ generator.id }}">
+                            <button class="btn btn-primary show_button{{ generator.pk|slugify }}">
                                 Show
                             </button>
-                            <pre class="script_data{{ generator.id }}" style="display: none">
+                            <pre class="script_data{{ generator.pk|slugify }}" style="display: none">
                                 {{ generator.text_data }}
                             </pre>
                         </td>
@@ -104,9 +104,9 @@
     <script>
     $(document).ready(function() {
         {% for generator in generators %}
-            set_click($(".show_button{{ generator.id }}"),
-                $(".hide_button{{ generator.id }}"),
-                $(".script_data{{ generator.id }}"));
+            set_click($(".show_button{{ generator.pk|slugify }}"),
+                $(".hide_button{{ generator.pk|slugify }}"),
+                $(".script_data{{ generator.pk|slugify }}"));
         {% endfor %}
     });
     </script>

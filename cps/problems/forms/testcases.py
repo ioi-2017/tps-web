@@ -18,8 +18,8 @@ class TestCaseAddForm(ProblemObjectModelForm):
     class Meta:
         automatically_filled_fields = [
             '_input_uploaded_file',
-            '_input_generator_name',
-            '_input_generation_parameters',
+            #'_input_generator_name',
+            #'_input_generation_parameters',
             '_output_uploaded_file',
         ]
         model = TestCase
@@ -75,8 +75,8 @@ class TestCaseEditForm(ProblemObjectModelForm):
     class Meta:
         automatically_filled_fields = [
             '_input_uploaded_file',
-            '_input_generator_name',
-            '_input_generation_parameters',
+            #'_input_generator_name',
+            #'_input_generation_parameters',
             '_output_uploaded_file',
         ]
         model = TestCase

@@ -111,6 +111,9 @@ class NewProblemBranch(git_models.Model):
     def _get_existing_primary_keys(cls, transaction):
         return [b for b in transaction.repo.branches.local]
 
+    def get_slug(self):
+        return self.name
+
     @classmethod
     def _get_instance(cls, transaction, pk):
         obj = cls(pk=pk)
@@ -139,6 +142,9 @@ class NewProblemBranch(git_models.Model):
 
     def get_branch_revision_for_user(self, user):
         return self.head
+
+    def __str__(self):
+        return self.name
 
 
 class ProblemBranch(models.Model):

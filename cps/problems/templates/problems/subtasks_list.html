@@ -44,19 +44,14 @@
                             </a>
                         </td>
                         <td>
-                            {% for validator in subtask.validators.all %}
-                                {% if not forloop.first %}
-                                    ,
-                                {% endif %}
-                                {{ validator.name }}
-                            {% endfor %}
+                            {% for validator in subtask.validators.all %}{% if not forloop.first %}, {% endif %}{{ validator.name }}{% endfor %}
                         </td>
                         <td>{{ subtask.score }}</td>
                         {% if revision_editable %}
                             <td>
-                                <a class="text-primary" href='{% problem_url "problems:edit_subtask" subtask.id %}'>
+                                <a class="text-primary" href='{% problem_url "problems:edit_subtask" subtask.pk %}'>
                                     <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
-                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this subtask?' %}' href='{% problem_url "problems:delete_subtask" subtask.id %}'>
+                                <a class="text-danger" data-method='delete' data-confirm='{% trans 'Are you sure you want to delete this subtask?' %}' href='{% problem_url "problems:delete_subtask" subtask.pk %}'>
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>
                         {% endif %}

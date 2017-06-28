@@ -93,7 +93,7 @@ class SolutionSubtaskExpectedVerdict(models.Model, CloneableMixin, MatchableMixi
     _VERDICTS = [(x.name, x.value) for x in list(SolutionVerdict)]
 
     #solution = models.ForeignKey(Solution, verbose_name=_("solution"), related_name="subtask_verdicts")
-    subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
+    #subtask = models.ForeignKey(Subtask, verbose_name=_("subtask"))
     verdict = EnumField(enum=SolutionVerdict, verbose_name=_("verdict"), max_length=50)
 
     class Meta:

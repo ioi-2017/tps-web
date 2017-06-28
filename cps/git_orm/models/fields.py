@@ -1,11 +1,15 @@
+import json
 import time
 from datetime import datetime, timedelta, timezone
 
 from django.db.models.fields.related import lazy_related_operation
+from django.utils.functional import cached_property
 
 from git_orm import transaction
 
 from django.db.models.fields import Field as DjangoField
+
+from git_orm.models.queryset import QuerySet
 
 __all__ = [
     'TextField', 'GitToGitForeignKey', 'DateTimeField', 'CreatedAtField',
@@ -177,13 +181,13 @@ class GitToGitForeignKey(Field):
             setattr(other, self.get_accessor_name(), self.reverse_descriptor(self))
 
     def get_prep_value(self, value):
-        if not value is None:
+        if value is not None:
             pk_field = self.target._meta.pk
             return pk_field.get_prep_value(value)
         return None
 
     def to_python(self, value):
-        if not value is None:
+        if value is not None:
             pk_field = self.target._meta.pk
             return pk_field.to_python(value)
         return None
@@ -259,3 +263,157 @@ class UpdatedAtDescriptor:
             if instance.pk:
                 return trans.stat(instance.path).updated_at
             return None
+
+
+def create_many_to_many_manager(model, field, reverse):
+
+    class ManyToManyManager(object):
+        def __init__(self, instance):
+            self.instance = instance
+            self.model = model
+            if reverse:
+                self.related_field_name = field.name
+            else:
+                self.pk_list = []
+            self.instance = instance
+
+        if not reverse:
+            def add(self, value):
+                if isinstance(value, self.model):
+                    self.pk_list.append(value.pk)
+                else:
+                    self.pk_list.append(value)
+
+            def remove(self, value):
+                if isinstance(value, self.model):
+                    self.pk_list.remove(value.pk)
+                else:
+                    self.pk_list.remove(value)
+
+            def get_queryset(self):
+                return self.model.objects.with_transaction(self.instance._transaction).filter(pk__in=tuple(self.pk_list))
+
+            def clear(self):
+                self.pk_list = []
+        else:
+            def add(self, value):
+                if not isinstance(value, self.model):
+                    value = self.model.objects.with_transaction(self.transaction).get(pk=value)
+                getattr(value, self.related_field_name).add(self.instance)
+
+            def remove(self, value):
+                if not isinstance(value, self.model):
+                    value = self.model.objects.with_transaction(self.transaction).get(pk=value)
+                getattr(value, self.related_field_name).remove(self.instance)
+
+            def get_queryset(self):
+                return self.model.objects.with_transaction(self.instance._transaction).filter(**{
+                    self.related_field_name + "__contains": self.instance
+                })
+
+            def clear(self):
+                objs = list(self)
+                for obj in objs:
+                    self.remove(obj)
+
+        def __getattr__(self, item):
+            if item in ["get", "filter", "exclude", "exists", "count", "order_by", "all"]:
+                return getattr(self.get_queryset(), item)
+            else:
+                raise AttributeError
+
+        def set(self, value):
+            self.clear()
+            if value is not None:
+                for instance in value:
+                    self.add(instance)
+
+        def __iter__(self):
+            return iter(self.get_queryset())
+
+
+    return ManyToManyManager
+
+
+class ManyToManyDescriptor(object):
+
+    def __init__(self, field, reverse):
+        self.field = field
+        self.reverse = reverse
+
+    def __get__(self, instance, instance_type=None):
+        """
+        Get the related objects through the reverse relation.
+
+        With the example above, when getting ``parent.children``:
+
+        - ``self`` is the descriptor managing the ``children`` attribute
+        - ``instance`` is the ``parent`` instance
+        - ``instance_type`` in the ``Parent`` class (we don't need it)
+        """
+        if instance is None:
+            return self
+        if self.field.attname not in instance.__dict__:
+            instance.__dict__[self.field.attname] = self.related_manager_cls(instance)
+        return instance.__dict__[self.field.attname]
+
+    def __set__(self, instance, value):
+        """
+        Set the related objects through the reverse relation.
+
+        With the example above, when setting ``parent.children = children``:
+
+        - ``self`` is the descriptor managing the ``children`` attribute
+        - ``instance`` is the ``parent`` instance
+        - ``value`` in the ``children`` sequence on the right of the equal sign
+        """
+        manager = self.__get__(instance)
+        manager.set(value)
+
+    @cached_property
+    def related_manager_cls(self):
+        model = self.field.model if self.reverse else self.field.target
+        return create_many_to_many_manager(
+            model,
+            self.field,
+            self.reverse,
+        )
+
+
+class GitToGitManyToManyField(GitToGitForeignKey):
+
+    def validate(self, value, *args, **kwargs):
+        value = self.to_python(value)
+        if value is not None:
+            for pk in value:
+                if not self.target.objects.exists(pk=pk):
+                    target_name = self.target.__name__
+                    raise ValueError(
+                        '{} with pk={!r} does not exist'.format(target_name, pk))
+
+    def get_prep_value(self, value):
+        if value is not None:
+            pk_field = self.target._meta.pk
+            return [pk_field.get_prep_value(pk) for pk in value]
+        return None
+
+    def to_python(self, value):
+        if value is not None:
+            if isinstance(value, str):
+                value = json.loads(value)
+            if not isinstance(value ,list):
+                raise ValueError("{} is not a valid value for M2M field".format(value))
+            pk_field = self.target._meta.pk
+            return [pk_field.to_python(pk) for pk in value]
+        return None
+
+    @staticmethod
+    def forward_descriptor(self):
+        return ManyToManyDescriptor(self, reverse=False)
+
+    @staticmethod
+    def reverse_descriptor(self):
+        return ManyToManyDescriptor(self, reverse=True)
+
+    def get_attname(self):
+        return self.name

@@ -5,6 +5,7 @@ from problems.forms.subtask import SubtaskAddForm
 from problems.models import Subtask
 from problems.views.generics import RevisionObjectView, ProblemObjectAddView, ProblemObjectDeleteView, \
     ProblemObjectEditView
+from problems.views.utils import get_git_object_or_404
 
 
 class SubtasksListView(RevisionObjectView):
@@ -28,7 +29,7 @@ class SubtaskAddView(ProblemObjectAddView):
 
 class SubtaskDetailsView(RevisionObjectView):
     def get(self, request, problem_id, revision_slug, subtask_id):
-        subtask = get_object_or_404(Subtask, **{
+        subtask = get_git_object_or_404(Subtask, **{
             "problem": self.revision,
             "pk": subtask_id,
         })

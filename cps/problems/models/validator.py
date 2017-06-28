@@ -114,11 +114,14 @@ class ValidatorResult(models.Model):
 
 class Validator(SourceFile):
 
-    _subtasks = models.ManyToManyField("Subtask", verbose_name=_("subtasks"), blank=True)
-    global_validator = models.BooleanField(
-        verbose_name=_("all subtasks"),
-        help_text=_("if marked, it validates all subtasks")
-    )
+    #_subtasks = models.ManyToManyField("Subtask", verbose_name=_("subtasks"), blank=True)
+    #global_validator = models.BooleanField(
+    #    verbose_name=_("all subtasks"),
+    #    help_text=_("if marked, it validates all subtasks")
+    #)
+
+    class Meta:
+        storage_name = "validator"
 
     def get_value_as_dict(self):
         d = super(Validator, self).get_value_as_dict()

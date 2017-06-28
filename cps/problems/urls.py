@@ -73,16 +73,16 @@ problem_urls = ([
 
         url(r'^subtasks/$', SubtasksListView.as_view(), name="subtasks"),
         url(r'^subtask/add/$', SubtaskAddView.as_view(), name="add_subtask"),
-        url(r'^subtask/(?P<subtask_id>\d+)/details/$', SubtaskDetailsView.as_view(), name="subtask_details"),
-        url(r'^subtask/(?P<subtask_id>\d+)/delete/$', SubtaskDeleteView, name="delete_subtask"),
-        url(r'^subtask/(?P<subtask_id>\d+)/edit/$', SubtaskEditView.as_view(), name="edit_subtask"),
+        url(r'^subtask/(?P<subtask_id>.+)/details/$', SubtaskDetailsView.as_view(), name="subtask_details"),
+        url(r'^subtask/(?P<subtask_id>.+)/delete/$', SubtaskDeleteView, name="delete_subtask"),
+        url(r'^subtask/(?P<subtask_id>.+)/edit/$', SubtaskEditView.as_view(), name="edit_subtask"),
 
         url(r'^validators/$', ValidatorsListView.as_view(), name="validators"),
-        url(r'^validator/(?P<validator_id>\d+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),
-        url(r'^validator/(?P<validator_id>\d+)/delete/$', ValidatorDeleteView, name="delete_validator"),
-        url(r'^validator/(?P<validator_id>\d+)/source/$', ValidatorShowSourceView.as_view(), name="validator_source"),
+        url(r'^validator/(?P<validator_id>.+)/edit/$', ValidatorEditView.as_view(), name="edit_validator"),
+        url(r'^validator/(?P<validator_id>.+)/delete/$', ValidatorDeleteView, name="delete_validator"),
+        url(r'^validator/(?P<validator_id>.+)/source/$', ValidatorShowSourceView.as_view(), name="validator_source"),
         url(r'^validator/add/$', ValidatorAddView.as_view(), name="add_validator"),
-        url(r'^validator/(?P<validator_id>\d+)/download/$', ValidatorDownloadView.as_view(), name="download_validator"),
+        url(r'^validator/(?P<validator_id>.+)/download/$', ValidatorDownloadView.as_view(), name="download_validator"),
 
         url(r'^generators/$', GeneratorsListView.as_view(), name="generators"),
         url(r'^generator/(?P<generator_id>.+)/edit/$', GeneratorEditView.as_view(), name="edit_generator"),
