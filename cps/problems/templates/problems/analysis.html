@@ -1,0 +1,40 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load problems_tags %}
+{% load object_list_generator %}
+
+{% block problem_content %}
+    <div class="row">
+        <h2> {% trans 'Analysis' %} </h2>
+    </div>
+    <div class="row">
+        <a data-method="post" href="{% problem_url "problems:analysis_generate" %}" class="btn btn-success">
+            <i class="fa fa-gear"></i>
+            {% trans 'Generate' %}
+        </a>
+
+        <a data-method="post" href="{% problem_url "problems:analyze" %}" class="btn btn-success">
+            <i class="fa fa-gear"></i>
+            {% trans 'Analyze directory structure' %}
+        </a>
+    </div>
+    <br />
+    <div class="row">
+    {% if output %}
+        Output: <br/>
+        <textarea readonly>{{ output }}</textarea>
+    {% else %}
+        Output: None
+    {% endif %}
+
+    </div>
+    <div class="row">
+    {% if errors %}
+        Errors: <br/>
+        <textarea readonly>{{ errors }}</textarea>
+    {% else %}
+        Errors: None
+    {% endif %}
+    </div>
+{% endblock %}
