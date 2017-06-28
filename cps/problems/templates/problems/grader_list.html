@@ -43,16 +43,16 @@
                         {% if revision_editable %}
                             <td>
 
-                                <a class="text-primary" href='{% problem_url "problems:edit_grader" grader.id %}'>
+                                <a class="text-primary" href='{% problem_url "problems:edit_grader" grader.pk %}'>
                                     <i class="fa fa-pencil fa-lg" title="{% trans 'Edit' %}"></i></a>
                                 <a class="text-danger" data-method='delete'
                                    data-confirm='{% trans 'Are you sure you want to delete this solution?' %}'
-                                   href='{% problem_url "problems:delete_grader" grader.id %}'>
+                                   href='{% problem_url "problems:delete_grader" grader.pk %}'>
                                     <i class="fa fa-remove fa-lg" title="{% trans 'Delete' %}"></i></a>
                             </td>
                         {% endif %}
                         <td>
-                            <a href="{% problem_url "problems:download_grader" grader.id%}" class="btn btn-success">
+                            <a href="{% problem_url "problems:download_grader" grader.pk%}" class="btn btn-success">
                                 <i class="fa fa-plus"></i> {% trans 'Download' %}
                             </a>
                         </td>

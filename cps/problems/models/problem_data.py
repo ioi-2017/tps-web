@@ -12,6 +12,7 @@ from problems.models.fields import ReadOnlyGitToGitForeignKey
 
 __all__ = ["ProblemData"]
 
+
 class ProblemData(git_models.Model):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)

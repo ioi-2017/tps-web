@@ -77,7 +77,7 @@ class ProblemObjectView(View):
         try:
             return super(ProblemObjectView, self).dispatch(request, *args, **kwargs)
         except Exception as e:
-            if not settings.DEBUG or True:
+            if not settings.DEBUG:
                 return self.exception_occured(request, e, *args, **kwargs)
             else:
                 raise e

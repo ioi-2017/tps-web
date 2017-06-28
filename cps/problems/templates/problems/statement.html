@@ -62,7 +62,8 @@
 
         function sync_editor() {
             var converter = new showdown.Converter({
-                'tables': true
+                'tables': true,
+                'parseImgDimensions': true
             });
             var preview_element = $("#preview")[0];
             preview_element.innerHTML = converter.makeHtml($('#id_statement')[0].value);

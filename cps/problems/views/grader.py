@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 
 from problems.forms.grader import GraderAddForm, GraderEditForm
 from problems.models import Grader
+from problems.views.utils import get_git_object_or_404
 from problems.views.generics import RevisionObjectView, ProblemObjectAddView, ProblemObjectShowSourceView, \
     ProblemObjectDeleteView, ProblemObjectEditView, ProblemObjectDownloadView
 
@@ -66,7 +67,7 @@ class GraderShowSourceView(ProblemObjectShowSourceView):
 
 class GraderDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Grader, id=kwargs.get('grader_id')).code.file
+        return get_git_object_or_404(Grader, pk=kwargs.get('grader_id'), problem=self.revision).code.file
 
     def get_name(self, request, *args, **kwargs):
-        return get_object_or_404(Grader, id=kwargs.get('grader_id')).name
+        return get_git_object_or_404(Grader, pk=kwargs.get('grader_id'), problem=self.revision).name

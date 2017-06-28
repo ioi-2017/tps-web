@@ -28,6 +28,7 @@ problem_urls = ([
         url(r'export/(?P<export_id>\d+)/start/$', ExportPackageStarterView.as_view(), name="export_start"),
 
         url(r'statement/$', EditStatement.as_view(), name="statement"),
+        url(r'statement/(?P<attachment_id>.+)$', DownloadStatementAttachment.as_view(), name="statement"),
 
         url(r'^history/$', HistoryView.as_view(), name="history"),
         url(r'^$', Overview.as_view(), name="overview"),

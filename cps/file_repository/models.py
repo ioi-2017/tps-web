@@ -6,7 +6,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import os
 
-from git_orm import models as git_models
+from git_orm import models as git_models, GitError
 
 from django.core.files import File as DjangoFile
 
@@ -109,7 +109,7 @@ class DummyFileDescriptor(object):
 
 class GitFile(git_models.Model, FileModelMixin):
     name = models.CharField(verbose_name=_("name"), max_length=256, blank=True, primary_key=True)
-    content = git_models.TextField(verbose_name=_("content"))
+    content = models.TextField(verbose_name=_("content"))
 
     @property
     def file(self):
@@ -117,14 +117,44 @@ class GitFile(git_models.Model, FileModelMixin):
 
     def dump(self, include_hidden=False, include_pk=True):
         field = self._meta.get_field('content')
-        return field.get_prep_value()
+        return field.get_prep_value(self.content)
 
     def load(self, data):
         field = self._meta.get_field('content')
         self.content = field.to_python(data)
 
-    def _get_existing_primary_keys(self, transaction):
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
         return []
+
+
+class GitBinaryFile(git_models.Model, FileModelMixin):
+    name = models.CharField(verbose_name=_("name"), max_length=256, blank=True, primary_key=True)
+    content = models.BinaryField(verbose_name=_("content"))
+
+    @property
+    def file(self):
+        return DummyFileDescriptor(self)
+
+    def dump(self, include_hidden=False, include_pk=True):
+        field = self._meta.get_field('content')
+        return field.get_prep_value(self.content)
+
+    def load(self, data):
+        field = self._meta.get_field('content')
+        self.content = field.to_python(data)
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        obj._transaction = transaction
+        try:
+            content = transaction.get_blob(obj.path)
+        except GitError:
+            raise cls.DoesNotExist(
+                'object with pk {} does not exist'.format(pk))
+        obj.load(content)
+        return obj
 
 
 class FileSystemDescriptor(DjangoFile):
