@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from problems.forms.solution import SolutionAddForm, SolutionEditForm
 from problems.models import Solution
 from problems.models.enums import SolutionVerdict
+from problems.views import get_git_object_or_404
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView, ProblemObjectEditView, \
     ProblemObjectShowSourceView, ProblemObjectDownloadView
 
@@ -76,7 +77,7 @@ class SolutionShowSourceView(ProblemObjectShowSourceView):
 
 class SolutionDownloadView(ProblemObjectDownloadView):
     def get_file(self, request, *args, **kwargs):
-        return get_object_or_404(Solution, id=kwargs.get('solution_id')).code.file
+        return get_git_object_or_404(Solution, id=kwargs.get('solution_id')).code.file
 
     def get_name(self, request, *args, **kwargs):
-        return get_object_or_404(Solution, id=kwargs.get('solution_id')).name
+        return get_git_object_or_404(Solution, id=kwargs.get('solution_id')).name
