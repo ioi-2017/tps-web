@@ -30,8 +30,6 @@
 
                             <a href="#" class="full-open-only">
 
-                                {{ revision.problem_data.title }}
-
                             </a>
 
 
@@ -319,6 +317,9 @@
             {% bootstrap_messages %}
             <div class="container-fluid" style="height:100%">
                 {% block problem_content %}
+                    <div class="row">
+                        {% trans 'An exception has occured when loading this page' %}: {{ exception }}
+                    </div>
                 {% endblock %}
             </div>
 

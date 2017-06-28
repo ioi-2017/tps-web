@@ -21,19 +21,6 @@ class HistoryView(RevisionObjectView):
 
     def get(self, request, *args, **kwargs):
 
-        used = {}
-        object_list = [ProblemRevision.objects.get(pk=self.revision.id)]
-        i = 0
-        while i < len(object_list):
-            obj = object_list[i]
-            query_set = obj.parent_revisions
-
-            for element in query_set.all():
-                if not element.pk in used:
-                    object_list.append(element)
-                    used[element.pk] = True
-            i += 1
-
         return render(request, self.template_name, context={
-            'object_list': sorted(object_list, key=lambda a: a.pk, reverse=True),
+            'object_list': self.revision._transaction.walk(reverse=True),
         })

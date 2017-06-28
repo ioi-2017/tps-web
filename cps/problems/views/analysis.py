@@ -1,59 +1,62 @@
 # coding=utf-8
+from django.contrib import messages
 
-from problems.views.generics import RevisionObjectView
+from problems.views.generics import RevisionObjectView, ProblemObjectView
 from django.shortcuts import render
-from problems.tasks import AnalysisGeneration
+from django.utils.translation import ugettext as _
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 import os
 
 
+
 __all__ = ["AnalysisView", "AnalyzeView", "AnalysisGenerateView"]
 
 
-class AnalysisView(RevisionObjectView):
-    repo_dir = '/home/kiarash/Desktop/worktree_test/'
-    commit_id = '59fb062'
-    out_dir = '/home/kiarash/Desktop/fld'
+class AnalysisView(ProblemObjectView):
 
     def get(self, request, *args, **kwargs):
-        output_file = os.path.join(self.out_dir, 'out.txt')
-        error_file = os.path.join(self.out_dir, 'err.txt')
+        def get_content(path):
+            if not os.path.exists(path):
+                content = ""
+            else:
+                with open(path) as f:
+                    content = '\n'.join(list(f.readlines()))
+            return content
 
-        if not os.path.exists(output_file):
-            output = None
-        else:
-            with open(output_file) as f:
-                output = ''.join(list(f.readline()))
+        repo_dir = self.revision.repository_path
+        commit_id = self.revision.commit_id
+        out_dir = self.revision.get_storage_path()
+        verify_output_file = get_content(os.path.join(out_dir, 'verify_out.txt'))
+        verify_error_file = get_content(os.path.join(out_dir, 'verify_err.txt'))
+        generate_output_file = get_content(os.path.join(out_dir, 'generate_out.txt'))
+        generate_error_file = get_content(os.path.join(out_dir, 'generate_err.txt'))
 
-        if not os.path.exists(error_file):
-            errors = None
-        else:
-            with open(error_file) as f:
-                errors = ''.join(list(f.readline()))
-
-        return render(request, 'problems/analysis.html', context={'output': output,
-                                                                  'errors': errors})
+        return render(request, 'problems/analysis.html', context={
+            'verify_out': verify_output_file,
+            'verify_err': verify_error_file,
+            'generate_out': generate_output_file,
+            'generate_err': generate_error_file,
+        })
 
 
-class AnalyzeView(RevisionObjectView):
+class AnalyzeView(ProblemObjectView):
     def post(self, request, problem_id, revision_slug):
-        # TODO: analyze
+        self.revision.verify()
+
+        messages.success(request, _("Verification started"))
         return HttpResponseRedirect(reverse("problems:analysis", kwargs={
             "problem_id": problem_id,
             "revision_slug": revision_slug
         }))
 
 
-class AnalysisGenerateView(RevisionObjectView):
-    repo_dir = '/home/kiarash/Desktop/worktree_test/'
-    commit_id = '59fb062'
-    out_dir = '/home/kiarash/Desktop/fld'
+class AnalysisGenerateView(ProblemObjectView):
 
     def post(self, request, problem_id, revision_slug):
-        id = AnalysisGeneration().delay(self.repo_dir,
-                                        self.commit_id,
-                                        self.out_dir).id
+        self.revision.generate_testcases()
+
+        messages.success(request, _("Generation started"))
 
         return HttpResponseRedirect(reverse("problems:analysis", kwargs={
             "problem_id": problem_id,

@@ -5,17 +5,15 @@
 
 {% block problem_content %}
     <h1> {% trans 'History' %} </h1>
-    {% for problem_revision in object_list %}
-        {% if problem_revision.committed %}
+    {% for commit in object_list %}
         <div class="panel panel-primary panel-body">
-            {{ problem_revision.author }} {% trans 'committed' %} (
-            <a href="{% url "problems:overview" problem_revision.problem.id problem_revision.revision_id %}" > {% trans "View" %} </a>
+            {{ commit.author.name }} {% trans 'committed' %} (
+            <a href="{% url "problems:overview" problem.id commit.id %}" > {% trans "View" %} </a>
             )
             <br />
-            <pre>{{ problem_revision.commit_message }}</pre>
+            <pre>{{ commit.message }}</pre>
 
         </div>
-         {% endif %}
     {% empty %}
          <h4 class="text-muted">
             {% trans 'No commits yet' %}

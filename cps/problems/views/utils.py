@@ -21,7 +21,7 @@ def extract_revision_data(problem_id, revision_slug, user):
         )
     except (KeyError, ValueError):
         if getattr(settings, "DISABLE_BRANCHES", False):
-            if revision_slug != user.username:
+            if revision_slug != "master":
                 raise Http404
             branch, _ = problem.branches.get_or_create(
                 name=revision_slug, defaults={

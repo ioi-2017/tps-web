@@ -5,6 +5,8 @@ from problems.forms.fields import AutoFilledField
 from problems.models import ProblemRevision, ProblemBranch, Problem
 from django.utils.translation import ugettext as _
 
+from problems.models.problem import NewProblemBranch
+
 
 class CommitForm(forms.ModelForm):
 
@@ -28,8 +30,8 @@ class CommitFormPullChoice(CommitForm):
 
 class BranchCreationForm(forms.ModelForm):
     class Meta:
-        model = ProblemBranch
-        fields = ["name", "problem", "creator"  ]
+        model = NewProblemBranch
+        fields = ["name", ]
         error_messages = {
             NON_FIELD_ERRORS: {
                  'unique_together': "Branch already exists",
@@ -41,8 +43,8 @@ class BranchCreationForm(forms.ModelForm):
         self.user = kwargs.pop("user")
         super(BranchCreationForm, self).__init__(*args, **kwargs)
 
-        self.fields["problem"] = AutoFilledField(initial=self.problem)
-        self.fields["creator"] = AutoFilledField(initial=self.user)
+        #self.fields["problem"] = AutoFilledField(initial=self.problem)
+        #self.fields["creator"] = AutoFilledField(initial=self.user)
 
         self.fields["source_branch"] = forms.ModelChoiceField(
             label=_("Source branch"),

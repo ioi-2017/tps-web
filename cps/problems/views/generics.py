@@ -1,6 +1,8 @@
+import logging
 from functools import update_wrapper
 
 import magic
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
@@ -18,10 +20,13 @@ from django.utils.translation import ugettext as _
 
 from django.db.models import ObjectDoesNotExist
 
+from git_orm import transaction as git_transaction
+
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
            "ProblemObjectShowSourceView", "ProblemObjectDownloadView", ]
 
+logger = logging.getLogger('django.request')
 
 class ProblemObjectView(View):
     @classonlymethod
@@ -51,6 +56,8 @@ class ProblemObjectView(View):
             self.problem, self.branch, self.revision = \
                 extract_revision_data(problem_id, revision_slug, request.user)
 
+            git_transaction.set_default_transaction(self.revision._transaction)
+
             #  TODO: set git repo path here
 
             return self.dispatch(request, problem_id, revision_slug, *args, **kwargs)
@@ -65,6 +72,28 @@ class ProblemObjectView(View):
         # like csrf_exempt from dispatch
         update_wrapper(view, cls.dispatch, assigned=())
         return view
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super(ProblemObjectView, self).dispatch(request, *args, **kwargs)
+        except Exception as e:
+            if not settings.DEBUG or True:
+                return self.exception_occured(request, e, *args, **kwargs)
+            else:
+                raise e
+
+    def exception_occured(self, request, exception, *args, **kwargs):
+        logger.error(
+            'Exception occured (%s) %s: %s', request.method, request.path,
+            str(exception),
+            extra={
+                'request': request,
+                'exception': exception,
+            }
+        )
+        return render(request, "problems/exception.html", context={
+            "exception": str(exception)
+        })
 
 
 class RevisionObjectView(ProblemObjectView):

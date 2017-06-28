@@ -9,32 +9,58 @@
         <h2> {% trans 'Analysis' %} </h2>
     </div>
     <div class="row">
-        <a data-method="post" href="{% problem_url "problems:analysis_generate" %}" class="btn btn-success">
-            <i class="fa fa-gear"></i>
-            {% trans 'Generate' %}
-        </a>
-
-        <a data-method="post" href="{% problem_url "problems:analyze" %}" class="btn btn-success">
-            <i class="fa fa-gear"></i>
-            {% trans 'Analyze directory structure' %}
-        </a>
+        <h3> {% trans 'Verification' %} </h3>
     </div>
-    <br />
-    <div class="row">
-    {% if output %}
-        Output: <br/>
-        <textarea readonly>{{ output }}</textarea>
+    {% if revision.verification_status == None or revision.verification_status == revision.verification_status.NotVerified %}
+        <div class="row">
+            <a data-method="post" href="{% problem_url "problems:analyze" %}" class="btn btn-success">
+                <i class="fa fa-gear"></i>
+                {% trans 'Analyze directory structure' %}
+            </a>
+        </div>
     {% else %}
-        Output: None
+        <div class="row">
+            {% trans 'Status' %}: {{ revision.verification_status.name }}
+        </div>
+        <br />
+        {% if revision.verification_status != revision.verification_status.ToBeVerified %}
+            <div class="row">
+                {% trans 'Stdout' %}: <br/>
+                <pre>{{ verify_out }}</pre>
+
+            </div>
+            <div class="row">
+                {% trans 'Stderr' %}: <br/>
+                <pre>{{ verify_err }}</pre>
+            </div>
+        {% endif %}
+    {% endif %}
+    <div class="row">
+        <h3> {% trans 'Generation' %} </h3>
+    </div>
+    {% if revision.generation_status == None or revision.generation_status == revision.generation_status.NotGenerated %}
+        <div class="row">
+            <a data-method="post" href="{% problem_url "problems:analysis_generate" %}" class="btn btn-success">
+                <i class="fa fa-gear"></i>
+                {% trans 'Generate' %}
+            </a>
+        </div>
+    {% else %}
+        <div class="row">
+            {% trans 'Status' %}: {{ revision.generation_status.name }}
+        </div>
+        <br />
+        {% if revision.generation_status != revision.generation_status.ToBeGenerated %}
+            <div class="row">
+                {% trans 'Stdout' %}: <br/>
+                <pre>{{ generate_out }}</pre>
+
+            </div>
+            <div class="row">
+                {% trans 'Stderr' %}: <br/>
+                <pre>{{ generate_err }}</pre>
+            </div>
+        {% endif %}
     {% endif %}
 
-    </div>
-    <div class="row">
-    {% if errors %}
-        Errors: <br/>
-        <textarea readonly>{{ errors }}</textarea>
-    {% else %}
-        Errors: None
-    {% endif %}
-    </div>
 {% endblock %}

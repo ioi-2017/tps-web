@@ -4,7 +4,11 @@ import hashlib
 import heapq
 import logging
 import os
+import shutil
+import tempfile
+from enum import Enum
 
+import subprocess
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,6 +18,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 import git_orm.models as git_models
+from core.fields import EnumField
 from file_repository.models import FileModel
 from git_orm.transaction import Transaction
 from judge import Judge
@@ -243,13 +248,141 @@ class ProblemJudgeInitialization(CeleryTask):
         problem_revision._initialize_in_judge()
 
 
+class CommitVerify(CeleryTask):
+    def validate_dependencies(self, *args, **kwargs):
+        return True
+
+    def execute(self, repo_dir, commit_id, out_dir):
+        command = "verify"
+        tempdir = tempfile.mkdtemp()
+        logger.warning('temp directory at %s' % tempdir)
+
+        transaction = Transaction(repository_path=repo_dir,
+                                  commit_id=commit_id)
+        revision = ProblemCommit.objects.with_transaction(transaction).get()
+        revision.verification_status = VerificationStatus.Verifying
+        revision.save()
+
+        os.system('git --git-dir="{repo_dir}" worktree add {work_dir} {commit_id}'.format(
+            repo_dir=repo_dir,
+            work_dir=tempdir,
+            commit_id=commit_id
+        ))
+
+        out_file = os.path.join(out_dir, '{command}_out.txt'.format(command=command))
+        err_file = os.path.join(out_dir, '{command}_err.txt'.format(command=command))
+
+        with open(out_file, "w") as out_desc:
+            with open(err_file, "w") as err_desc:
+                exit_code = subprocess.call(['python2', 'manage.py', command], stdout=out_desc, stderr=err_desc,
+                                            cwd=tempdir)
+
+        if exit_code != 0:
+            revision.verification_status = VerificationStatus.Failed
+        else:
+            revision.verification_status = VerificationStatus.Successful
+        revision.save()
+
+        try:
+            shutil.rmtree(tempdir)
+            os.system('git --git-dir="{repo_dir}" worktree prune'.format(
+                repo_dir=repo_dir,
+                work_dir=tempdir,
+                commit_id=commit_id
+            ))
+        except Exception as e:
+            logger.error(e, exc_info=e)
+
+
+class CommitTestcaseGenerate(CeleryTask):
+    def validate_dependencies(self, *args, **kwargs):
+        return True
+
+    def execute(self, repo_dir, commit_id, out_dir):
+        command = "generate"
+        tempdir = tempfile.mkdtemp()
+        logger.warning('temp directory at %s' % tempdir)
+
+        transaction = Transaction(repository_path=repo_dir,
+                                  commit_id=commit_id)
+        revision = ProblemCommit.objects.with_transaction(transaction).get()
+        revision.generation_status = GenerationStatus.Generating
+        revision.save()
+
+        os.system('git --git-dir="{repo_dir}" worktree add {work_dir} {commit_id}'.format(
+            repo_dir=repo_dir,
+            work_dir=tempdir,
+            commit_id=commit_id
+        ))
+
+        out_file = os.path.join(out_dir, '{command}_out.txt'.format(command=command))
+        err_file = os.path.join(out_dir, '{command}_err.txt'.format(command=command))
+
+        with open(out_file, "w") as out_desc:
+            with open(err_file, "w") as err_desc:
+                exit_code = subprocess.call(['python2', 'manage.py', command], stdout=out_desc, stderr=err_desc,
+                                            cwd=tempdir)
+
+        if exit_code != 0:
+            revision.generation_status = GenerationStatus.GenerationFailed
+        else:
+            try:
+                tests_src = os.path.join(tempdir, 'tests')
+                tests_dst = os.path.join(out_dir, 'tests')
+                if os.path.exists(tests_dst):
+                    shutil.rmtree(tests_dst)
+                shutil.copytree(tests_src, tests_dst)
+            except Exception as e:
+                with open(err_file, "a") as err_desc:
+                    err_desc.write(str(e))
+                revision.generation_status = GenerationStatus.GenerationFailed
+            else:
+                revision.generation_status = GenerationStatus.GenerationSuccessful
+
+        revision.save()
+        try:
+            shutil.rmtree(tempdir)
+            os.system('git --git-dir="{repo_dir}" worktree prune'.format(
+                repo_dir=repo_dir,
+                work_dir=tempdir,
+                commit_id=commit_id
+            ))
+        except Exception as e:
+            logger.error(e, exc_info=e)
+
+
+class GenerationStatus(Enum):
+    NotGenerated = 0,
+    ToBeGenerated = 1,
+    Generating = 2,
+    GenerationSuccessful = 3,
+    GenerationFailed = 4
+
+
+class VerificationStatus(Enum):
+    NotVerified = 0,
+    ToBeVerified = 1,
+    Verifying = 2,
+    Successful = 3,
+    Failed = 4
+
+
 class ProblemCommit(FileSystemPopulatedModel):
 
     commit_id = models.CharField(verbose_name=_("commit id"), max_length=256, primary_key=True)
 
-    judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128, null=True)
+    judge_initialization_task_id = models.CharField(verbose_name=_("initialization task id"), max_length=128,
+                                                    null=True)
     judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization success"))
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
+
+    generation_task_id = models.CharField(verbose_name=_("generation task id"), max_length=128, null=True)
+    generation_status = EnumField(enum=GenerationStatus, verbose_name=_("generation status"),
+                                  default=GenerationStatus.NotGenerated)
+
+    verification_task_id = models.CharField(verbose_name=_("verification task id"), max_length=128, null=True)
+    verification_status = EnumField(enum=VerificationStatus, verbose_name=_("verification status"),
+                                    default=VerificationStatus.NotVerified)
 
     @property
     def commit_id(self):
@@ -326,6 +459,22 @@ class ProblemCommit(FileSystemPopulatedModel):
         if not self.judge_initialization_task_id:
             self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
             self.save()
+
+    def generate_testcases(self):
+        self.generation_task_id = CommitTestcaseGenerate().delay(
+            self.repository_path,
+            self.commit_id,
+            self.get_storage_path()).id
+        self.generation_status = GenerationStatus.ToBeGenerated
+        self.save()
+
+    def verify(self):
+        self.verification_task_id = CommitVerify().delay(
+            self.repository_path,
+            self.commit_id,
+            self.get_storage_path()).id
+        self.verification_status = VerificationStatus.ToBeVerified
+        self.save()
 
     def invalidate_judge_initialization(self):
         self.judge_initialization_task_id = None

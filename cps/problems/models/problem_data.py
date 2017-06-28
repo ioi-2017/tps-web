@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from git_orm import models as git_models, GitError
+from git_orm import serializer
 from problems.models import ProblemCommit, Checker
 from problems.models.enums import SolutionVerdict
 from problems.models.fields import ReadOnlyGitToGitForeignKey
@@ -66,3 +67,12 @@ class ProblemData(git_models.Model):
         except GitError:
             pass
         return obj
+
+    def load(self, data):
+        # FIXME: The type is deprecated. remove this
+        if not hasattr(data, 'items'):
+            data = serializer.loads(data)
+        if "type" in data:
+            data["task_type"] = data["type"]
+            del data["type"]
+        super(ProblemData, self).load(data)

@@ -30,7 +30,7 @@ class ProblemAddView(View):
             obj = form.save()
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
                 "problem_id": obj.id,
-                "revision_slug": request.user.username if settings.DISABLE_BRANCHES
+                "revision_slug": request.user.username if settings.DISABLE_BRANCHES and False
                 else obj.get_master_branch().get_slug()
             }))
 

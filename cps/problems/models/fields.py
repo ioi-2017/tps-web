@@ -23,10 +23,10 @@ def create_git_related_manager(superclass, field):
 
             self.instance = instance
 
-            self.model = field.target
+            self.model = field.model
 
             self.problem = Problem.objects.get(repository_path=instance._transaction.repo.path)
-            self.commit_id = instance._transaction.commit_id
+            self.commit_id = str(instance._transaction.parents[0])
             self.commit_id_field_name = field.commit_id_field_name
             self.problem_field_name = field.problem_field_name
             self.prefetch_cache_name = field.attname
@@ -51,7 +51,7 @@ def create_git_related_manager(superclass, field):
             try:
                 return self.instance._prefetched_objects_cache[self.prefetch_cache_name]
             except (AttributeError, KeyError):
-                db = self._db or router.db_for_read(self.model, instance=self.instance)
+                db = self._db or router.db_for_read(self.model)
                 return super(ProblemGitRelatedObjectManager, self).get_queryset().using(db).filter(**self.core_filters)
 
         def get_prefetch_queryset(self, instances, queryset=None):
@@ -77,7 +77,7 @@ def create_git_related_manager(superclass, field):
 
         def add(self, *objs, **kwargs):
             bulk = kwargs.pop('bulk', True)
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
 
             def check_and_update_obj(obj):
                 if not isinstance(obj, self.model):
@@ -119,7 +119,7 @@ def create_git_related_manager(superclass, field):
         clear.alters_data = True
 
         def _clear(self, queryset, bulk):
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
             queryset = queryset.using(db)
             if bulk:
                 # `QuerySet.delete()` creates its own atomic block which
@@ -139,7 +139,7 @@ def create_git_related_manager(superclass, field):
             bulk = kwargs.pop('bulk', True)
             clear = kwargs.pop('clear', False)
 
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
             with transaction.atomic(using=db, savepoint=False):
                 if clear:
                     self.clear()
@@ -160,21 +160,21 @@ def create_git_related_manager(superclass, field):
         def create(self, **kwargs):
             kwargs[self.commit_id_field_name] = self.commit_id
             kwargs[self.problem_field_name] = self.problem
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
             return super(ProblemGitRelatedObjectManager, self).using(db).create(**kwargs)
         create.alters_data = True
 
         def get_or_create(self, **kwargs):
             kwargs[self.commit_id_field_name] = self.commit_id
             kwargs[self.problem_field_name] = self.problem
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
             return super(ProblemGitRelatedObjectManager, self).using(db).get_or_create(**kwargs)
         get_or_create.alters_data = True
 
         def update_or_create(self, **kwargs):
             kwargs[self.commit_id_field_name] = self.commit_id
             kwargs[self.problem_field_name] = self.problem
-            db = router.db_for_write(self.model, instance=self.instance)
+            db = router.db_for_write(self.model)
             return super(ProblemGitRelatedObjectManager, self).using(db).update_or_create(**kwargs)
         update_or_create.alters_data = True
 
@@ -203,7 +203,7 @@ class ReverseGitManyToOneDescriptor(object):
     @cached_property
     def related_manager_cls(self):
         return create_git_related_manager(
-            self.field.target._default_manager.__class__,
+            self.field.model._default_manager.__class__,
             self.field,
         )
 

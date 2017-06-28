@@ -24,6 +24,7 @@ class ObjCache(object):
 
 
 class QuerySet(object):
+    _prefetch_related_lookups = None
     REPR_MAXLEN = 10
 
     def __init__(self, model, query=None, transaction=None):
@@ -157,3 +158,6 @@ class QuerySet(object):
             return self.get(**kwargs), False
         except self.model.DoesNotExist:
             return self.create(**parameters), True
+
+    def iterator(self):
+        return iter(self)

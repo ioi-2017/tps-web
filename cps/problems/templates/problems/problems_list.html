@@ -24,7 +24,7 @@
         {% for problem in problems %}
         <tr>
             <td>
-                {% if branches_disabled %}
+                {% if branches_disabled and False %}
                     <a href="{% url "problems:overview" problem.id request.user.username %}">
                 {% else %}
                     <a href="{% url "problems:overview" problem.id "master" %}">
