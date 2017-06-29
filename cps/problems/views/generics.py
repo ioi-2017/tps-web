@@ -4,7 +4,7 @@ from functools import update_wrapper
 import magic
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -15,12 +15,12 @@ from django.views.generic import View
 
 from file_repository.models import FileModel
 from problems.views.utils import extract_revision_data, get_git_object_or_404
-from problems.models import SourceFile
+from problems.models import SourceFile, NewProblemBranch
 from django.utils.translation import ugettext as _
 
 from django.db.models import ObjectDoesNotExist
 
-from git_orm import transaction as git_transaction
+from git_orm import transaction as git_transaction, GitError
 from pygit2 import Signature
 
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
@@ -216,10 +216,40 @@ class ProblemObjectEditView(RevisionObjectView):
         })
 
     def post(self, request, problem_id, revision_slug, *args, **kwargs):
+        if "_commit_id" not in request.POST:
+            raise PermissionDenied
+        if settings.DISABLE_BRANCHES:
+            edited_on_commit_id = request.POST["_commit_id"]
+            patch_prefix = "{}_patch".format(request.user.username)
+            patch_number = 0
+            for x in NewProblemBranch.objects.filter(
+                name__startswith=patch_prefix
+            ):
+                try:
+                    patch_number = max(patch_number, int(x.name[len(patch_prefix):]))
+                except ValueError:
+                    pass
+            new_branch_name = patch_prefix + str(patch_number + 1)
+            new_branch = self.problem.branches.create(
+                name=new_branch_name,
+                head=edited_on_commit_id
+            )
+
+            overriding_transaction = git_transaction.Transaction(
+                repository_path=self.problem.repository_path,
+                branch_name=new_branch_name
+            )
+            previous_transaction = git_transaction.current()
+        else:
+            raise NotImplementedError
+
+        git_transaction.set_default_transaction(overriding_transaction)
+
         try:
             instance = self.get_instance(request, *args, **kwargs)
         except ObjectDoesNotExist:
             raise Http404
+
         form = self.model_form(request.POST, request.FILES,
                                problem=self.problem,
                                revision=self.revision,
@@ -228,12 +258,26 @@ class ProblemObjectEditView(RevisionObjectView):
         if form.is_valid():
             obj = form.save()
             if hasattr(obj, "_transaction"):
-                obj._transaction.commit(
+                new_commit = obj._transaction.commit(
                     author_signature=Signature(
                         request.user.get_full_name(),
                         request.user.email
                     )
                 )
+                if settings.DISABLE_BRANCHES:
+                    try:
+                        previous_transaction.merge(new_commit, squash=True, author_signature=Signature(
+                            request.user.get_full_name(),
+                            request.user.email
+                        ))
+                    except GitError as e:
+                        messages.error(request, _("Unable to merge automatically. "
+                                                  "Your changes can be found in commit {commit_id}. "
+                                                  "The merge should be done manually.").format(
+                            commit_id=str(new_commit)
+                        ))
+                        return HttpResponseRedirect(self.request.get_full_path())
+                    new_branch.delete()
             messages.success(request, _("Saved successfully"))
             return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
         return self._show_form(request, form, instance)

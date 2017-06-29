@@ -21,7 +21,7 @@ def get_branch_reference(name):
     return 'refs/heads/{}'.format(name)
 
 
-class Transaction:
+class Transaction(object):
     def __init__(self, repository_path, commit_id=None, branch_name=None):
         try:
             path = pygit2.discover_repository(repository_path)
@@ -32,6 +32,7 @@ class Transaction:
         if branch_name is not None and commit_id is not None:
             raise ValueError('only one of branch_name and commit_id should be set')
 
+        self.branch = None
         if branch_name is None and commit_id is None:
             parents = []
         elif branch_name is not None:
@@ -160,6 +161,33 @@ class Transaction:
             treebuilder.insert(name, tree_id, stat.S_IFDIR)
         return treebuilder.write()
 
+    def merge(self, commit_oid, squash=False, message=None, author_signature=None):
+        if not self.branch:
+            raise GitError('no branch specified')
+        index = self.repo.merge_commits(self.parents[0], commit_oid)
+        if index.conflicts:
+            raise GitError("conflicts occurred. cannot merge")
+        new_tree = index.write_tree(repo=self.repo)
+        try:
+            name = settings.GIT_USER_NAME
+            email = settings.GIT_USER_EMAIL
+        except KeyError as e:
+            raise GitError('{} not found in Django settings'.format(e))
+        sig = pygit2.Signature(name, email)
+        if not author_signature:
+            author_signature = sig
+        ref = get_branch_reference(self.branch)
+        if squash:
+            if not message:
+                message = self.repo[commit_oid].message
+            parents = self.parents
+        else:
+            if not message:
+                message = "Merged with {}".format(str(commit_oid))
+            parents = self.parents + [commit_oid]
+        return self.repo.create_commit(
+            ref, author_signature, sig, message, new_tree, parents, 'utf-8')
+
     def commit(self, message=None, author_signature=None, amend=False, allow_empty=False):
         if not self.branch:
             raise GitError('no branch specified')
@@ -198,7 +226,7 @@ class Transaction:
         if not author_signature:
             author_signature = sig
         ref = get_branch_reference(self.branch)
-        self.repo.create_commit(
+        return self.repo.create_commit(
             ref, author_signature, sig, message, tree_id, parents, 'utf-8')
 
     def rollback(self):
@@ -211,6 +239,7 @@ _transaction = None
 
 def set_default_transaction(transaction):
     global _transaction
+    _transaction = None
     _transaction = transaction
 
 

@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from pygit2 import Oid
 
 import git_orm.models as git_models
 from core.fields import EnumField
@@ -26,7 +27,9 @@ from problems.models.fields import ReadOnlyGitToGitForeignKey
 from problems.models.generic import FileSystemPopulatedModel
 from tasks.tasks import CeleryTask
 
-__all__ = ["Problem", "ProblemRevision", "ProblemBranch", "ProblemCommit"]
+
+
+__all__ = ["Problem", "ProblemRevision", "ProblemBranch", "ProblemCommit", "NewProblemBranch"]
 
 logger = logging.getLogger(__name__)
 
@@ -137,9 +140,15 @@ class NewProblemBranch(git_models.Model):
             self.initial_pk,
         )
         if current_branch is None:
+            if isinstance(self.inited_head, str):
+                commit = repository[Oid(hex=self.inited_head)]
+            elif isinstance(self.inited_head, ProblemCommit):
+                commit = repository[self.inited_head.commit_id]
+            else:
+                raise ValueError("Invalid head")
             current_branch = self._transaction.repo.branches.local.create(
                 self.name,
-                repository[self.inited_head.commit_id]
+                commit
             )
         if self.initial_pk != self.pk:
             current_branch.rename(self.pk)
@@ -147,6 +156,10 @@ class NewProblemBranch(git_models.Model):
 
     def get_branch_revision_for_user(self, user):
         return self.head
+
+    def delete(self):
+        repository = self._transaction.repo
+        repository.branches.local.delete(self.name)
 
     def __str__(self):
         return self.name

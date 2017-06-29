@@ -1,3 +1,5 @@
+from pygit2 import GitError
+
 __version__ = '0.4'
 __author__ = 'Martin Natano <natano@natano.net>'
 
@@ -5,10 +7,6 @@ __author__ = 'Martin Natano <natano@natano.net>'
 _repository = None
 _branch = 'git-orm'
 _remote = 'origin'
-
-
-class GitError(Exception):
-    pass
 
 
 def set_repository(value):

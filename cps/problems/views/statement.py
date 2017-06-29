@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 
 from problems.forms.statement import StatementForm
-from problems.models import StatementAttachment
+from problems.models import StatementAttachment, Statement
 from problems.views.utils import get_git_object_or_404
 from problems.views.generics import ProblemObjectEditView, RevisionObjectView, ProblemObjectDownloadView
 
@@ -24,7 +24,7 @@ class EditStatement(ProblemObjectEditView):
         })
 
     def get_instance(self, request, *args, **kwargs):
-        return self.revision.statement_set.get()
+        return Statement.objects.get()
 
 
 class DownloadStatementAttachment(ProblemObjectDownloadView):

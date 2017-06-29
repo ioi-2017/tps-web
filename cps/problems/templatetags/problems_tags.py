@@ -1,5 +1,6 @@
 from django import template
 from django.template.defaulttags import url, URLNode
+from django.utils.html import format_html
 
 register = template.Library()
 
@@ -21,4 +22,11 @@ def problem_url(parser, token):
         parser.compile_filter("problem.id"),
         parser.compile_filter("revision_slug"),
         url(parser, token)
+    )
+
+@register.simple_tag(takes_context=True)
+def commit_token(context):
+    return format_html(
+        "<input type='hidden' name='_commit_id' value='{}' />",
+        context["revision"].commit_id
     )
