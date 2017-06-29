@@ -104,7 +104,7 @@ class ModelBase(type):
             for field in parent_fields:
                 new_field = copy.deepcopy(field)
                 new_class.add_to_class(field.name, new_field)
-
+        new_class._meta.concrete_model = new_class
         opts._prepare()
         new_class._meta.apps.register_model(new_class._meta.app_label, new_class)
         return new_class
@@ -231,15 +231,21 @@ class Model(metaclass=ModelBase):
         obj.load(content)
         return obj
 
-    def full_clean(self, *args, **kwargs):
+    def full_clean(self, exclude=None, validate_unique=True):
+        if exclude is None:
+            exclude = []
+        else:
+            exclude = list(exclude)
         for field in self._meta.writable_fields:
+            if field.name in exclude:
+                continue
             try:
                 field.validate(getattr(self, field.attname), self)
             except ValueError as e:
                 raise self.InvalidObject(e)
 
     def validate_unique(self, exclude=None):
-        raise NotImplementedError
+        return True
 
     def _get_FIELD_display(self, field):
         value = getattr(self, field.attname)

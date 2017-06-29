@@ -14,6 +14,7 @@ class Options(DjangoOptions):
         self.storage_name = None
         self.json_db_name = None
         self.has_custom_queryset = False
+        self.managed = False
 
     def contribute_to_class(self, cls, name):
         setattr(cls, name, self)

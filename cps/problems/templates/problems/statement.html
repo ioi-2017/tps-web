@@ -5,41 +5,37 @@
 {% load problems_tags %}
 {% load staticfiles %}
 
-{% block head_js %}
+{% block css %}
     {{ block.super }}
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({
-        tex2jax: {
-          inlineMath: [ ["\\(","\\)"], ["$", "$"] ],
-          processEscapes: true
-        }
-      });
-    </script>
-    <script type="text/javascript" src="{% static 'MathJax/MathJax.js' %}?config=TeX-MML-AM_CHTML"></script>
-
+    <link rel="stylesheet" type="text/css" href="{% static 'katex/katex.min.css' %}" />
 {% endblock %}
 
 
 {% block problem_content %}
     <div class="row">
 		<h1>{% trans 'Problem Statement' %}</h1>
-		{% if revision_editable %}
+        {% if commit_editable %}
 			<form class="form-horizontal" method="post" action="{% problem_url "problems:statement" %}"
 				  enctype="multipart/form-data">
 			{% csrf_token %}
 		{% endif %}
-		{% if revision_editable %}
+        {% csrf_token %}
+        <div class="col-sm-6">
+        {% if commit_editable %}
 			{% bootstrap_form form %}
 			{{ form.media }}
 		{% else %}
 			{% bootstrap_form form layout='readonly' %}
 		{% endif %}
+        </div>
+        <div class="col-sm-6">
 
         <div id="preview" class="markdown-body">
 
         </div>
+        </div>
 
-		{% if revision_editable %}
+        {% if commit_editable %}
 			<div class="form-group">
 				<button type="submit" class="form-control btn btn-success">
 					{% trans 'Save' %}
@@ -54,6 +50,9 @@
 {% block foot_js %}
     {{ block.super }}
     <script src="{% static 'js/showdown.min.js' %}"></script>
+    <script src="{% static 'katex/katex.min.js' %}"></script>
+    <script src="{% static 'katex/auto-render.min.js' %}"></script>
+
     <script>
 
         var sync_wait_interval = 100;
@@ -66,14 +65,26 @@
                 'parseImgDimensions': true
             });
             var preview_element = $("#preview")[0];
-            preview_element.innerHTML = converter.makeHtml($('#id_statement')[0].value);
-            MathJax.Hub.queue.Push(["Typeset", MathJax.Hub, preview_element]);
+            var statement_element = $('#id_statement')[0];
+            preview_element.innerHTML = converter.makeHtml(statement_element.value);
+            $(statement_element).height($(preview_element).height());
+            window.renderMathInElement(preview_element, {
+                delimiters: [
+                  {left: "$$", right: "$$", display: true},
+                  {left: "\\[", right: "\\]", display: true},
+                  {left: "\\(", right: "\\)", display: false},
+                  {left: "$", right: "$", display: false}
+                ]
+            });
         }
         $('#id_statement').on("keyup", function() {
             clearTimeout(typingTimer);
             typingTimer = setTimeout(sync_editor, sync_wait_interval);
         }).on("keydown", function() {
             clearTimeout(typingTimer);
+        });
+        $(document).ready(function() {
+            $("#id_statement").height($("#preview").height());
         });
         sync_editor();
     </script>

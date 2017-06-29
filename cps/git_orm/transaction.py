@@ -189,7 +189,6 @@ class Transaction:
             message += '\n\n' + '\n'.join(detailed_messages)
 
         tree_id = self._store_objects(self.memory_tree)
-
         try:
             name = settings.GIT_USER_NAME
             email = settings.GIT_USER_EMAIL

@@ -63,6 +63,10 @@ class ResourceFile(GitFile):
     def path(self):
         return [self.pk]
 
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        return []
+
 
 
 class ResourceBase(git_models.Model):

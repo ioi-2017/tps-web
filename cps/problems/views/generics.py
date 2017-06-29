@@ -21,6 +21,7 @@ from django.utils.translation import ugettext as _
 from django.db.models import ObjectDoesNotExist
 
 from git_orm import transaction as git_transaction
+from pygit2 import Signature
 
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
@@ -98,21 +99,32 @@ class ProblemObjectView(View):
 
 class RevisionObjectView(ProblemObjectView):
     http_method_names_requiring_edit_access = ['post', 'put', 'delete', 'patch']
+    UPDATED_TO_GIT = False
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() in self.http_method_names_requiring_edit_access and \
-                not self.revision.editable(self.request.user):
+                not self.edit_allowed():
             return self.http_method_not_allowed(request, *args, **kwargs)
         return super(RevisionObjectView, self).dispatch(request, *args, **kwargs)
 
     def _allowed_methods(self):
         allowed_methods = super(RevisionObjectView, self)._allowed_methods()
 
-        if not self.revision.editable(self.request.user):
+        if not self.edit_allowed():
             allowed_methods = [allowed_method for allowed_method in allowed_methods
                                if allowed_method not in self.http_method_names_requiring_edit_access]
 
         return allowed_methods
+
+    def edit_allowed(self):
+        if self.branch is None:
+            return False
+        if not(self.revision.editable(self.request.user)):
+            return False
+        # TODO: Remove this after everything is updated
+        if not self.UPDATED_TO_GIT:
+            return False
+        return True
 
 
 class ProblemObjectDeleteView(RevisionObjectView):
@@ -215,6 +227,14 @@ class ProblemObjectEditView(RevisionObjectView):
                                instance=instance)
         if form.is_valid():
             obj = form.save()
+            if hasattr(obj, "_transaction"):
+                obj._transaction.commit(
+                    author_signature=Signature(
+                        request.user.get_full_name(),
+                        request.user.email
+                    )
+                )
+            messages.success(request, _("Saved successfully"))
             return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
         return self._show_form(request, form, instance)
 

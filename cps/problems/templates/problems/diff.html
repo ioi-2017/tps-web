@@ -1,0 +1,13 @@
+{% extends "problems/base.html" %}
+{% load i18n %}
+{% load problems_tags %}
+
+
+{% block problem_content %}
+    <h1> {% trans 'Diff' %} </h1>
+    <div class="row">
+        {{ ours_id }} -- {{ theirs_id }}
+    </div>
+
+    <div class="pre-wrap-block">{{ diff }}</div>
+{% endblock %}

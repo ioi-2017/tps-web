@@ -17,7 +17,6 @@ class ProblemData(git_models.Model):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
-    statement = models.TextField(verbose_name=_("statement"), default="", blank=True)
 
     task_type = models.CharField(verbose_name=_("task type"), max_length=150, null=True)
     task_type_parameters = models.TextField(verbose_name=_("task type parameters"), null=True)
@@ -60,15 +59,6 @@ class ProblemData(git_models.Model):
     def _get_existing_primary_keys(cls, transaction):
         return [0]
 
-    @classmethod
-    def _get_instance(cls, transaction, pk):
-        obj = super(ProblemData, cls)._get_instance(transaction, pk)
-        try:
-            obj.statement = transaction.get_blob(["statement", "index.md"]).decode("utf-8")
-        except GitError:
-            pass
-        return obj
-
     def load(self, data):
         # FIXME: The type is deprecated. remove this
         if not hasattr(data, 'items'):
@@ -77,3 +67,4 @@ class ProblemData(git_models.Model):
             data["task_type"] = data["type"]
             del data["type"]
         super(ProblemData, self).load(data)
+

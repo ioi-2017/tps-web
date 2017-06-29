@@ -28,7 +28,7 @@
                         <li class="text-center problem-title">
 
 
-                            <a href="#" class="full-open-only">
+                            <a href="{% if branches_disabled %}{% url "problems:overview" problem.id problem.get_master_branch.get_slug %}{% else %}#{% endif %}" class="full-open-only">
 
                                 {{ revision.problem_data.title }}
 

@@ -1,7 +1,7 @@
 import six
 from django.db import router
 from django.db import transaction
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, curry
 
 from git_orm.models import GitToGitForeignKey
 from git_orm.models.fields import ReverseForeignKeyDescriptor
@@ -275,13 +275,46 @@ class DBToGitForeignKeyDescriptor(object):
 
 
 class DBToGitForeignKey(GitToGitForeignKey):
+    # TODO: Make this a proper Django field
     forward_descriptor = DBToGitForeignKeyDescriptor
     reverse_descriptor = ReverseGitManyToOneDescriptor
+
+    auto_created = False
+    concrete = False
+    editable = False
+    hidden = False
+
+    is_relation = True
+    many_to_many = False
+    many_to_one = True
+    one_to_many = False
+    one_to_one = False
+    related_model = None
+    remote_field = None
 
     def __init__(self, to, problem_field_name, commit_id_field_name, *args, **kwargs):
         super(DBToGitForeignKey, self).__init__(to, *args, **kwargs)
         self.problem_field_name = problem_field_name
         self.commit_id_field_name = commit_id_field_name
+
+    def set_attributes_from_name(self, name):
+        if not self.name:
+            self.name = name
+        self.attname, self.column = self.get_attname_column()
+        self.concrete = False
+        if self.verbose_name is None and self.name:
+            self.verbose_name = self.name.replace('_', ' ')
+
+    def contribute_to_class(self, cls, name, virtual_only=True):
+        self.set_attributes_from_name(name)
+        self.model = cls
+        if virtual_only:
+            cls._meta.add_field(self, virtual=True)
+        else:
+            cls._meta.add_field(self)
+        if self.choices:
+            setattr(cls, 'get_%s_display' % self.name,
+                    curry(cls._get_FIELD_display, field=self))
 
     def deconstruct(self):
         name, path, args, kwargs = super(DBToGitForeignKey, self).deconstruct()
@@ -295,6 +328,7 @@ class DBToGitForeignKey(GitToGitForeignKey):
         kwargs["problem_field_name"] = self.problem_field_name
         kwargs["commit_id_field_name"] = self.commit_id_field_name
         return name, path, args, kwargs
+
 
 
 class ReadOnlyDescriptor(object):

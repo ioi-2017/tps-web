@@ -31,6 +31,8 @@ problem_urls = ([
         url(r'statement/(?P<attachment_id>.+)$', DownloadStatementAttachment.as_view(), name="statement"),
 
         url(r'^history/$', HistoryView.as_view(), name="history"),
+        url(r'^diff/(?P<other_slug>\w{1,40})/$', DiffView.as_view(), name="diff"),
+
         url(r'^$', Overview.as_view(), name="overview"),
 
         url(r'^discussions/$', DiscussionsListView.as_view(), name="discussions"),

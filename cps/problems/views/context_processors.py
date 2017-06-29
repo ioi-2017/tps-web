@@ -16,7 +16,7 @@ def revision_data(request):
     problem_id = request.resolver_match.kwargs["problem_id"]
     revision_slug = request.resolver_match.kwargs["revision_slug"]
     problem, branch, revision = extract_revision_data(problem_id, revision_slug, request.user)
-    revision_editable = revision.editable(request.user)
+    revision_editable = False
 
     errors = {}
     try:
@@ -52,6 +52,7 @@ def revision_data(request):
         "branch": branch,
         "branches": branches,
         "revision_slug": revision_slug,
+        "commit_editable": branch is not None,
         "revision_editable": revision_editable,
         "branches_disabled": getattr(settings, "DISABLE_BRANCHES", False),
         "errors": errors

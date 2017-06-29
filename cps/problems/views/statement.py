@@ -9,11 +9,13 @@ from problems.views.generics import ProblemObjectEditView, RevisionObjectView, P
 
 __all__ = ["EditStatement", "DownloadStatementAttachment"]
 
+
 class EditStatement(ProblemObjectEditView):
     template_name = "problems/statement.html"
     model_form = StatementForm
     permissions_required = "observe"
     http_method_names_requiring_edit_access = RevisionObjectView.http_method_names_requiring_edit_access
+    UPDATED_TO_GIT = True
 
     def get_success_url(self, request, problem_id, revision_slug, obj):
         return reverse("problems:statement", kwargs={
@@ -22,7 +24,7 @@ class EditStatement(ProblemObjectEditView):
         })
 
     def get_instance(self, request, *args, **kwargs):
-        return self.revision.problem_data
+        return self.revision.statement_set.get()
 
 
 class DownloadStatementAttachment(ProblemObjectDownloadView):

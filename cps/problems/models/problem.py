@@ -402,7 +402,7 @@ class ProblemCommit(FileSystemPopulatedModel):
 
     def editable(self, user):
         # TODO: Add editing
-        return False
+        return True
 
     def get_storage_path(self):
         path = settings.COMMIT_STORAGE_ROOT

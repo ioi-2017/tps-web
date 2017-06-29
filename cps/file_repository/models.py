@@ -123,10 +123,6 @@ class GitFile(git_models.Model, FileModelMixin):
         field = self._meta.get_field('content')
         self.content = field.to_python(data)
 
-    @classmethod
-    def _get_existing_primary_keys(cls, transaction):
-        return []
-
 
 class GitBinaryFile(git_models.Model, FileModelMixin):
     name = models.CharField(verbose_name=_("name"), max_length=256, blank=True, primary_key=True)
