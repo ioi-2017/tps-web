@@ -198,6 +198,9 @@ class CMSTaskType(TaskType):
 
     def generate_output(self, problem_code, testcase_code, language,
                         solution_file):
+        if language is None:
+            language = self.judge.detect_language(solution_file[0])
+
         if language == 'text':
             return EvaluationResult(
                 success=True,

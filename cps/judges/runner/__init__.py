@@ -2,7 +2,7 @@ from judge import Judge
 from judge.results import JudgeVerdict
 from runner.sandbox.sandbox import SandboxBase
 from .batch import Batch
-from runner import RUNNER_SUPPORTED_LANGUAGES
+from runner import RUNNER_SUPPORTED_LANGUAGES, detect_language
 
 
 class Runner(Judge):
@@ -49,4 +49,7 @@ class Runner(Judge):
         elif exit_status == SandboxBase.EXIT_OK:
             return JudgeVerdict.ok
         else:
-            raise ValueError ("We should not reach this line")
+            raise ValueError("We should not reach this line")
+
+    def detect_language(self, filename):
+        return detect_language(filename)
