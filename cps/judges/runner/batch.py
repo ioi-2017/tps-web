@@ -6,6 +6,7 @@ from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
 from runner.actions.execute_with_input import execute_with_input
 from django import forms
+from runner import detect_language
 
 
 class Batch(TaskType):
@@ -22,6 +23,9 @@ class Batch(TaskType):
         return status, msg
 
     def generate_output(self, problem_code, testcase_code, language, solution_file):
+        if language is None:
+            language = self.judge.detect_language(solution_file[0])
+
         if language not in self.judge.get_supported_languages():
             return EvaluationResult(
                 success=False,

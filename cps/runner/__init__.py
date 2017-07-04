@@ -1,4 +1,5 @@
 from logging import getLogger
+import os
 
 RUNNER_SUPPORTED_LANGUAGES = ["c++", "java", "pas"]
 
@@ -7,6 +8,21 @@ class NotSupportedLanguage(Exception):
     pass
 
 logger = getLogger(__name__)
+
+
+def detect_language(filename):
+    extensions = {'.cpp': 'c++',
+                  '.cc': 'c++',
+                  '.cxx': 'c++',
+                  '.c++': 'c++',
+                  '.C': 'c++',
+                  '.java': 'java',
+                  '.pas': 'pas'}
+
+    name, ext = os.path.splitext(filename)
+    if ext not in extensions:
+        return None
+    return extensions[ext]
 
 
 def get_valid_extensions(language):

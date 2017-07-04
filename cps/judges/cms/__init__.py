@@ -22,6 +22,7 @@ from .batch import Batch
 from .communication import Communication
 from .output_only import OutputOnly
 from .two_steps import TwoSteps
+import os
 
 
 class CMS(Judge):
@@ -50,3 +51,22 @@ class CMS(Judge):
         else:
             task_type = self.task_types[name]
         return task_type(self)
+
+    def detect_language(self, filename):
+        extensions = {'.cpp': 'C++11 / g++',
+                      '.cc': 'C++11 / g++',
+                      '.cxx': 'C++11 / g++',
+                      '.c++': 'C++11 / g++',
+                      '.C': 'C++11 / g++',
+                      '.c': 'C11 / gcc',
+                      '.hs': 'Haskell / ghc',
+                      '.java': 'Java 1.4 / gcj',
+                      '.pas': 'Pascal / fpc',
+                      '.php': 'PHP',
+                      '.py': 'Python 2 / CPython',
+                      '.txt': 'text'}
+
+        name, ext = os.path.splitext(filename)
+        if ext not in extensions:
+            return None
+        return extensions[ext]

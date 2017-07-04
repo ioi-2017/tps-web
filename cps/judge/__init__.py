@@ -39,3 +39,8 @@ class Judge(object):
         """
         raise NotImplementedError
 
+    def detect_language(self, filename):
+        """
+        Returns the language name of the file, based on its filename
+        """
+        raise NotImplementedError
