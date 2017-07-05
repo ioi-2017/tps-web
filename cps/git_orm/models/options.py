@@ -30,6 +30,8 @@ class Options(DjangoOptions):
                 self.storage_name = self.meta.storage_name
             if hasattr(self.meta, 'json_db_name'):
                 self.json_db_name = self.meta.json_db_name
+            if hasattr(self.meta, 'ordering'):
+                self.ordering = list(self.meta.ordering)
 
     def add_field(self, field, virtual=False):
         self.fields.append(field)
@@ -50,7 +52,7 @@ class Options(DjangoOptions):
     def _prepare(self):
         if not self.pk:
             id_field = TextField(
-                primary_key=True, default=lambda: uuid4().hex)
+                primary_key=True, default=lambda: uuid4().hex, auto_created=True)
             self.model.add_to_class('id', id_field)
             self.fields.insert(0, self.fields.pop())
         fieldnames = [f.name for f in self.fields]

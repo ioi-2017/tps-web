@@ -23,8 +23,8 @@ class Batch(CMSTaskType):
             task_type_parameters_Batch_compilation = forms.ChoiceField(
                 label='Compilation',
                 choices=[
+                    ('grader', 'Submissions are compiled with a grader'),
                     ('alone', 'Submissions are self-sufficient'),
-                    ('grader', 'Submissions are compiled with a grader')
                 ]
             )
             task_type_parameters_Batch_io_0_inputfile = forms.CharField(
@@ -63,7 +63,7 @@ class Batch(CMSTaskType):
                 fields = ['task_type_parameters_Batch_compilation',
                           'task_type_parameters_Batch_io_0_inputfile',
                           'task_type_parameters_Batch_io_1_outputfile']
-                defaults = ['alone', '', '']
+                defaults = ['grader', '', '']
                 errors = self.errors.as_data()
                 res = dict()
                 for num in range(len(fields)):

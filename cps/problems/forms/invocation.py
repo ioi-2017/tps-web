@@ -1,19 +1,15 @@
 from django import forms
 
-from problems.forms.generic import ProblemObjectModelForm
+from problems.forms.fields import AutoFilledField
+from problems.forms.generic import ProblemObjectModelForm, ProblemObjectForm, DBProblemObjectModelForm
 from problems.models import SourceFile, Solution, SolutionRun, TestCase
 
 
-class InvocationAddForm(ProblemObjectModelForm):
+class InvocationAddForm(DBProblemObjectModelForm):
 
     class Meta:
         model = SolutionRun
-        fields = []
-
-    def __init__(self, *args, **kwargs):
-        super(InvocationAddForm, self).__init__(*args, **kwargs)
-        self.fields["solutions"].queryset = Solution.objects.filter(problem=self.revision)
-        self.fields["testcases"].queryset = TestCase.objects.filter(problem=self.revision)
+        fields = ["base_problem", "commit_id", "solutions", "testcases"]
 
     def save(self, commit=True):
         super(InvocationAddForm, self).save(commit=False)

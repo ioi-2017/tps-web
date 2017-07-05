@@ -1,4 +1,5 @@
 import logging
+import shutil
 
 from runner.sandbox.sandbox import SandboxBase
 
@@ -82,14 +83,26 @@ def run_compilation_commands(sandbox, commands,
 
 def retrieve_files(sandbox, files):
     retrieved_files = {}
-    for file in files:
-        try:
-            stored_file = sandbox.get_file_to_storage(file)
-            retrieved_files[file] = stored_file
-        except IOError as e:
-            logger.debug(
-                "The following problem occurred when retrieving file {}: \n {}".format(
-                    file, repr(e))
-            )
-            retrieved_files[file] = None
+    if isinstance(files, dict):
+        for name, new_path in files.items():
+            try:
+                old_path = sandbox.relative_path(name)
+                shutil.copyfile(old_path, new_path)
+            except IOError as e:
+                logger.debug(
+                    "The following problem occurred when retrieving file {}: \n {}".format(
+                        name, repr(e))
+                )
+                retrieved_files[name] = None
+    else:
+        for file in files:
+            try:
+                stored_file = sandbox.get_file_to_storage(file)
+                retrieved_files[file] = stored_file
+            except IOError as e:
+                logger.debug(
+                    "The following problem occurred when retrieving file {}: \n {}".format(
+                        file, repr(e))
+                )
+                retrieved_files[file] = None
     return retrieved_files

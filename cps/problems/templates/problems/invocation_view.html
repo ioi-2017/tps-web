@@ -36,7 +36,9 @@
                             <a href="{% problem_url "problems:view_invocation_result" invocation.id result.id %}">
                                 {{ result.get_short_name_for_verdict }}
                             </a>
+                            {% if result.solution_execution_time != None and result.solution_memory_usage != None %}
                             <small class="text-muted"> {{ result.solution_execution_time }}s/{{ result.solution_memory_usage }}MB </small>
+                            {% endif %}
                             </td>
                         {% endfor %}
                     </tr>
@@ -72,6 +74,7 @@
                 {% for subtask,subtask_results in subtasks %}
                     <tr>
                         <td>{{ subtask }}</td>
+
                         {% for subtask_solution_result,validation in subtask_results %}
                             {% if validation %}
                                 <td>

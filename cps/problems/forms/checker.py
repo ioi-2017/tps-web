@@ -9,7 +9,7 @@ from problems.models.problem_data import ProblemData
 class CheckerAddForm(SourceFileAddForm):
     class Meta:
         model = Checker
-        fields = ["name", "source_language"]
+        fields = ["name",]
 
     def save(self, commit=True):
         ret = super(CheckerAddForm, self).save(commit)

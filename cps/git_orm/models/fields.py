@@ -74,26 +74,30 @@ class GitToGitForeignKeyDescriptor(object):
     def __init__(self, field):
         self.field = field
 
+    def get_cache_name(self):
+        return '_cache_%s' % self.field.attname
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        if not hasattr(self, '_cache'):
+
+        if not hasattr(instance, self.get_cache_name()):
             pk = getattr(instance, self.field.attname)
             if pk is None:
                 obj = None
             else:
                 obj = self.field.target._get_instance(instance._transaction, pk)
-            self._cache = obj
-        return self._cache
+            setattr(instance, self.get_cache_name(), obj)
+        return getattr(instance, self.get_cache_name())
 
     def __set__(self, instance, value):
         if isinstance(value, self.field.target):
             pk = value.pk
-            self._cache = value
+            setattr(instance, self.get_cache_name(), value)
         else:
             pk = value
             try:
-                del self._cache
+                delattr(instance, self.get_cache_name())
             except AttributeError:
                 pass
         setattr(instance, self.field.attname, pk)
@@ -132,7 +136,7 @@ class GitToGitForeignKey(Field):
         self.related_name = related_name
 
     def contribute_to_class(self, cls, name, *args, **kwargs):
-        super().contribute_to_class(cls, name)
+        super(GitToGitForeignKey, self).contribute_to_class(cls, name)
         setattr(cls, self.name, self.forward_descriptor(self))
 
         def resolve_related_class(model, related, field):
@@ -270,12 +274,16 @@ def create_many_to_many_manager(model, field, reverse):
     class ManyToManyManager(object):
         def __init__(self, instance):
             self.instance = instance
+
             self.model = model
             if reverse:
                 self.related_field_name = field.name
             else:
                 self.pk_list = []
-            self.instance = instance
+
+        @cached_property
+        def transaction(self):
+            return self.instance._transaction
 
         if not reverse:
             def add(self, value):
@@ -291,7 +299,7 @@ def create_many_to_many_manager(model, field, reverse):
                     self.pk_list.remove(value)
 
             def get_queryset(self):
-                return self.model.objects.with_transaction(self.instance._transaction).filter(pk__in=tuple(self.pk_list))
+                return self.model.objects.with_transaction(self.transaction).filter(pk__in=tuple(self.pk_list))
 
             def clear(self):
                 self.pk_list = []
@@ -307,7 +315,7 @@ def create_many_to_many_manager(model, field, reverse):
                 getattr(value, self.related_field_name).remove(self.instance)
 
             def get_queryset(self):
-                return self.model.objects.with_transaction(self.instance._transaction).filter(**{
+                return self.model.objects.with_transaction(self.transaction).filter(**{
                     self.related_field_name + "__contains": self.instance
                 })
 
@@ -316,17 +324,23 @@ def create_many_to_many_manager(model, field, reverse):
                 for obj in objs:
                     self.remove(obj)
 
-        def __getattr__(self, item):
+        def __getattribute__(self, item):
             if item in ["get", "filter", "exclude", "exists", "count", "order_by", "all"]:
                 return getattr(self.get_queryset(), item)
             else:
-                raise AttributeError
+                return super(ManyToManyManager, self).__getattribute__(item)
 
         def set(self, value):
+            if value == self:
+                return
             self.clear()
             if value is not None:
-                for instance in value:
-                    self.add(instance)
+                if hasattr(value, 'all'):
+                    for instance in value.all():
+                        self.add(instance)
+                else:
+                    for instance in value:
+                        self.add(instance)
 
         def __iter__(self):
             return iter(self.get_queryset())

@@ -1,4 +1,5 @@
 # Amir Keivan Mohtashami
+import json
 import logging
 import os
 import shlex
@@ -351,7 +352,7 @@ class TestCase(FileSystemPopulatedModel):
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
     class Meta:
-        ordering = ("problem", "name",)
+        ordering = ("name",)
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
 
@@ -732,7 +733,7 @@ class Subtask(JSONModel):
     index = models.IntegerField(verbose_name=_("index"))
 
     class Meta:
-        ordering = ("problem", "name",)
+        ordering = ("name",)
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
         json_db_name = "subtasks.json"
@@ -747,6 +748,38 @@ class Subtask(JSONModel):
             "testcases": ",".join([str(testcase) for testcase in self.testcases.all()])
         }
         return data
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        model = cls
+        if model._meta.json_db_name is not None:
+            try:
+                raw_data = transaction.get_blob([model._meta.json_db_name]).decode('utf-8')
+                pks = json.loads(raw_data)["subtasks"].keys()
+            except GitError:
+                logger.warning("{} not found".format(model._meta.json_db_name))
+                pks = list()
+            except (ValueError, UnicodeError) as e:
+                raise model.InvalidObject(e)
+        else:
+            raise ValueError("json_db_name should be set in model's meta")
+
+        return pks
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = cls(pk=pk)
+        obj._transaction = transaction
+        try:
+            raw_data = transaction.get_blob(obj.path).decode('utf-8')
+            content = json.loads(raw_data)["subtasks"][pk]
+        except KeyError:
+            raise cls.DoesNotExist(
+                'object with pk {} does not exist'.format(pk))
+        except ValueError as e:
+            raise cls.InvalidObject(e)
+        obj.load(content)
+        return obj
 
     def __str__(self):
         return self.name

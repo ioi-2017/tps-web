@@ -1,4 +1,5 @@
 import json
+import os
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -21,13 +22,17 @@ class GraderFile(GitFile, RecursiveDirectoryModel):
 
 class Grader(RecursiveDirectoryModel, ManuallyPopulatedModel):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
-    name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
-                            blank=True, db_index=True, primary_key=True)
+    full_path = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
+                                 blank=True, db_index=True, primary_key=True)
     code = ReadOnlyGitToGitForeignKey(GraderFile, verbose_name=_("code"), related_name='+', )
 
     @property
+    def name(self):
+        return os.path.split(self.full_path)[1]
+
+    @property
     def get_code_id(self):
-        return self.name
+        return self.full_path
     language = models.CharField(verbose_name=_("language"), null=True, max_length=20)
 
     class Meta:

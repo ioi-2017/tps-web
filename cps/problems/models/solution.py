@@ -45,7 +45,7 @@ class Solution(JSONModel):
 
     class Meta:
         unique_together = ("problem", "name",)
-        ordering = ("problem", "name", )
+        ordering = ("name", )
         index_together = ("problem", "name",)
         json_db_name = "solutions.json"
 

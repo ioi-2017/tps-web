@@ -18,11 +18,8 @@ logger = logging.getLogger(__name__)
 def FileModel_to_base64(filemodel):
     file = filemodel.file
     file.open('rb')
-    lines = file.readlines()
+    text = file.read()
     file.close()
-    text = b""
-    for line in lines:
-        text += line
     return base64.b64encode(text).decode('utf-8')
 
 

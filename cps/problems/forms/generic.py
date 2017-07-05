@@ -2,6 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.models import construct_instance, InlineForeignKeyField
 
+from problems.forms.fields import AutoFilledField
+
 
 class ProblemObjectForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -9,6 +11,16 @@ class ProblemObjectForm(forms.Form):
         self.revision = kwargs.pop("revision")
         self.owner = kwargs.pop("owner")
         super(ProblemObjectForm, self).__init__(*args, **kwargs)
+
+
+class DBProblemObjectModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.problem = kwargs.pop("problem")
+        self.revision = kwargs.pop("revision")
+        self.owner = kwargs.pop("owner")
+        super(DBProblemObjectModelForm, self).__init__(*args, **kwargs)
+        self.fields["base_problem"] = AutoFilledField(initial=self.problem)
+        self.fields["commit_id"] = AutoFilledField(initial=self.revision.commit_id)
 
 
 class ProblemObjectModelForm(forms.ModelForm):

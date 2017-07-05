@@ -1,10 +1,15 @@
+import json
+
 import six
+from django import forms
+from django.db import models
 from django.db import router
 from django.db import transaction
+from django.db.models.fields.related import lazy_related_operation
 from django.utils.functional import cached_property, curry
 
 from git_orm.models import GitToGitForeignKey
-from git_orm.models.fields import ReverseForeignKeyDescriptor
+from git_orm.models.fields import ReverseForeignKeyDescriptor, create_many_to_many_manager, ManyToManyDescriptor
 from git_orm.transaction import Transaction
 
 
@@ -242,14 +247,16 @@ class DBToGitForeignKeyDescriptor(object):
         self.commit_id_field_name = field.commit_id_field_name
         self.problem_field_name = field.problem_field_name
 
+    def get_cache_name(self):
+        return '_cache_%s' % self.field.attname
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        repository_path = getattr(instance, self.problem_field_name).repo.path
+        repository_path = getattr(instance, self.problem_field_name).repository_path
         commit_id = getattr(instance, self.commit_id_field_name)
-        if not hasattr(self, '_cache'):
-            pk = getattr(instance, self.field.attname)
+        if not hasattr(instance, self.get_cache_name()):
+            pk = getattr(instance, self.field.attname, self.field.get_default())
             git_transaction = Transaction(
                 repository_path=repository_path,
                 commit_id=commit_id
@@ -258,17 +265,17 @@ class DBToGitForeignKeyDescriptor(object):
                 obj = None
             else:
                 obj = self.field.target.objects.with_transaction(git_transaction).get(pk=pk)
-            self._cache = obj
-        return self._cache
+            setattr(instance, self.get_cache_name(), obj)
+        return getattr(instance, self.get_cache_name())
 
     def __set__(self, instance, value):
         if isinstance(value, self.field.target):
             pk = value.pk
-            self._cache = value
+            setattr(instance, self.get_cache_name(), value)
         else:
             pk = value
             try:
-                del self._cache
+                delattr(instance, self.get_cache_name())
             except AttributeError:
                 pass
         setattr(instance, self.field.attname, pk)
@@ -279,24 +286,30 @@ class DBToGitForeignKey(GitToGitForeignKey):
     forward_descriptor = DBToGitForeignKeyDescriptor
     reverse_descriptor = ReverseGitManyToOneDescriptor
 
-    auto_created = False
-    concrete = False
-    editable = False
-    hidden = False
-
-    is_relation = True
-    many_to_many = False
-    many_to_one = True
-    one_to_many = False
-    one_to_one = False
-    related_model = None
-    remote_field = None
-
     def __init__(self, to, problem_field_name, commit_id_field_name, *args, **kwargs):
         super(DBToGitForeignKey, self).__init__(to, *args, **kwargs)
+        self.max_length = 128
         self.problem_field_name = problem_field_name
         self.commit_id_field_name = commit_id_field_name
 
+    def deconstruct(self):
+        name, path, args, kwargs = super(DBToGitForeignKey, self).deconstruct()
+        if isinstance(self.target, six.string_types):
+            kwargs['to'] = self.target
+        else:
+            kwargs['to'] = "%s.%s" % (
+                self.target._meta.app_label,
+                self.target._meta.object_name,
+            )
+        kwargs["problem_field_name"] = self.problem_field_name
+        kwargs["commit_id_field_name"] = self.commit_id_field_name
+        return name, path, args, kwargs
+
+    def get_internal_type(self):
+        return "CharField"
+
+
+class DBToGitReadOnlyForeignKey(DBToGitForeignKey):
     def set_attributes_from_name(self, name):
         if not self.name:
             self.name = name
@@ -315,20 +328,13 @@ class DBToGitForeignKey(GitToGitForeignKey):
         if self.choices:
             setattr(cls, 'get_%s_display' % self.name,
                     curry(cls._get_FIELD_display, field=self))
+        setattr(cls, self.name, self.forward_descriptor(self))
 
-    def deconstruct(self):
-        name, path, args, kwargs = super(DBToGitForeignKey, self).deconstruct()
-        if isinstance(self.target, six.string_types):
-            kwargs['to'] = self.target
-        else:
-            kwargs['to'] = "%s.%s" % (
-                self.target._meta.app_label,
-                self.target._meta.object_name,
-            )
-        kwargs["problem_field_name"] = self.problem_field_name
-        kwargs["commit_id_field_name"] = self.commit_id_field_name
-        return name, path, args, kwargs
+        def resolve_related_class(model, related, field):
+            field.target = related
+            field.do_related_class(related, model)
 
+        lazy_related_operation(resolve_related_class, cls, self.target, field=self)
 
 
 class ReadOnlyDescriptor(object):
@@ -352,5 +358,95 @@ class ReadOnlyGitToGitForeignKey(GitToGitForeignKey):
     def contribute_to_class(self, cls, name, *args, **kwargs):
         super(ReadOnlyGitToGitForeignKey, self).contribute_to_class(cls, name, *args, **kwargs)
         setattr(cls, self.attname, ReadOnlyDescriptor(self.attname, self.get_default()))
+
+
+def create_db_to_git_many_to_many_manager(problem_field, commit_field, *args, **kwargs):
+
+    cls = create_many_to_many_manager(*args, **kwargs)
+
+    class ManyToManyManager(cls):
+        @cached_property
+        def transaction(self):
+            repository_path = getattr(self.instance, problem_field).repository_path
+            commit_id = getattr(self.instance, commit_field)
+            return Transaction(
+                repository_path=repository_path,
+                commit_id=commit_id
+            )
+
+    return ManyToManyManager
+
+
+class DBToGitManyToManyDescriptor(ManyToManyDescriptor):
+
+    def __init__(self, field):
+        super(DBToGitManyToManyDescriptor, self).__init__(field, reverse=False)
+
+    @cached_property
+    def related_manager_cls(self):
+        return create_db_to_git_many_to_many_manager(
+            self.field.problem_field_name,
+            self.field.commit_id_field_name,
+            self.field.to,
+            self.field,
+            False,
+        )
+
+
+class DBToGitManyToManyField(models.TextField):
+
+    def __init__(self, to, problem_field_name, commit_id_field_name, *args, **kwargs):
+        super(DBToGitManyToManyField, self).__init__(*args, **kwargs)
+        self.to = to
+        self.problem_field_name = problem_field_name
+        self.commit_id_field_name = commit_id_field_name
+
+    def contribute_to_class(self, cls, name, *args, **kwargs):
+        super(DBToGitManyToManyField, self).contribute_to_class(cls, name, *args, **kwargs)
+        setattr(cls, name, DBToGitManyToManyDescriptor(self))
+
+        def resolve_related_class(model, related, field):
+            field.target = related
+            # TODO: Support backward relation
+        lazy_related_operation(resolve_related_class, cls, self.to, field=self)
+
+    def get_prep_value(self, value):
+        if isinstance(value, str):
+            return value
+        elif hasattr(value, 'all'):
+            pk_list = [obj.pk for obj in value.all()]
+        else:
+            pk_list = list(value)
+        value = json.dumps(pk_list)
+        return value
+
+    def to_python(self, value):
+        if isinstance(value, str):
+            return json.loads(value)
+        else:
+            return value
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super(DBToGitManyToManyField, self).deconstruct()
+        kwargs["to"] = self.to
+        kwargs["problem_field_name"] = self.problem_field_name
+        kwargs["commit_id_field_name"] = self.commit_id_field_name
+        return name, path, args, kwargs
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'form_class': forms.ModelMultipleChoiceField,
+            'queryset': self.target.objects,
+        }
+        defaults.update(kwargs)
+        if defaults.get('initial') is not None:
+            initial = defaults['initial']
+            if callable(initial):
+                initial = initial()
+            defaults['initial'] = [i.pk for i in initial]
+        return super(models.TextField, self).formfield(**defaults)
 
 

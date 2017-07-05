@@ -13,13 +13,13 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from file_repository.models import FileModel, GitFile
+from file_repository.models import FileModel, GitFile, FileSystemModel
 from problems.models import ProblemCommit
 from problems.models.fields import ReadOnlyGitToGitForeignKey
-from problems.models.generic import RecursiveDirectoryModel
+from problems.models.generic import RecursiveDirectoryModel, FileSystemPopulatedModel
 from problems.models.problem import ProblemRevision
 from problems.models.version_control import RevisionObject
-from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES
+from runner import RUNNER_SUPPORTED_LANGUAGES as SUPPORTED_SOURCE_LANGUAGES, detect_language
 from runner import get_compilation_commands
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
@@ -69,15 +69,28 @@ class ResourceFile(GitFile):
 
 
 
-class ResourceBase(git_models.Model):
+class ResourceBase(FileSystemPopulatedModel):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
     name = models.CharField(max_length=50, verbose_name=_("name"), validators=[FileNameValidator],
                             blank=True, db_index=True, primary_key=True)
     file = ReadOnlyGitToGitForeignKey(ResourceFile, verbose_name=_("file"), related_name="+")
 
+    def get_storage_path(self):
+        dir_path = os.path.join(self.problem.get_storage_path(), self._meta.storage_name)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        elif not os.path.isdir(dir_path):
+            raise ValueError("{} should be a directory".format(dir_path))
+
+        return dir_path
+
+    @property
+    def path(self):
+        return os.path.join(self.get_storage_path(), "{}.desc".format(self.pk))
+
     @property
     def get_file_id(self):
-        return os.path.join(self._meta.storage_name, self.name)
+        return os.path.join(self._meta.storage_name, self.pk)
 
     def __str__(self):
         return self.name
@@ -89,6 +102,7 @@ class ResourceBase(git_models.Model):
         super(ResourceBase, self).save(*args, **kwargs)
 
     def load(self, data):
+        super(ResourceBase, self).load(data)
         try:
             self.file
         except ResourceFile.DoesNotExist as e:
@@ -102,15 +116,9 @@ class Resource(ResourceBase):
 
 # TODO: Source file can have multiple files (e.g. testlib.h)
 class SourceFile(ResourceBase):
-    source_language = models.CharField(
-        choices=[(x, x) for x in SUPPORTED_SOURCE_LANGUAGES],
-        max_length=max([200] + [len(language) for language in SUPPORTED_SOURCE_LANGUAGES])
-    )
 
-    #compiled_file = models.ForeignKey(FileModel, verbose_name=_("compiled file"),
-    #                                 related_name="+", null=True, blank=True)
-
-    compiled_file = property(lambda s: None, lambda s, v: None)
+    compiled_file = ReadOnlyGitToGitForeignKey(FileSystemModel, verbose_name=_("compiled file"),
+                                               related_name="+", null=True, blank=True)
 
     compilation_task_id = models.CharField(verbose_name=_("compilation task id"), max_length=128, null=True)
     compilation_finished = models.BooleanField(verbose_name=_("compilation finished"), default=False)
@@ -122,6 +130,31 @@ class SourceFile(ResourceBase):
         # Backward compatibility
         return self.file
 
+    @property
+    def source_language(self):
+        return detect_language(self.pk)
+
+    def get_compiled_path(self):
+        return os.path.join(self.get_storage_path(), "{}_compiled".format(self.pk))
+
+    @property
+    def get_compiled_file_id(self):
+        path = self.get_compiled_path()
+        if os.path.exists(path):
+            return path
+        else:
+            return None
+
+    @classmethod
+    def _get_existing_primary_keys(cls, transaction):
+        all_pks = super(SourceFile, cls)._get_existing_primary_keys(transaction)
+        pks = []
+        for pk in all_pks:
+            name, ext = os.path.splitext(pk)
+            if name and ext:
+                pks.append(pk)
+        return pks
+
     def _compile(self):
         # TODO: Handling of simulataneous compilation of a single source file
 
@@ -129,19 +162,25 @@ class SourceFile(ResourceBase):
         compiled_file_name = self.name + ".out"
         compile_commands = get_compilation_commands(self.source_language, [code_name],
                                                     compiled_file_name)
-        files = [(resource.name, resource.file) for resource in self.problem.resource_set.all()]
-        files.append((code_name, self.source_file))
+        files = [(resource.name, resource.file) for resource in
+                 type(self).objects.with_transaction(self._transaction).all()]
+        #files.append((code_name, self.source_file))
         action = ActionDescription(
             commands=compile_commands,
             files=files,
-            output_files=[compiled_file_name],
+            output_files={
+                compiled_file_name: self.get_compiled_path()
+            },
             time_limit=settings.FAILSAFE_TIME_LIMIT,
             memory_limit=settings.FAILSAFE_MEMORY_LIMIT
         )
 
-        success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
+        try:
+            os.remove(self.get_compiled_path())
+        except OSError:
+            pass
 
-        self.compiled_file = None
+        success, compilation_success, outputs, stdout, stderr, sandbox_data = compile_source(action)
 
         if not success:
             logger.error("Running compilation command failed due to sandbox error")
@@ -149,9 +188,10 @@ class SourceFile(ResourceBase):
             self.last_compile_log = "Standard output:\n" + stdout + "\n"
             self.last_compile_log += "Standard error:\n" + stderr + "\n"
             if compilation_success:
-                self.compiled_file = outputs[compiled_file_name]
+                self.compiled_file  # This is to make sure the file can be accessed
 
         self.compilation_finished = True
+        self.compilation_task_id = None
 
         self.save()
 

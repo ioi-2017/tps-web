@@ -1,6 +1,7 @@
+from git_orm.transaction import Transaction
 from judge.results import EvaluationResult, JudgeVerdict
 from judge.tasktype import TaskType
-from problems.models import ProblemRevision, TestCase
+from problems.models import ProblemRevision, TestCase, Problem, ProblemCommit
 from runner import get_compilation_commands, get_execution_command, get_valid_extensions
 from runner.actions.action import ActionDescription
 from runner.actions.compile_source import compile_source
@@ -11,14 +12,31 @@ from runner import detect_language
 
 class Batch(TaskType):
 
+    def parse_code(self, problem_code):
+        problem_id, commit_id = problem_code.split('_')
+        problem = Problem.objects.get(pk=problem_id)
+        transaction = Transaction(
+            repository_path=problem.repository_path,
+            commit_id=commit_id
+        )
+        problem_commit = ProblemCommit.objects.with_transaction(transaction).get()
+        return problem_commit
 
     def initialize_problem(self, problem_code, *args, **kwargs):
-        status = ProblemRevision.objects.filter(pk=problem_code).exists()
-        msg = "problem_code should be the primary key of an existing revision" if not status else ""
+        try:
+            self.parse_code(problem_code)
+        except:
+            msg = "problem_code should be the primary key of an existing revision"
+            status = False
+        else:
+            msg = ""
+            status = True
         return status, msg
 
     def add_testcase(self, problem_code, testcase_code, *args, **kwargs):
-        status = TestCase.objects.filter(problem_id=problem_code, name=testcase_code).exists()
+        problem_id, commit_id = problem_code.split(':')
+        commit = self.parse_code(problem_code)
+        status = commit.testcase_set.filter(name=testcase_code).exists()
         msg = "testcase_code should be the name of a testcase in this revision" if not status else ""
         return status, msg
 
@@ -32,7 +50,7 @@ class Batch(TaskType):
                 verdict=JudgeVerdict.invalid_submission,
                 message="Language not supported"
             )
-        revision = ProblemRevision.objects.get(pk=problem_code)
+        revision = self.parse_code(problem_code)
         graders = [(grader.name, grader.code)
                    for grader in revision.grader_set.all()
                    if any([grader.name.endswith(x) for x in get_valid_extensions(language)])
@@ -65,7 +83,7 @@ class Batch(TaskType):
 
         time_limit = revision.problem_data.time_limit
         memory_limit = revision.problem_data.memory_limit
-        testcase = TestCase.objects.get(problem_id=problem_code, name=testcase_code)
+        testcase = revision.testcase_set.get(name=testcase_code)
 
         success, compilation_success, outputs, stdout, stderr, compilation_sandbox_data = compile_source(action)
         if not success or not compilation_success or outputs[compiled_file_name] is None:

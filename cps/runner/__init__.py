@@ -16,6 +16,7 @@ def detect_language(filename):
                   '.cxx': 'c++',
                   '.c++': 'c++',
                   '.C': 'c++',
+                  '.h': 'c++',
                   '.java': 'java',
                   '.pas': 'pas'}
 

@@ -29,8 +29,8 @@ class AnalysisView(ProblemObjectView):
         out_dir = self.revision.get_storage_path()
         verify_output_file = get_content(os.path.join(out_dir, 'verify_out.txt'))
         verify_error_file = get_content(os.path.join(out_dir, 'verify_err.txt'))
-        generate_output_file = get_content(os.path.join(out_dir, 'generate_out.txt'))
-        generate_error_file = get_content(os.path.join(out_dir, 'generate_err.txt'))
+        generate_output_file = get_content(os.path.join(out_dir, 'gen_out.txt'))
+        generate_error_file = get_content(os.path.join(out_dir, 'gen_err.txt'))
 
         return render(request, 'problems/analysis.html', context={
             'verify_out': verify_output_file,

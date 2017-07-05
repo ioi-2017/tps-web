@@ -13,7 +13,7 @@ class GraderEditForm(ProblemObjectModelForm):
 
     class Meta:
         model = Grader
-        fields = ["name", "language", ]
+        fields = ["full_path", "language", ]
 
     def __init__(self, *args, **kwargs):
         super(GraderEditForm, self).__init__(*args, **kwargs)

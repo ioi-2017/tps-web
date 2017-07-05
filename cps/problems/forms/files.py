@@ -15,7 +15,7 @@ class SourceFileEditForm(ProblemObjectModelForm):
 
     class Meta:
         model = SourceFile
-        fields = ['source_language', 'name']
+        fields = ['name']
 
     def __init__(self, *args, **kwargs):
         super(SourceFileEditForm, self).__init__(*args, **kwargs)

@@ -45,7 +45,8 @@ class ProblemData(git_models.Model):
     @property
     def get_checker_id(self):
         for checker in self.problem.checker_set.all():
-            if os.path.splitext(checker.pk)[0] == "checker":
+            name, ext = os.path.splitext(checker.pk)
+            if name == "checker":
                 return checker.pk
 
     def __str__(self):

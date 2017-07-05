@@ -102,6 +102,8 @@ class ModelBase(type):
                     )
 
             for field in parent_fields:
+                if field.primary_key and field.auto_created:
+                    continue
                 new_field = copy.deepcopy(field)
                 new_class.add_to_class(field.name, new_field)
         new_class._meta.concrete_model = new_class

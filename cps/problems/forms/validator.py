@@ -9,7 +9,7 @@ class ValidatorAddForm(SourceFileAddForm):
     class Meta:
         model = Validator
         # TODO add global subtask for IOI
-        fields = ["name", "source_language",]
+        fields = ["name", ]
 
     def __init__(self, *args, **kwargs):
         super(ValidatorAddForm, self).__init__(*args, **kwargs)
@@ -21,7 +21,7 @@ class ValidatorEditForm(SourceFileEditForm):
     class Meta:
         model = Validator
         # TODO add global subtask for IOI
-        fields = ["name", "source_language", ]
+        fields = ["name", ]
 
     def __init__(self, *args, **kwargs):
         super(ValidatorEditForm, self).__init__(*args, **kwargs)

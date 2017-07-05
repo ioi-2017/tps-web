@@ -30,7 +30,7 @@ class QuerySet(object):
     def __init__(self, model, query=None, transaction=None):
         self.model = model
         if query is None:
-            query = Q()
+            query = Q().order_by(*self.model._meta.ordering)
         self.query = query
         self.transaction = transaction
 
@@ -88,6 +88,10 @@ class QuerySet(object):
     def __iter__(self):
         pks, obj_cache = self._execute()
         return iter([obj_cache[pk] for pk in pks])
+
+    def __len__(self):
+        pks, obj_cache = self._execute()
+        return len(list(pks))
 
     def _execute(self, *args, **kwargs):
         query = self.query & self._filter(*args, **kwargs)

@@ -17,7 +17,7 @@ from problems.models import Solution, RevisionObject, SolutionSubtaskExpectedVer
 from problems.models.testdata import TestCase
 from problems.utils.run_checker import run_checker
 
-from .fields import DBToGitForeignKey
+from .fields import DBToGitForeignKey, DBToGitManyToManyField, DBToGitReadOnlyForeignKey
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
@@ -27,11 +27,15 @@ logger = logging.getLogger(__name__)
 class SolutionRun(RevisionObject):
     base_problem = models.ForeignKey("problems.Problem", verbose_name=_("problem"))
     commit_id = models.CharField(verbose_name=_("commit id"), max_length=256)
-    problem = DBToGitForeignKey("problems.ProblemCommit", commit_id_field_name="commit_id",
+    problem = DBToGitReadOnlyForeignKey("problems.ProblemCommit", commit_id_field_name="commit_id",
                                 problem_field_name="base_problem",
-                                verbose_name=_("revision"))
-    #solutions = models.ManyToManyField(Solution, verbose_name=_("solution"), related_name="+")
-    #testcases = models.ManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+")
+                                verbose_name=_("revision"), default=0)
+    solutions = DBToGitManyToManyField(Solution, commit_id_field_name="commit_id",
+                                       problem_field_name="base_problem",
+                                       verbose_name=_("solution"), )
+    testcases = DBToGitManyToManyField(TestCase, commit_id_field_name="commit_id",
+                                       problem_field_name="base_problem",
+                                       verbose_name=_("testcases"), )
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
 
@@ -39,7 +43,7 @@ class SolutionRun(RevisionObject):
         self.results.all().delete()
         for solution in self.solutions.all():
             for testcase in self.testcases.all():
-                result = SolutionRunResult(solution_run=self, solution=solution, testcase=testcase)
+                result = SolutionRunResult(solution_run=self, solution_id=solution.pk, testcase_id=testcase.pk)
                 result.save()
                 result.run()
 
@@ -160,9 +164,11 @@ class SolutionRunResult(models.Model):
 
     solution_run = models.ForeignKey(SolutionRun, verbose_name=_("solution run"), editable=False,
                                      related_name="results")
-    solution = DBToGitForeignKey(Solution, commit_id_field_name="commit_id", problem_field_name="base_problem",
+    solution = DBToGitForeignKey(Solution, commit_id_field_name="commit_id",
+                                 problem_field_name="base_problem",
                                  verbose_name=_("solution"), editable=False)
-    testcase = DBToGitForeignKey(TestCase, commit_id_field_name="commit_id", problem_field_name="base_problem",
+    testcase = DBToGitForeignKey(TestCase, commit_id_field_name="commit_id",
+                                 problem_field_name="base_problem",
                                  verbose_name=_("testcase"), editable=False)
 
     @property

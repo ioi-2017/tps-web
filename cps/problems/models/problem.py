@@ -287,7 +287,7 @@ class CommitVerify(CeleryTask):
 
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
-                exit_code = subprocess.call(['python2', 'manage.py', command], stdout=out_desc, stderr=err_desc,
+                exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
                                             cwd=tempdir)
 
         if exit_code != 0:
@@ -312,7 +312,7 @@ class CommitTestcaseGenerate(CeleryTask):
         return True
 
     def execute(self, repo_dir, commit_id, out_dir):
-        command = "generate"
+        command = "gen"
         tempdir = tempfile.mkdtemp()
         logger.warning('temp directory at %s' % tempdir)
 
@@ -333,7 +333,7 @@ class CommitTestcaseGenerate(CeleryTask):
 
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
-                exit_code = subprocess.call(['python2', 'manage.py', command], stdout=out_desc, stderr=err_desc,
+                exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
                                             cwd=tempdir)
 
         if exit_code != 0:
@@ -364,20 +364,27 @@ class CommitTestcaseGenerate(CeleryTask):
             logger.error(e, exc_info=e)
 
 
-class GenerationStatus(Enum):
-    NotGenerated = 0,
-    ToBeGenerated = 1,
-    Generating = 2,
-    GenerationSuccessful = 3,
-    GenerationFailed = 4
+class TaskStateEnum(Enum):
+
+    def __init__(self, output_presentable=False, start_allowed=True):
+        self.start_allowed = start_allowed
+        self.output_presentable = output_presentable
 
 
-class VerificationStatus(Enum):
-    NotVerified = 0,
-    ToBeVerified = 1,
-    Verifying = 2,
-    Successful = 3,
-    Failed = 4
+class GenerationStatus(TaskStateEnum):
+    NotGenerated = (),
+    ToBeGenerated = (False, False, ),
+    Generating = (True, False, ),
+    GenerationSuccessful = (True, ),
+    GenerationFailed = (True, )
+
+
+class VerificationStatus(TaskStateEnum):
+    NotVerified = (),
+    ToBeVerified = (False, False, ),
+    Verifying = (True, False, ),
+    Successful = (True, ),
+    Failed = (True, )
 
 
 class ProblemCommit(FileSystemPopulatedModel):
@@ -449,10 +456,19 @@ class ProblemCommit(FileSystemPopulatedModel):
     def get_task_type(self):
         return self.get_judge().get_task_type(self.problem_data.task_type)
 
+    def get_judge_code(self):
+        if not self.judge_initialization_successful:
+            return None
+        else:
+            return self._get_judge_code()
+
+    def _get_judge_code(self):
+        return "%s_%s" % (self.problem.pk, self.commit_id)
+
     def _initialize_in_judge(self):
         self.judge_initialization_successful, self.judge_initialization_message = \
             self.get_task_type().initialize_problem(
-                problem_code=str(self.pk),
+                problem_code=self._get_judge_code(),
                 time_limit=self.problem_data.time_limit,
                 memory_limit=self.problem_data.memory_limit,
                 task_type_parameters=self.problem_data.task_type_parameters,

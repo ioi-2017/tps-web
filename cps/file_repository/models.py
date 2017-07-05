@@ -75,14 +75,14 @@ class DummyFileDescriptor(object):
             new_pointer = min(len(self.git_file.content), self.pointer + size)
         else:
             new_pointer = len(self.git_file.content)
-        ret_content = self.git_file.content[self.pointer:new_pointer]
+        ret_content = self.git_file.content[self.pointer:new_pointer].encode("utf-8")
         self.pointer = new_pointer
         return ret_content
 
     def seek(self, ptr):
         self.pointer = ptr
 
-    def open(self):
+    def open(self, mode='rb'):
         self.seek(0)
 
     def close(self):
@@ -98,6 +98,9 @@ class DummyFileDescriptor(object):
 
     def chunks(self):
         yield self.read()
+
+    def readlines(self):
+        return self.read().split(b'\n')
 
     def __iter__(self):
         if self.multiple_chunks():
@@ -157,6 +160,7 @@ class FileSystemDescriptor(DjangoFile):
 
     def open(self, mode='rb'):
         return super(FileSystemDescriptor, self).open(mode)
+
 
 class FileSystemModel(git_models.Model, FileModelMixin):
     name = models.CharField(verbose_name=_("name"), max_length=256, blank=True, primary_key=True)

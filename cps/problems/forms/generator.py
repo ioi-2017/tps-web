@@ -7,7 +7,7 @@ class GeneratorAddForm(SourceFileAddForm):
 
     class Meta:
         model = InputGenerator
-        fields = ["name", "source_language", "text_data"]
+        fields = ["name", "text_data"]
 
 
 class GeneratorEditForm(SourceFileEditForm):
@@ -15,4 +15,4 @@ class GeneratorEditForm(SourceFileEditForm):
 
     class Meta:
         model = InputGenerator
-        fields = ["name", "source_language", "text_data"]
+        fields = ["name", "text_data"]

@@ -41,7 +41,6 @@ class JSONModel(GitModel):
                 'object with pk {} does not exist'.format(pk))
         except ValueError as e:
             raise cls.InvalidObject(e)
-
         obj.load(content)
         return obj
 
