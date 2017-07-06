@@ -297,6 +297,12 @@ class CommitVerify(CeleryTask):
             revision.verification_status = VerificationStatus.Successful
         revision.save()
 
+        code = revision.problem.code
+        name = revision.problem.name
+        if code != name:
+            with open(err_file, "w+") as err_desc:
+                err_desc.write('The problem code does not match the name given in problem.json')
+
         try:
             shutil.rmtree(tempdir)
             os.system('git --git-dir="{repo_dir}" worktree prune'.format(
