@@ -19,7 +19,7 @@ __all__ = ["TestCasesListView", "TestCaseAddView",
 
 
 class TestCasesListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         testcases = self.revision.testcase_set.all()
 
         return render(request,
@@ -33,9 +33,9 @@ class TestCaseAddView(ProblemObjectAddView):
     template_name = "problems/add_testcase.html"
     model_form = TestCaseAddForm
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:testcases", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -53,9 +53,9 @@ class TestCaseEditView(ProblemObjectEditView):
     model_form = TestCaseEditForm
     permissions_required = ["edit_testcase"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:testcase_details", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug,
             "testcase_id": obj.pk,
         })
@@ -65,7 +65,7 @@ class TestCaseEditView(ProblemObjectEditView):
 
 
 class TestCaseDetailsView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, testcase_id):
+    def get(self, request, problem_code, revision_slug, testcase_id):
         testcase = get_git_object_or_404(TestCase, **{
             "problem": self.revision,
             "pk": testcase_id,
@@ -83,7 +83,7 @@ class TestCaseDetailsView(RevisionObjectView):
 class TestCaseGenerateView(RevisionObjectView):
     http_method_names_requiring_edit_access = []
 
-    def post(self, request, problem_id, revision_slug, testcase_id=None):
+    def post(self, request, problem_code, revision_slug, testcase_id=None):
         if testcase_id is None:
             testcases = self.revision.testcase_set.all()
             count = 0
@@ -93,7 +93,7 @@ class TestCaseGenerateView(RevisionObjectView):
                     count += 1
             messages.success(request, _("Started generation of {} testcase(s).".format(count)))
             return HttpResponseRedirect(reverse("problems:testcases", kwargs={
-                "problem_id": problem_id,
+                "problem_code": problem_code,
                 "revision_slug": revision_slug
             }))
         else:
@@ -110,14 +110,14 @@ class TestCaseGenerateView(RevisionObjectView):
                 messages.success(request, _("Generation started"))
 
             return HttpResponseRedirect(reverse("problems:testcase_details", kwargs={
-                "problem_id": problem_id,
+                "problem_code": problem_code,
                 "revision_slug": revision_slug,
                 "testcase_id": testcase.pk,
             }))
 
 
 class TestCaseInputDownloadView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, testcase_id):
+    def get(self, request, problem_code, revision_slug, testcase_id):
         testcase = get_git_object_or_404(TestCase, **{
             "problem": self.revision,
             "pk": testcase_id
@@ -129,7 +129,7 @@ class TestCaseInputDownloadView(RevisionObjectView):
         return FileResponse(file_, content_type="txt")
 
 class TestCaseOutputDownloadView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, testcase_id):
+    def get(self, request, problem_code, revision_slug, testcase_id):
         testcase = get_git_object_or_404(TestCase, **{
             "problem": self.revision,
             "pk": testcase_id

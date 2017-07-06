@@ -45,7 +45,7 @@ class ProblemObjectView(View):
                                 "only accepts arguments that are already "
                                 "attributes of the class." % (cls.__name__, key))
 
-        def view(request, problem_id, revision_slug, *args, **kwargs):
+        def view(request, problem_code, revision_slug, *args, **kwargs):
             self = cls(**initkwargs)
             if hasattr(self, 'get') and not hasattr(self, 'head'):
                 self.head = self.get
@@ -55,13 +55,13 @@ class ProblemObjectView(View):
             self.revision_slug = revision_slug
 
             self.problem, self.branch, self.revision = \
-                extract_revision_data(problem_id, revision_slug, request.user)
+                extract_revision_data(problem_code, revision_slug, request.user)
 
             git_transaction.set_default_transaction(self.revision._transaction)
 
             #  TODO: set git repo path here
 
-            return self.dispatch(request, problem_id, revision_slug, *args, **kwargs)
+            return self.dispatch(request, problem_code, revision_slug, *args, **kwargs)
 
         view.view_class = cls
         view.view_initkwargs = initkwargs
@@ -135,7 +135,7 @@ class ProblemObjectDeleteView(RevisionObjectView):
     url_slug = "object_id"
     revision_field_name = "problem"
 
-    def delete(self, request, problem_id, revision_slug, *args, **kwargs):
+    def delete(self, request, problem_code, revision_slug, *args, **kwargs):
         object_id = kwargs.pop(self.url_slug, args[0] if len(args) > 0 else None)
         if not self.object_type:
             raise ImproperlyConfigured("you must specify an object type for delete view")
@@ -147,7 +147,7 @@ class ProblemObjectDeleteView(RevisionObjectView):
         })
         obj.delete()
         return HttpResponseRedirect(reverse(self.redirect_to, kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": revision_slug
         }))
 
@@ -177,23 +177,23 @@ class ProblemObjectAddView(RevisionObjectView):
             "form": form
         })
 
-    def post(self, request, problem_id, revision_slug, *args, **kwargs):
+    def post(self, request, problem_code, revision_slug, *args, **kwargs):
         form = self.model_form(request.POST, request.FILES,
                                problem=self.problem,
                                revision=self.revision,
                                owner=request.user)
         if form.is_valid():
             obj = form.save()
-            return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
+            return HttpResponseRedirect(self.get_success_url(request, problem_code, revision_slug, obj))
         return self._show_form(request, form)
 
-    def get(self, request, problem_id, revision_slug, *args, **kwargs):
+    def get(self, request, problem_code, revision_slug, *args, **kwargs):
         form = self.model_form(problem=self.problem,
                                revision=self.revision,
                                owner=request.user)
         return self._show_form(request, form)
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         raise NotImplementedError("Thist must be implemented in subclasses")
 
 
@@ -215,7 +215,7 @@ class ProblemObjectEditView(RevisionObjectView):
             "instance": instance,
         })
 
-    def post(self, request, problem_id, revision_slug, *args, **kwargs):
+    def post(self, request, problem_code, revision_slug, *args, **kwargs):
         if "_commit_id" not in request.POST:
             raise PermissionDenied
         if settings.DISABLE_BRANCHES:
@@ -279,10 +279,10 @@ class ProblemObjectEditView(RevisionObjectView):
                         return HttpResponseRedirect(self.request.get_full_path())
                     new_branch.delete()
             messages.success(request, _("Saved successfully"))
-            return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
+            return HttpResponseRedirect(self.get_success_url(request, problem_code, revision_slug, obj))
         return self._show_form(request, form, instance)
 
-    def get(self, request, problem_id, revision_slug, *args, **kwargs):
+    def get(self, request, problem_code, revision_slug, *args, **kwargs):
         try:
             instance = self.get_instance(request, *args, **kwargs)
         except ObjectDoesNotExist:
@@ -294,7 +294,7 @@ class ProblemObjectEditView(RevisionObjectView):
                                instance=instance)
         return self._show_form(request, form, instance)
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         raise NotImplementedError("This must be implemented in subclasses")
 
     def get_instance(self, request, *args, **kwargs):
@@ -308,7 +308,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
     language_field_name = None
     code_field_name = None
 
-    def post(self, request, problem_id, revision_slug, **kwargs):
+    def post(self, request, problem_code, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
         instance = get_git_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
@@ -322,7 +322,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
             messages.success(request, _("Saved successfully"))
         return HttpResponseRedirect(request.get_full_path())
 
-    def get(self, request, problem_id, revision_slug, **kwargs):
+    def get(self, request, problem_code, revision_slug, **kwargs):
         instance_pk = kwargs.get(self.instance_slug)
         instance = get_git_object_or_404(self.model, pk=instance_pk, problem=self.revision)
         code_file = getattr(instance, self.code_field_name)
@@ -335,10 +335,10 @@ class ProblemObjectShowSourceView(RevisionObjectView):
             "code": code,
             "lang": lang,
             "title": title,
-            "next_url": self.get_next_url(request, problem_id, revision_slug, instance)
+            "next_url": self.get_next_url(request, problem_code, revision_slug, instance)
         })
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         raise NotImplementedError("Must be implemented in subclasses")
 
 

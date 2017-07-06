@@ -17,9 +17,9 @@ class EditStatement(ProblemObjectEditView):
     http_method_names_requiring_edit_access = RevisionObjectView.http_method_names_requiring_edit_access
     UPDATED_TO_GIT = True
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:statement", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

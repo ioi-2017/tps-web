@@ -17,7 +17,7 @@ class ExportView(RevisionObjectView):
 
     def redirect_home(self):
         return HttpResponseRedirect(reverse("problems:export", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug
         }))
 
@@ -76,7 +76,7 @@ class ExportPackageStarterView(RevisionObjectView):
 
     def redirect_home(self):
         return HttpResponseRedirect(reverse("problems:export", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug
         }))
 

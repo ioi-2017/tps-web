@@ -31,7 +31,7 @@ class Overview(RevisionObjectView):
         task_type = Judge.get_judge().get_task_type(task_type_name)
         return task_type.get_parameters_form()
 
-    def post(self, request, problem_id, revision_slug, *args, **kwargs):
+    def post(self, request, problem_code, revision_slug, *args, **kwargs):
         instance = self.get_instance(request, *args, **kwargs)
         form = OverviewForm(request.POST, request.FILES,
                             problem=self.problem,
@@ -47,10 +47,10 @@ class Overview(RevisionObjectView):
                 if params_form.is_valid():
                     obj = form.save()
                     params_form.save(self.revision)
-                    return HttpResponseRedirect(self.get_success_url(request, problem_id, revision_slug, obj))
+                    return HttpResponseRedirect(self.get_success_url(request, problem_code, revision_slug, obj))
         return self._show_form(request, form, {new_task_type: params_form}, instance)
 
-    def get(self, request, problem_id, revision_slug, *args, **kwargs):
+    def get(self, request, problem_code, revision_slug, *args, **kwargs):
         instance = self.get_instance(request, *args, **kwargs)
         form = OverviewForm(problem=self.problem,
                             revision=self.revision,
@@ -68,9 +68,9 @@ class Overview(RevisionObjectView):
 
         return self._show_form(request, form, params_forms, instance)
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:overview", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

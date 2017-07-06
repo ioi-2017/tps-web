@@ -12,8 +12,8 @@ from django.conf import settings
 from git_orm.models.base import ModelBase
 
 
-def extract_revision_data(problem_id, revision_slug, user):
-    problem = get_object_or_404(Problem, id=problem_id)
+def extract_revision_data(problem_code, revision_slug, user):
+    problem = get_object_or_404(Problem, code=problem_code)
     try:
         transaction = Transaction(
             repository_path=problem.repository_path,

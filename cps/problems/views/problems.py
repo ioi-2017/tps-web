@@ -25,6 +25,8 @@ class ProblemAddView(View):
     template_name = "problems/add_problem.html"
 
     def post(self, request):
+        # FIXME: change the form
+        # FIXME: use code instead of id in the URL
         form = ProblemAddForm(request.POST, owner=request.user)
         if form.is_valid():
             obj = form.save()

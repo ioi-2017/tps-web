@@ -8,11 +8,11 @@
     {% for commit, previous_commit in object_list %}
         <div class="panel panel-primary panel-body">
             {{ commit.author.name }} {% trans 'committed' %} (
-            <a href="{% url "problems:overview" problem.id commit.id %}" > {% trans "View" %} </a> |
+            <a href="{% url "problems:overview" problem.code commit.id %}" > {% trans "View" %} </a> |
             {% if previous_commit %}
-                <a href="{% url "problems:diff" problem.id commit.id previous_commit.id %}" > {% trans "Diff with previous commit" %} </a> |
+                <a href="{% url "problems:diff" problem.code commit.id previous_commit.id %}" > {% trans "Diff with previous commit" %} </a> |
             {% endif %}
-            <a href="{% url "problems:diff" problem.id revision_slug commit.id %}" > {% trans "Diff with current commit" %} </a> |
+            <a href="{% url "problems:diff" problem.code revision_slug commit.id %}" > {% trans "Diff with current commit" %} </a> |
             )
             <br />
             <pre>{{ commit.message }}</pre>

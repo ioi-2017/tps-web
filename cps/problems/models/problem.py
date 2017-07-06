@@ -40,6 +40,7 @@ class Problem(models.Model):
     creation_date = models.DateTimeField(verbose_name=_("creation date"), auto_now_add=True)
     files = models.ManyToManyField(FileModel, verbose_name=_("problem files"), blank=True)
     repository_path = models.CharField(verbose_name=_("repository path"), max_length=256, blank=True)
+    code = models.CharField(verbose_name=_("code"), max_length=100, unique=True)
 
 
     @property
@@ -335,6 +336,8 @@ class CommitTestcaseGenerate(CeleryTask):
             with open(err_file, "w") as err_desc:
                 exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
                                             cwd=tempdir)
+
+        # TODO: Check if the problem name is tha same as its code
 
         if exit_code != 0:
             revision.generation_status = GenerationStatus.GenerationFailed

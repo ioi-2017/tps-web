@@ -15,7 +15,7 @@ __all__ = ["CheckerListView", "CheckerActivateView",
 
 
 class CheckerListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         checkers = self.revision.checker_set.all()
         resources = self.revision.resource_set.all()
 
@@ -26,14 +26,14 @@ class CheckerListView(RevisionObjectView):
 
 
 class CheckerActivateView(RevisionObjectView):
-    def post(self, request, problem_id, revision_slug, checker_id):
+    def post(self, request, problem_code, revision_slug, checker_id):
         checker = get_object_or_404(Checker, problem=self.revision, id=checker_id)
         problem_data = self.revision.problem_data
         problem_data.checker = checker
         problem_data.save()
 
         return HttpResponseRedirect(reverse("problems:checkers", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))
 
@@ -43,9 +43,9 @@ class CheckerAddView(ProblemObjectAddView):
     model_form = CheckerAddForm
     permissions_required = ["add_checker"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:checkers", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -64,9 +64,9 @@ class CheckerShowSourceView(ProblemObjectShowSourceView):
     language_field_name = "source_language"
     instance_slug = "checker_id"
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:checkers", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -76,9 +76,9 @@ class CheckerEditView(ProblemObjectEditView):
     model_form = SourceFileEditForm
     permissions_required = ["edit_checker"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:checkers", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

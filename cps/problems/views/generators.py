@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeneratorsListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         generators = self.revision.inputgenerator_set.all()
         resources = self.revision.resource_set.all()
 
@@ -35,9 +35,9 @@ class GeneratorEditView(ProblemObjectEditView):
     model_form = GeneratorEditForm
     permissions_required = ["edit_generator"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:generators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -50,9 +50,9 @@ class GeneratorAddView(ProblemObjectAddView):
     model_form = GeneratorAddForm
     permissions_required = ["add_generator"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:generators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -71,9 +71,9 @@ class GeneratorShowSourceView(ProblemObjectShowSourceView):
     language_field_name = "source_language"
     instance_slug = "generator_id"
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:generators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -91,7 +91,7 @@ class GeneratorEnableView(RevisionObjectView):
             messages.error(request, _("Error occurred while generating!"))
 
         return HttpResponseRedirect(reverse("problems:generators", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug,
         }))
 
@@ -101,6 +101,6 @@ class GeneratorDisableView(RevisionObjectView):
         generator = get_object_or_404(InputGenerator, pk=kwargs['generator_id'])
         generator.disable()
         return HttpResponseRedirect(reverse("problems:generators", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug
         }))

@@ -11,11 +11,11 @@ from .utils import extract_revision_data
 logger = logging.getLogger(__name__)
 
 def revision_data(request):
-    if "problem_id" not in request.resolver_match.kwargs:
+    if "problem_code" not in request.resolver_match.kwargs:
         return {}
-    problem_id = request.resolver_match.kwargs["problem_id"]
+    problem_code = request.resolver_match.kwargs["problem_code"]
     revision_slug = request.resolver_match.kwargs["revision_slug"]
-    problem, branch, revision = extract_revision_data(problem_id, revision_slug, request.user)
+    problem, branch, revision = extract_revision_data(problem_code, revision_slug, request.user)
     revision_editable = False
 
     errors = {}

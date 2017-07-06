@@ -25,9 +25,9 @@
         <tr>
             <td>
                 {% if branches_disabled and False %}
-                    <a href="{% url "problems:overview" problem.id request.user.username %}">
+                    <a href="{% url "problems:overview" problem.code request.user.username %}">
                 {% else %}
-                    <a href="{% url "problems:overview" problem.id "master" %}">
+                    <a href="{% url "problems:overview" problem.code "master" %}">
                 {% endif %}
                     {{ problem.get_master_branch.head.problem_data.title }}({{problem.get_master_branch.head.problem_data.code_name}})
                 </a>

@@ -14,15 +14,15 @@ class ResourceAddView(ProblemObjectAddView):
     model_form = ResourceAddForm
     required_permissions = ["add_files"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return request.POST.get("next", request.GET.get("next", reverse("problems:overview", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })))
 
 
 class SourceFileCompileView(RevisionObjectView):
-    def post(self, request, problem_id, revision_slug, object_id):
+    def post(self, request, problem_code, revision_slug, object_id):
         sourcefiles = SourceFile.objects.all()
         obj = get_object_or_404(SourceFile, **{
             "problem_id": self.revision.id,
@@ -30,7 +30,7 @@ class SourceFileCompileView(RevisionObjectView):
         })
         obj.compile()
         return HttpResponseRedirect(reverse("problems:files", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))
 
@@ -40,13 +40,13 @@ class ResourceDeleteView(ProblemObjectDeleteView):
     permissions_required = "delete_files",
     redirect_to = "problems:overview"
 
-    def delete(self, request, problem_id, revision_slug, *args, **kwargs):
-        super(ResourceDeleteView, self).delete(request, problem_id, revision_slug, *args, **kwargs)
+    def delete(self, request, problem_code, revision_slug, *args, **kwargs):
+        super(ResourceDeleteView, self).delete(request, problem_code, revision_slug, *args, **kwargs)
         return HttpResponseRedirect(
             request.POST.get("next",
                              request.GET.get("next",
                                              reverse("problems:overview", kwargs={
-                                                 "problem_id": problem_id,
+                                                 "problem_code": problem_code,
                                                  "revision_slug": revision_slug
                                              }))))
 
@@ -55,9 +55,9 @@ class ResourceEditView(ProblemObjectEditView):
     model_form = ResourceEditForm
     permissions_required = ["edit_resource"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return request.POST.get("next", request.GET.get("next", reverse("problems:overview", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })))
 
@@ -66,7 +66,7 @@ class ResourceEditView(ProblemObjectEditView):
 
 
 class ResourceDownloadView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, object_id):
+    def get(self, request, problem_code, revision_slug, object_id):
         resource = get_object_or_404(Resource, **{
             "problem_id": self.revision.id,
             "id": object_id

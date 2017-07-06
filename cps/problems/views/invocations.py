@@ -18,7 +18,7 @@ __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "Inv
 
 
 class InvocationsListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         invocations  = self.revision.solutionrun_set.all()
         return render(request, "problems/invocations_list.html", context={
             "invocations": invocations
@@ -31,16 +31,17 @@ class InvocationAddView(ProblemObjectAddView):
     permissions_required = ["add_invocation"]
     http_method_names_requiring_edit_access = []
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:invocations", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
 
 class InvocationRunView(RevisionObjectView):
     http_method_names_requiring_edit_access = []
-    def post(self, request, problem_id, revision_slug, invocation_id):
+
+    def post(self, request, problem_code, revision_slug, invocation_id):
         invocations = SolutionRun.objects.all()
         obj = get_object_or_404(SolutionRun, **{
             "base_problem_id": self.problem.id,
@@ -49,13 +50,13 @@ class InvocationRunView(RevisionObjectView):
         })
         obj.run()
         return HttpResponseRedirect(reverse("problems:invocations", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))
 
 
 class InvocationDetailsView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, invocation_id):
+    def get(self, request, problem_code, revision_slug, invocation_id):
         obj = get_object_or_404(SolutionRun, **{
             "base_problem_id": self.problem.id,
             "commit_id": self.revision.commit_id,
@@ -63,7 +64,7 @@ class InvocationDetailsView(RevisionObjectView):
         })
         if not obj.started():
             return HttpResponseRedirect(reverse("problems:invocations", kwargs={
-                "problem_id": problem_id,
+                "problem_code": problem_code,
                 "revision_slug": revision_slug
             }))
 
@@ -141,7 +142,7 @@ class InvocationDetailsView(RevisionObjectView):
 
 
 class InvocationResultView(RevisionObjectView):
-    def get(self, request, problem_id, revesion_slug, invocation_id, result_id):
+    def get(self, request, problem_code, revesion_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
@@ -177,7 +178,7 @@ class InvocationResultView(RevisionObjectView):
 
 
 class InvocationOutputDownloadView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+    def get(self, request, problem_code, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
@@ -195,7 +196,7 @@ class InvocationInputDownloadView(RevisionObjectView):
     # FIXME: This view is equivalent to the testcase input download view
     # however we probably want to cache the input for the results. but in case
     # we decide not to, this should be removed
-    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+    def get(self, request, problem_code, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
@@ -213,7 +214,7 @@ class InvocationAnswerDownloadView(RevisionObjectView):
     # FIXME: This view is equivalent to the testcase output download view
     # however we probably want to cache the input for the results. but in case
     # we decide not to, this should be removed
-    def get(self, request, problem_id, revision_slug, invocation_id, result_id):
+    def get(self, request, problem_code, revision_slug, invocation_id, result_id):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,

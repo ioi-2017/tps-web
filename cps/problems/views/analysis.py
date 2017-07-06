@@ -41,24 +41,24 @@ class AnalysisView(ProblemObjectView):
 
 
 class AnalyzeView(ProblemObjectView):
-    def post(self, request, problem_id, revision_slug):
+    def post(self, request, problem_code, revision_slug):
         self.revision.verify()
 
         messages.success(request, _("Verification started"))
         return HttpResponseRedirect(reverse("problems:analysis", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))
 
 
 class AnalysisGenerateView(ProblemObjectView):
 
-    def post(self, request, problem_id, revision_slug):
+    def post(self, request, problem_code, revision_slug):
         self.revision.generate_testcases()
 
         messages.success(request, _("Generation started"))
 
         return HttpResponseRedirect(reverse("problems:analysis", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))

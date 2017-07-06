@@ -18,9 +18,9 @@ __all__ = ["ProblemFilesView", "ProblemFileAddView",
 
 
 class ProblemFilesView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         return render(request, 'problems/problem_files.html', {
-            'files': Problem.objects.get(id=problem_id).files.all()
+            'files': Problem.objects.get(code=problem_code).files.all()
         })
 
 
@@ -31,9 +31,9 @@ class ProblemFileAddView(ProblemObjectAddView):
     model_form = FileAddForm
     permissions_required = ["add_file"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:files", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -41,10 +41,10 @@ class ProblemFileAddView(ProblemObjectAddView):
 class ProblemFileDeleteView(RevisionObjectView):
     http_method_names_requiring_edit_access = []
 
-    def post(self, request, problem_id, revision_slug, file_id):
+    def post(self, request, problem_code, revision_slug, file_id):
         FileModel.objects.get(id=file_id).delete()
         return redirect(reverse("problems:files", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         }))
 
@@ -56,9 +56,9 @@ class ProblemFileEditView(ProblemObjectEditView):
     model_form = FileEditForm
     permissions_required = ["edit_file"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:files", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -68,7 +68,7 @@ class ProblemFileEditView(ProblemObjectEditView):
 
 class ProblemFileShowSourceView(ProblemObjectView):
 
-    def post(self, request, problem_id, revision_slug, **kwargs):
+    def post(self, request, problem_code, revision_slug, **kwargs):
         instance_pk = kwargs.get("file_id")
         try:
             instance = self.problem.files.get(pk=instance_pk)
@@ -82,14 +82,14 @@ class ProblemFileShowSourceView(ProblemObjectView):
             self.problem.files.remove(instance)
             messages.success(request, _("Saved successfully"))
             return HttpResponseRedirect(reverse("problems:file_source", kwargs={
-                "problem_id": problem_id,
+                "problem_code": problem_code,
                 "revision_slug": revision_slug,
                 "file_id": new_file.pk
             }))
         else:
             return HttpResponseRedirect(request.get_full_path())
 
-    def get(self, request, problem_id, revision_slug, **kwargs):
+    def get(self, request, problem_code, revision_slug, **kwargs):
         instance_pk = kwargs.get("file_id")
         try:
             instance = self.problem.files.get(pk=instance_pk)
@@ -102,12 +102,12 @@ class ProblemFileShowSourceView(ProblemObjectView):
         return render(request, "problems/view_file_source.html", context={
             "code": code,
             "title": title,
-            "next_url": self.get_next_url(request, problem_id, revision_slug, instance)
+            "next_url": self.get_next_url(request, problem_code, revision_slug, instance)
         })
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:files", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

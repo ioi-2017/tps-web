@@ -35,7 +35,7 @@ class HistoryView(ProblemObjectView):
 class DiffView(ProblemObjectView):
     def get(self, request, *args, **kwargs):
         other_slug = kwargs.pop("other_slug")
-        _, _, other_revision = extract_revision_data(self.problem.id, other_slug, request.user)
+        _, _, other_revision = extract_revision_data(self.problem.code, other_slug, request.user)
         ours_id = self.revision.commit_id
         theirs_id = other_revision.commit_id
         diff = self.revision._transaction.repo.diff(a=theirs_id, b=ours_id).patch

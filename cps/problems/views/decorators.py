@@ -11,10 +11,10 @@ def problem_view(required_permissions=None):
     def wrap(func):
         def wrapper(self, request, *args, **kwargs):
 
-            problem_id = kwargs.pop("problem_id")
+            problem_code = kwargs.pop("problem_code")
             revision_slug = kwargs.pop("revision_slug")
 
-            problem, revision, fork = extract_revision_data(problem_id, revision_slug)
+            problem, revision, fork = extract_revision_data(problem_code, revision_slug)
 
             return func(self, request, problem, revision, *args, **kwargs)
 

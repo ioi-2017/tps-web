@@ -36,8 +36,8 @@
                         </small>
                     </p>
                 </td>
-                <td><a href="{% url "problems:overview" problem.id request.source_branch.get_slug %}">{{ request.source_branch }}</a></td>
-                <td><a href="{% url "problems:overview" problem.id request.destination_branch.get_slug %}">{{ request.destination_branch }}</a></td>
+                <td><a href="{% url "problems:overview" problem.code request.source_branch.get_slug %}">{{ request.source_branch }}</a></td>
+                <td><a href="{% url "problems:overview" problem.code request.destination_branch.get_slug %}">{{ request.destination_branch }}</a></td>
             </tr>
             {% endfor %}
         </tbody>

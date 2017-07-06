@@ -9,7 +9,7 @@ from problems.views.utils import get_git_object_or_404
 
 
 class SubtasksListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         subtasks = self.revision.subtasks.all()
 
         return render(request, "problems/subtasks_list.html", context={
@@ -21,14 +21,15 @@ class SubtaskAddView(ProblemObjectAddView):
     template_name = "problems/add_subtask.html"
     model_form = SubtaskAddForm
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:subtasks", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
+
 class SubtaskDetailsView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug, subtask_id):
+    def get(self, request, problem_code, revision_slug, subtask_id):
         subtask = get_git_object_or_404(Subtask, **{
             "problem": self.revision,
             "pk": subtask_id,
@@ -42,6 +43,7 @@ class SubtaskDetailsView(RevisionObjectView):
                           "testcases": testcases
                       })
 
+
 SubtaskDeleteView = ProblemObjectDeleteView.as_view(
     object_type=Subtask,
     url_slug="subtask_id",
@@ -49,14 +51,15 @@ SubtaskDeleteView = ProblemObjectDeleteView.as_view(
     redirect_to="problems:subtasks"
 )
 
+
 class SubtaskEditView(ProblemObjectEditView):
     template_name = "problems/edit_subtask.html"
     model_form = SubtaskAddForm
     permissions_required = ["edit_subtask"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:subtask_details", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug,
             "subtask_id": obj.pk,
         })

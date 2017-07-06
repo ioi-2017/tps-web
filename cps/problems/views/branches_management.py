@@ -43,7 +43,7 @@ def assert_no_open_merge_request(request, problem, revision_slug, source, destin
         merge_request = merge_requests[0]
         messages.error(request, MergeRequest.error_messages["same_open_request_exists"])
         return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
-            "problem_id": problem.id,
+            "problem_code": problem.code,
             "revision_slug": revision_slug,
             "merge_request_id": merge_request.id,
         }))
@@ -66,7 +66,7 @@ class CreateBranchView(ProblemObjectView):
         if form.is_valid():
             branch = form.save()
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": branch.get_slug(),
             }))
         return render(request, "problems/create_branch.html", {
@@ -90,7 +90,7 @@ def assert_not_changed_working_copy(func):
                 _("Commit or discard your changes first.")
             )
             return HttpResponseRedirect(reverse("problems:commit", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.revision_slug,
             }))
         else:
@@ -114,7 +114,7 @@ class PullBranchView(BranchControlView):
             branch_pull(request, source=form.cleaned_data["source_branch"], destination=self.branch)
 
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.branch.get_slug(),
             }))
         return render(request, "problems/pull_branch.html", {
@@ -124,7 +124,7 @@ class PullBranchView(BranchControlView):
 
 class CommitWorkingCopy(BranchControlView):
 
-    def post(self, request, problem_id, revision_slug):
+    def post(self, request, problem_code, revision_slug):
         if settings.DISABLE_BRANCHES:
             commit_form_class = CommitForm
         else:
@@ -133,7 +133,7 @@ class CommitWorkingCopy(BranchControlView):
             if self.branch.working_copy.has_unresolved_conflicts():
                 messages.error(request, _("You must resolve all conflicts"))
                 return HttpResponseRedirect(reverse("problems:conflicts", kwargs={
-                    "problem_id": self.problem.id,
+                    "problem_code": self.problem.code,
                     "revision_slug": self.branch.get_slug()
                 }))
             commit_form = commit_form_class(request.POST, instance=self.branch.working_copy)
@@ -150,29 +150,29 @@ class CommitWorkingCopy(BranchControlView):
 
                 if "create_merge_request" in request.POST and not settings.DISABLE_BRANCHES:
                     return HttpResponseRedirect(reverse("problems:create_merge_request", kwargs={
-                        "problem_id": self.problem.id,
+                        "problem_code": self.problem.code,
                         "revision_slug": self.branch.get_slug()
                     }))
                 else:
                     return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                        "problem_id": self.problem.id,
+                        "problem_code": self.problem.code,
                         "revision_slug": self.branch.get_slug()
                     }))
             else:
                 changes = get_revision_difference(self.branch.head, self.revision)
                 return render(request, "problems/confirm_commit.html", context={
                     "changes": changes,
-                    "commit_form":commit_form
+                    "commit_form": commit_form
                 })
 
         else:
             messages.error(request, _("Nothing to commit"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                    "problem_id": self.problem.id,
+                    "problem_code": self.problem.code,
                     "revision_slug": self.revision_slug,
                 }))
 
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         if settings.DISABLE_BRANCHES:
             commit_form_class = CommitForm
         else:
@@ -180,13 +180,13 @@ class CommitWorkingCopy(BranchControlView):
         if not self.branch.working_copy_has_changed():
             messages.error(request, _("Nothing to commit"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.revision_slug,
             }))
         if self.branch.working_copy.has_unresolved_conflicts():
             messages.error(request, _("You must resolve all conflicts"))
             return HttpResponseRedirect(reverse("problems:conflicts", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.branch.get_slug()
             }))
         # TODO: Optimize the process of calculating changes
@@ -210,7 +210,7 @@ class CommitWorkingCopy(BranchControlView):
 
 class ConflictsListView(BranchControlView):
 
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         if not self.revision.has_merge_result():
             raise Http404
         return render(request, "problems/conflicts.html", context={
@@ -220,7 +220,7 @@ class ConflictsListView(BranchControlView):
 
 class ResolveConflictView(BranchControlView):
 
-    def post(self, request, problem_id, revision_slug, conflict_id):
+    def post(self, request, problem_code, revision_slug, conflict_id):
         conflict = get_object_or_404(
             Conflict,
             id=conflict_id,
@@ -230,11 +230,11 @@ class ResolveConflictView(BranchControlView):
         conflict.resolved = True
         conflict.save()
         return HttpResponseRedirect(reverse("problems:conflicts", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug
         }))
 
-    def get(self, request, problem_id, revision_slug, conflict_id):
+    def get(self, request, problem_code, revision_slug, conflict_id):
         conflict = get_object_or_404(
             Conflict,
             id=conflict_id,
@@ -304,7 +304,7 @@ class CreateMergeRequest(BranchControlView):
                 text=first_comment,
             )
             return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "merge_request_id": merge_request.id,
                 "revision_slug": self.revision_slug,
             }))
@@ -340,10 +340,10 @@ class BranchesListView(ProblemObjectView):
 
 class MergeRequestDiscussionView(ProblemObjectView):
 
-    def get(self, request, problem_id, revision_slug, merge_request_id):
+    def get(self, request, problem_code, revision_slug, merge_request_id):
         merge_request = get_object_or_404(
             MergeRequest,
-            source_branch__problem_id=problem_id,
+            source_branch__problem_id=self.problem.id,
             id=merge_request_id,
         )
         form = CommentAddForm(owner=self.request.user,
@@ -354,18 +354,18 @@ class MergeRequestDiscussionView(ProblemObjectView):
             "is_follow": merge_request.is_participant(request.user),
         })
 
-    def post(self, request, problem_id, revision_slug, merge_request_id):
+    def post(self, request, problem_code, revision_slug, merge_request_id):
 
         def redirect_to_current_url():
             return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
-                "problem_id": problem_id,
+                "problem_code": problem_code,
                 "revision_slug": revision_slug,
                 "merge_request_id": merge_request_id,
             }))
 
         merge_request = get_object_or_404(
             MergeRequest,
-            source_branch__problem_id=problem_id,
+            source_branch__problem_id=self.problem.id,
             id=merge_request_id,
         )
         if merge_request.status != MergeRequest.OPEN:
@@ -388,7 +388,7 @@ class MergeRequestDiscussionView(ProblemObjectView):
             if form.is_valid():
                 form.save()
                 return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
-                    "problem_id": problem_id,
+                    "problem_code": problem_code,
                     "revision_slug": merge_request.destination_branch.get_slug(),
                     "merge_request_id": merge_request_id,
                 }))
@@ -399,10 +399,10 @@ class MergeRequestDiscussionView(ProblemObjectView):
 
 
 class MergeRequestChangesView(ProblemObjectView):
-    def get(self, request, problem_id, revision_slug, merge_request_id):
+    def get(self, request, problem_code, revision_slug, merge_request_id):
         merge_request = get_object_or_404(
             MergeRequest,
-            source_branch__problem_id=problem_id,
+            source_branch__problem_id=self.problem.id,
             id=merge_request_id,
         )
         differences = get_revision_difference(
@@ -425,7 +425,7 @@ class DiscardWorkingCopy(BranchControlView):
         else:
             messages.error(request, _("Nothing to discard"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.revision_slug
             }))
 
@@ -442,7 +442,7 @@ class DiscardWorkingCopy(BranchControlView):
         else:
             messages.error(request, _("Nothing to discard"))
         return HttpResponseRedirect(reverse("problems:overview", kwargs={
-            "problem_id": self.problem.id,
+            "problem_code": self.problem.code,
             "revision_slug": self.revision_slug
         }))
 
@@ -453,7 +453,7 @@ class DeleteBranchView(BranchControlView):
         if self.branch == self.problem.get_master_branch():
             messages.error(request, _("Cannot delete master branch"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.revision_slug
             }))
         diverged_from_master = self.revision.find_merge_base(self.problem.get_master_branch().head) != self.revision
@@ -466,43 +466,43 @@ class DeleteBranchView(BranchControlView):
         if self.branch == self.problem.get_master_branch():
             messages.error(request, _("Cannot delete master branch"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.revision_slug
             }))
         else:
             self.branch.delete()
             messages.success(request, _("Branch deleted successfully"))
             return HttpResponseRedirect(reverse("problems:overview", kwargs={
-                "problem_id": self.problem.id,
+                "problem_code": self.problem.code,
                 "revision_slug": self.problem.get_master_branch().get_slug()
             }))
 
 
 class MergeRequestActionView(ProblemObjectView):
-    def post(self, request, problem_id, revision_slug, merge_request_id):
+    def post(self, request, problem_code, revision_slug, merge_request_id):
         merge_request = get_object_or_404(MergeRequest, id=merge_request_id)
-        self.action(request, problem_id, revision_slug, merge_request)
+        self.action(request, problem_code, revision_slug, merge_request)
 
         return HttpResponseRedirect(reverse("problems:merge_request", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": merge_request.destination_branch.get_slug(),
             "merge_request_id": merge_request_id,
             }))
 
-    def action(self, request, problem_id, revision_slug, merge_request):
+    def action(self, request, problem_code, revision_slug, merge_request):
         pass
 
 
 class MergeRequestReopenView(MergeRequestActionView):
-    def action(self, request, problem_id, revision_slug, merge_request):
+    def action(self, request, problem_code, revision_slug, merge_request):
         merge_request.reopen(request.user)
 
 
 class FollowMergeRequestView(MergeRequestActionView):
-    def action(self, request, problem_id, revision_slug, merge_request):
+    def action(self, request, problem_code, revision_slug, merge_request):
         merge_request.follow(request.user)
 
 
 class UnfollowMergeRequestView(MergeRequestActionView):
-    def action(self, request, problem_id, revision_slug, merge_request):
+    def action(self, request, problem_code, revision_slug, merge_request):
         merge_request.unfollow(request.user)

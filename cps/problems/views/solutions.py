@@ -19,7 +19,7 @@ __all__ = ["SolutionAddView", "SolutionDeleteView",
 
 class SolutionsListView(RevisionObjectView):
 
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         solutions = self.revision.solution_set.all()
 
         return render(request, "problems/solutions_list.html", context={
@@ -32,9 +32,9 @@ class SolutionAddView(ProblemObjectAddView):
     model_form = SolutionAddForm
     permissions_required = ["add_solution"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:solutions", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -44,9 +44,9 @@ class SolutionEditView(ProblemObjectEditView):
     model_form = SolutionEditForm
     permissions_required = ["edit_solution"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:solutions", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -68,9 +68,9 @@ class SolutionShowSourceView(ProblemObjectShowSourceView):
     language_field_name = "language"
     instance_slug = "solution_id"
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:solutions", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

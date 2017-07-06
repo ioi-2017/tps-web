@@ -9,7 +9,7 @@ from problems.views.generics import RevisionObjectView, ProblemObjectAddView, Pr
 
 
 class GradersListView(RevisionObjectView):
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         graders = self.revision.grader_set.all()
 
         return render(request, "problems/grader_list.html", context={
@@ -22,9 +22,9 @@ class GraderAddView(ProblemObjectAddView):
     model_form = GraderAddForm
     permissions_required = ["add_grader"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:graders", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -34,9 +34,9 @@ class GraderEditView(ProblemObjectEditView):
     model_form = GraderEditForm
     permissions_required = ["edit_grader"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:graders", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -58,9 +58,9 @@ class GraderShowSourceView(ProblemObjectShowSourceView):
     language_field_name = "language"
     instance_slug = "grader_id"
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:graders", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

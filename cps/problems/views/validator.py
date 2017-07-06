@@ -14,7 +14,7 @@ __all__ = ["ValidatorsListView", "ValidatorEditView", "ValidatorAddView",
 
 class ValidatorsListView(RevisionObjectView):
 
-    def get(self, request, problem_id, revision_slug):
+    def get(self, request, problem_code, revision_slug):
         validators = self.revision.validator_set.all()
         resources = self.revision.resource_set.all()
 
@@ -29,9 +29,9 @@ class ValidatorEditView(ProblemObjectEditView):
     model_form = ValidatorEditForm
     permissions_required = ["edit_validator"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:validators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -44,9 +44,9 @@ class ValidatorAddView(ProblemObjectAddView):
     model_form = ValidatorAddForm
     permissions_required = ["add_validator"]
 
-    def get_success_url(self, request, problem_id, revision_slug, obj):
+    def get_success_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:validators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 
@@ -65,9 +65,9 @@ class ValidatorShowSourceView(ProblemObjectShowSourceView):
     language_field_name = "source_language"
     instance_slug = "validator_id"
 
-    def get_next_url(self, request, problem_id, revision_slug, obj):
+    def get_next_url(self, request, problem_code, revision_slug, obj):
         return reverse("problems:validators", kwargs={
-            "problem_id": problem_id,
+            "problem_code": problem_code,
             "revision_slug": revision_slug
         })
 

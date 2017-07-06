@@ -81,7 +81,7 @@
                         <span class="col-sm-6">
                         <select class="full-open-only  form-control" name="branch_choice" onchange="location.href=this.value">
                             {% for itr_branch in branches %}
-                                <option value="{% url "problems:overview" problem.id itr_branch.get_slug %}" {% if itr_branch == branch %} selected="selected" {% endif %}>{{ itr_branch }}</option>
+                                <option value="{% url "problems:overview" problem.code itr_branch.get_slug %}" {% if itr_branch == branch %} selected="selected" {% endif %}>{{ itr_branch }}</option>
                             {% endfor %}
                         </select>
                         </span>
