@@ -125,6 +125,6 @@ problem_urls = ([
 
 urlpatterns = [
     url(r'^$', ProblemsListView.as_view(), name="problems"),
-    url(r'^problem/(?P<problem_code>\w{1,40})/(?P<revision_slug>\w{1,40})/', problem_urls),
+    url(r'^problem/(?P<problem_code>.+)/(?P<revision_slug>\w{1,40})/', problem_urls),
     url(r'^problem/add/$', ProblemAddView.as_view(), name="add_problem"),
 ]
