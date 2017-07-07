@@ -4,7 +4,7 @@ import os
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from core.fields import EnumField
+from core.fields import EnumField, DictEnumField
 from file_repository.models import FileModel, GitFile
 from problems.models import RevisionObject, CloneableMixin
 from problems.models.enums import SolutionVerdict
@@ -33,6 +33,7 @@ class Solution(JSONModel):
     name = models.CharField(verbose_name=_("name"), validators=[FileNameValidator], max_length=255,
                             blank=True, db_index=True, primary_key=True)
     code = ReadOnlyGitToGitForeignKey(SolutionFile, verbose_name=_("code"), related_name='+', )
+    subtask_verdicts = DictEnumField(enum=SolutionVerdict, )
 
     @property
     def get_code_id(self):
@@ -75,7 +76,7 @@ class Solution(JSONModel):
         return "Not supported"
 
     def load(self, data, *args, **kwargs):
-        data.pop("except", None)
+        data["subtask_verdicts"] = data.pop("except", dict())
         super(Solution, self).load(data, *args, **kwargs)
         try:
             self.code

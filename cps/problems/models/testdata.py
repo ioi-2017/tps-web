@@ -351,6 +351,8 @@ class TestCase(FileSystemPopulatedModel):
     judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization finished"), default=None)
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
+    subtasks = GitToGitManyToManyField("Subtask", verbose_name=_("subtasks"), related_name="+", blank=True)
+
     class Meta:
         ordering = ("name",)
         unique_together = ("problem", "name",)
@@ -374,6 +376,26 @@ class TestCase(FileSystemPopulatedModel):
                     elif file.endswith(".out"):
                         outputs.append(file[:-4])
             return [key for key in inputs if key in outputs]
+
+    @classmethod
+    def _get_instance(cls, transaction, pk):
+        obj = super(TestCase, cls)._get_instance(transaction, pk)
+        mapping_file = os.path.join(obj.get_storage_path(), "mapping")
+        content = {}
+        if os.path.exists(mapping_file):
+            subtasks = []
+            with open(mapping_file, "r") as file_:
+                for line in file_.readlines():
+                    try:
+                        data = line.strip().split(' ')
+                        subtask_name, testcase_name = data[0], data[1]
+                        if testcase_name == obj.name:
+                            subtasks.append(subtask_name)
+                    except Exception:
+                        pass
+            content["subtasks"] = subtasks
+            obj.load(content)
+        return obj
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
@@ -728,7 +750,7 @@ class Subtask(JSONModel):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), related_name="subtasks", default=0)
     name = models.CharField(max_length=100, verbose_name=_("name"), db_index=True, primary_key=True)
     score = models.IntegerField(verbose_name=_("score"))
-    testcases = GitToGitManyToManyField(TestCase, verbose_name=_("testcases"), related_name="subtasks", blank=True)
+    testcases = GitToGitManyToManyField(TestCase, verbose_name=_("testcases"), related_name="+", blank=True)
     validators = GitToGitManyToManyField(Validator, verbose_name=_("validators"), related_name="subtasks", blank=True)
     index = models.IntegerField(verbose_name=_("index"))
 
@@ -737,6 +759,7 @@ class Subtask(JSONModel):
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
         json_db_name = "subtasks.json"
+        storage_name = "subtasks"
 
     @staticmethod
     def get_matching_fields():
@@ -772,12 +795,28 @@ class Subtask(JSONModel):
         obj._transaction = transaction
         try:
             raw_data = transaction.get_blob(obj.path).decode('utf-8')
-            content = json.loads(raw_data)["subtasks"][pk]
+            full_data = json.loads(raw_data)
+            content = full_data["subtasks"][pk]
         except KeyError:
             raise cls.DoesNotExist(
                 'object with pk {} does not exist'.format(pk))
         except ValueError as e:
             raise cls.InvalidObject(e)
+        if "global_validators" in full_data:
+            content["validators"] += full_data["global_validators"]
+        mapping_file = os.path.join(obj.problem.get_storage_path(), "tests", "mapping")
+        if os.path.exists(mapping_file):
+            testcases = []
+            with open(mapping_file, "r") as file_:
+                for line in file_.readlines():
+                    try:
+                        data = line.strip().split(' ')
+                        subtask_name, testcase_name = data[0], data[1]
+                        if subtask_name == obj.name:
+                            testcases.append(testcase_name)
+                    except Exception:
+                        pass
+            content["testcases"] = testcases
         obj.load(content)
         return obj
 

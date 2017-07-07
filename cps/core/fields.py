@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 
 import six
@@ -75,4 +76,21 @@ class EnumField(models.CharField):
                 for i, _ in super(EnumField, self).get_choices(*args, **kwargs)]
 
 
+class DictEnumField(EnumField):
 
+    def to_python(self, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            d = json.loads(value)
+        else:
+            d = value
+        if not isinstance(d, dict):
+            raise ValueError("Invalid value")
+        return {a: super(DictEnumField, self).to_python(b) for a, b in d.items()}
+
+    def get_prep_value(self, value):
+        value = self.to_python(value)
+        if value is None:
+            return None
+        return json.dumps({a: super(DictEnumField, self).get_prep_value(b) for a, b in value.items()})

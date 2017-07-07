@@ -67,7 +67,7 @@ class SolutionRun(RevisionObject):
         return is_valid
 
     def validate_solution(self, solution):
-        results = SolutionRunResult.objects.filter(solution_run=self, solution=solution)
+        results = self.results.filter(solution=solution)
         verdict_happend = False
         only_dont_care_happend = True
         for result in results:
@@ -309,13 +309,11 @@ class SolutionRunResult(models.Model):
         for subtask in subtasks:
             try:
                 solution_subtask_expected_verdict = \
-                    SolutionSubtaskExpectedVerdict.objects.get(
-                        subtask=subtask, solution=self.solution
-                    )
+                    self.solution.subtask_verdicts[subtask.name]
                 flag &= self.validate_for_verdict(
                     solution_subtask_expected_verdict.verdict
                 )
-            except SolutionSubtaskExpectedVerdict.DoesNotExist:
+            except KeyError:
                 flag &= self.validate_for_verdict(solution_verdict)
 
         return flag

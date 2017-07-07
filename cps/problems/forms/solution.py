@@ -28,8 +28,7 @@ class SolutionEditForm(ProblemObjectModelForm):
         self.subtask_fields = []
         verdicts_defaults = {}
         if self.instance is not None:
-            for verdict in self.instance.subtask_verdicts.all():
-                verdicts_defaults[verdict.subtask] = verdict.verdict
+            verdicts_defaults = self.instance.subtask_verdicts
         for subtask in self.revision.subtasks.all():
             self.fields[str(subtask)] = EnumChoiceField(
                 choices=self._VERDICTS,
@@ -46,13 +45,10 @@ class SolutionEditForm(ProblemObjectModelForm):
             self.instance.code = \
                 FileModel.objects.create(file=self.cleaned_data["file"])
         self.instance.save()
-        self.instance.subtask_verdicts.all().delete()
+        self.instance.subtask_verdicts = {}
         for subtask in self.revision.subtasks.all():
             if self.cleaned_data[str(subtask)]:
-                solution_subtask_verdict = SolutionSubtaskExpectedVerdict(
-                    solution=self.instance, subtask=subtask,
-                    verdict=self.cleaned_data[str(subtask)])
-                solution_subtask_verdict.save()
+                self.instance.subtask_verdicts[subtask.name] = self.cleaned_data[str(subtask)]
 
         if commit:
             self.instance.save()
