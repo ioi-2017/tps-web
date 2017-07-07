@@ -13,4 +13,4 @@ redis
 python-magic
 pygit2
 django-extensions
-
+ansi2html==1.2.0

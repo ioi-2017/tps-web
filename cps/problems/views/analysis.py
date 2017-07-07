@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 import os
+from ansi2html import Ansi2HTMLConverter
 
 
 
@@ -22,10 +23,11 @@ class AnalysisView(ProblemObjectView):
             else:
                 with open(path) as f:
                     content = '\n'.join(list(f.readlines()))
-            return content
+            converted = conv.convert(content, full=False)
+            return converted
 
-        repo_dir = self.revision.repository_path
-        commit_id = self.revision.commit_id
+        conv = Ansi2HTMLConverter(inline=True)
+
         out_dir = self.revision.get_storage_path()
         verify_output_file = get_content(os.path.join(out_dir, 'verify_out.txt'))
         verify_error_file = get_content(os.path.join(out_dir, 'verify_err.txt'))

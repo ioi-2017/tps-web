@@ -5,6 +5,13 @@
 {% load object_list_generator %}
 
 {% block problem_content %}
+    <style type="text/css">
+        .body_foreground { color: #AAAAAA; }
+        .body_background { background-color: #000000; }
+        .body_foreground > .bold,.bold > .body_foreground, body.body_foreground > pre > .bold { color: #FFFFFF; font-weight: normal; }
+        .scrolled {max-height: 500px; overflow: auto;}
+    </style>
+
     <div class="row">
         <h2> {% trans 'Analysis' %} </h2>
     </div>
@@ -26,12 +33,12 @@
     {% if revision.verification_status.output_presentable %}
         <div class="row">
             {% trans 'Stdout' %}: <br/>
-            <pre>{{ verify_out }}</pre>
+            <pre class="body_foreground body_background scrolled" >{{ verify_out | safe }}</pre>
 
         </div>
         <div class="row">
             {% trans 'Stderr' %}: <br/>
-            <pre>{{ verify_err }}</pre>
+            <pre class="body_foreground body_background scrolled" >{{ verify_err | safe }}</pre>
         </div>
     {% endif %}
 
@@ -53,12 +60,12 @@
     {% if revision.generation_status.output_presentable %}
         <div class="row">
             {% trans 'Stdout' %}: <br/>
-            <pre>{{ generate_out }}</pre>
+            <pre class="body_foreground body_background scrolled" >{{ generate_out | safe }}</pre>
 
         </div>
         <div class="row">
             {% trans 'Stderr' %}: <br/>
-            <pre>{{ generate_err }}</pre>
+            <pre class="body_foreground body_background scrolled" >{{ generate_err | safe }}</pre>
         </div>
     {% endif %}
 
