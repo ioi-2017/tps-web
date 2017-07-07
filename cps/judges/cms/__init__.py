@@ -36,7 +36,7 @@ class CMS(Judge):
         self.api_address = api_address
 
     def get_task_types(self):
-        return list(self.task_types.keys())
+        return ["Batch", "Communication", "OutputOnly", "TwoSteps"]
 
     def get_supported_languages(self):
         return ["C++11 / g++", "C11 / gcc", "Haskell / ghc",
