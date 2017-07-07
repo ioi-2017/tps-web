@@ -269,7 +269,9 @@ class CommitVerify(CeleryTask):
     def execute(self, repo_dir, commit_id, out_dir):
         command = "verify"
         tempdir = tempfile.mkdtemp()
-        logger.warning('temp directory at %s' % tempdir)
+        logger.debug('temp directory at %s' % tempdir)
+        environment = os.environ.copy()
+        environment["WEB_TERMINAL"] = "true"
 
         transaction = Transaction(repository_path=repo_dir,
                                   commit_id=commit_id)
@@ -289,7 +291,7 @@ class CommitVerify(CeleryTask):
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
                 exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
-                                            cwd=tempdir)
+                                            cwd=tempdir, env=environment)
 
         if exit_code != 0:
             revision.verification_status = VerificationStatus.Failed
@@ -322,6 +324,8 @@ class CommitTestcaseGenerate(CeleryTask):
         command = "gen"
         tempdir = tempfile.mkdtemp()
         logger.warning('temp directory at %s' % tempdir)
+        environment = os.environ.copy()
+        environment["WEB_TERMINAL"] = "true"
 
         transaction = Transaction(repository_path=repo_dir,
                                   commit_id=commit_id)
@@ -341,7 +345,7 @@ class CommitTestcaseGenerate(CeleryTask):
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
                 exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
-                                            cwd=tempdir)
+                                            cwd=tempdir, env=environment)
 
         if exit_code != 0:
             revision.generation_status = GenerationStatus.GenerationFailed
