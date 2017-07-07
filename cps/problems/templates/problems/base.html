@@ -30,7 +30,7 @@
 
                             <a href="{% if branches_disabled %}{% url "problems:overview" problem.code problem.get_master_branch.get_slug %}{% else %}#{% endif %}" class="full-open-only">
 
-                                {{ revision.problem_data.title }}
+                                {{ problem.code }}
 
                             </a>
 

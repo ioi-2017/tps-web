@@ -29,7 +29,7 @@
                 {% else %}
                     <a href="{% url "problems:overview" problem.code "master" %}">
                 {% endif %}
-                    {{ problem.get_master_branch.head.problem_data.title }}({{problem.get_master_branch.head.problem_data.code_name}})
+                    {{ problem.get_master_branch.head.problem.code }}
                 </a>
             </td>
             <td> {{ problem.creator }} </td>
