@@ -288,8 +288,8 @@ class CommitVerify(CeleryTask):
 
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
-                exit_code = 0 # subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
-                              #              cwd=tempdir)
+                exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
+                                            cwd=tempdir)
 
         if exit_code != 0:
             revision.verification_status = VerificationStatus.Failed
