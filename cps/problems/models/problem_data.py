@@ -15,7 +15,8 @@ __all__ = ["ProblemData"]
 
 class ProblemData(git_models.Model):
     problem = ReadOnlyGitToGitForeignKey(ProblemCommit, verbose_name=_("problem"), default=0)
-    name = models.CharField(verbose_name=_("code name"), max_length=150, db_index=True)
+    code = models.CharField(verbose_name=_("code"), max_length=150, db_index=True)
+    name = models.CharField(verbose_name=_("name"), max_length=150, db_index=True)
     title = models.CharField(verbose_name=_("title"), max_length=150)
 
     task_type = models.CharField(verbose_name=_("task type"), max_length=150, null=True)

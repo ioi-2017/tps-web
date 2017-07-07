@@ -288,22 +288,29 @@ class CommitVerify(CeleryTask):
         out_file = os.path.join(out_dir, '{command}_out.txt'.format(command=command))
         err_file = os.path.join(out_dir, '{command}_err.txt'.format(command=command))
 
+        failed = False
+
         with open(out_file, "w") as out_desc:
             with open(err_file, "w") as err_desc:
                 exit_code = subprocess.call(['tps', command], stdout=out_desc, stderr=err_desc,
                                             cwd=tempdir, env=environment)
 
-        if exit_code != 0:
+        failed &= exit_code != 0
+
+        code = revision.problem.code
+        name = revision.problem_data.code
+        if code != name:
+            with open(err_file, "w+") as err_desc:
+                err_desc.write('The problem code does not match the name given in problem.json')
+            failed = True
+
+        if failed:
             revision.verification_status = VerificationStatus.Failed
         else:
             revision.verification_status = VerificationStatus.Successful
         revision.save()
 
-        code = revision.problem.code
-        name = revision.problem_data.name
-        if code != name:
-            with open(err_file, "w+") as err_desc:
-                err_desc.write('The problem code does not match the name given in problem.json')
+
 
         try:
             shutil.rmtree(tempdir)
