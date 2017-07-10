@@ -380,6 +380,8 @@ class TestCase(FileSystemPopulatedModel):
 
     @cached_property
     def subtasks(self):
+        if self._subtasks.count() != 0:
+            return self._subtasks
         mapping_file = os.path.join(self.get_storage_path(), "mapping")
         if os.path.exists(mapping_file):
             subtasks = []
@@ -393,15 +395,9 @@ class TestCase(FileSystemPopulatedModel):
                     except Exception:
                         pass
             self._subtasks = subtasks
+            self.save()
         return self._subtasks
 
-        def get_proxy(self):
-            return self._subtasks
-
-        def set_proxy(self, value):
-            self._subtasks = value
-        #setattr(self, "subtasks", property(get_proxy, set_proxy))
-        return property(get_proxy, set_proxy)
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
