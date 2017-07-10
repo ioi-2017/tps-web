@@ -90,7 +90,7 @@ class InvocationDetailsView(RevisionObjectView):
                     if not dic[testcase.pk][solution.pk].validate(subtasks=[subtask]):
                         try:
                             subtask_verdict = solution.subtask_verdicts[subtask.name]
-                            short_name = subtask_verdict.verdict.short_name
+                            short_name = subtask_verdict.short_name
                         except KeyError:
                             short_name = solution.verdict.short_name
                         testcase_subtasks.append((subtask, short_name))

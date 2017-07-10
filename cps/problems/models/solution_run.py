@@ -311,7 +311,7 @@ class SolutionRunResult(models.Model):
                 solution_subtask_expected_verdict = \
                     self.solution.subtask_verdicts[subtask.name]
                 flag &= self.validate_for_verdict(
-                    solution_subtask_expected_verdict.verdict
+                    solution_subtask_expected_verdict
                 )
             except KeyError:
                 flag &= self.validate_for_verdict(solution_verdict)
