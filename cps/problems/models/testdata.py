@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max, Q
+from django.utils.functional import cached_property, lazy_property
 from django.utils.translation import ugettext_lazy as _
 
 from file_repository.models import FileModel, FileSystemModel
@@ -351,7 +352,7 @@ class TestCase(FileSystemPopulatedModel):
     judge_initialization_successful = models.NullBooleanField(verbose_name=_("initialization finished"), default=None)
     judge_initialization_message = models.CharField(verbose_name=_("initialization message"), max_length=256)
 
-    subtasks = GitToGitManyToManyField("Subtask", verbose_name=_("subtasks"), related_name="+", blank=True)
+    _subtasks = GitToGitManyToManyField("Subtask", verbose_name=_("subtasks"), related_name="+", blank=True)
 
     class Meta:
         ordering = ("name",)
@@ -377,11 +378,9 @@ class TestCase(FileSystemPopulatedModel):
                         outputs.append(file[:-4])
             return [key for key in inputs if key in outputs]
 
-    @classmethod
-    def _get_instance(cls, transaction, pk):
-        obj = super(TestCase, cls)._get_instance(transaction, pk)
-        mapping_file = os.path.join(obj.get_storage_path(), "mapping")
-        content = {}
+    @cached_property
+    def subtasks(self):
+        mapping_file = os.path.join(self.get_storage_path(), "mapping")
         if os.path.exists(mapping_file):
             subtasks = []
             with open(mapping_file, "r") as file_:
@@ -389,13 +388,20 @@ class TestCase(FileSystemPopulatedModel):
                     try:
                         data = line.strip().split(' ')
                         subtask_name, testcase_name = data[0], data[1]
-                        if testcase_name == obj.name:
+                        if testcase_name == self.name:
                             subtasks.append(subtask_name)
                     except Exception:
                         pass
-            content["subtasks"] = subtasks
-            obj.load(content)
-        return obj
+            self._subtasks = subtasks
+        return self._subtasks
+
+        def get_proxy(self):
+            return self._subtasks
+
+        def set_proxy(self, value):
+            self._subtasks = value
+        #setattr(self, "subtasks", property(get_proxy, set_proxy))
+        return property(get_proxy, set_proxy)
 
     def _clean_for_clone(self, cloned_instances):
         super(TestCase, self)._clean_for_clone(cloned_instances)
