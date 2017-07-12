@@ -64,6 +64,9 @@ class FileModel(models.Model, FileModelMixin):
     upload_date = models.DateTimeField(verbose_name=_("upload date"), auto_now_add=True)
     description = models.TextField(verbose_name=_("description"), blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class DummyFileDescriptor(object):
     def __init__(self, git_file):
@@ -75,7 +78,11 @@ class DummyFileDescriptor(object):
             new_pointer = min(len(self.git_file.content), self.pointer + size)
         else:
             new_pointer = len(self.git_file.content)
-        ret_content = self.git_file.content[self.pointer:new_pointer].encode("utf-8")
+        res = self.git_file.content[self.pointer:new_pointer]
+        if isinstance(res, str):
+            ret_content = res.encode("utf-8")
+        else:
+            ret_content = res
         self.pointer = new_pointer
         return ret_content
 
