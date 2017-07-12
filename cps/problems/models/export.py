@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 
 from file_repository.models import FileModel
+from problems.models.fields import DBToGitReadOnlyForeignKey
 from tasks.tasks import CeleryTask
 from trader import get_exporter
 
@@ -22,7 +23,10 @@ class ExportPackage(models.Model):
         ("tar", "tar"),
     )
     problem = models.ForeignKey("Problem", related_name='exports')
-    revision = models.ForeignKey("ProblemRevision", related_name='+')
+    commit_id = models.CharField(verbose_name=_("commit id"), max_length=256)
+    revision = DBToGitReadOnlyForeignKey("problems.ProblemCommit", commit_id_field_name="commit_id",
+                                        problem_field_name="problem",
+                                        verbose_name=_("revision"), default=0, related_name='+')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     creation_date = models.DateTimeField(auto_now_add=True)
     exporter = models.CharField(max_length=20, choices=EXPORTER_CHOICES, verbose_name=_("exporter"))

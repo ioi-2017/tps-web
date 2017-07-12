@@ -531,6 +531,8 @@ class ProblemCommit(FileSystemPopulatedModel):
     def judge_initialization_completed(self):
         return self.judge_initialization_successful is not None
 
+    def __str__(self):
+        return self.commit_id
 
 
 class ProblemRevision(models.Model):

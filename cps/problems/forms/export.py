@@ -17,7 +17,7 @@ class ExportForm(forms.ModelForm):
     def save(self, **kwargs):
         export_package = super(ExportForm, self).save(commit=False)
         export_package.problem = self.problem
-        export_package.revision = self.revision
+        export_package.commit_id = self.revision.commit_id
         export_package.creator = self.creator
         export_package.save()
         return export_package

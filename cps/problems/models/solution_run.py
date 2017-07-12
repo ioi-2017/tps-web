@@ -5,6 +5,7 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from core.fields import EnumField
@@ -18,10 +19,22 @@ from problems.models.testdata import TestCase
 from problems.utils.run_checker import run_checker
 
 from .fields import DBToGitForeignKey, DBToGitManyToManyField, DBToGitReadOnlyForeignKey
+from django.core.cache import cache
 
 __all__ = ["SolutionRun", "SolutionRunResult"]
 
 logger = logging.getLogger(__name__)
+
+
+class SolutionRunStartTask(CeleryTask):
+
+    def execute(self, run):
+        try:
+            run._run()
+        finally:
+            run.task_id = None
+            run.save()
+
 
 
 class SolutionRun(RevisionObject):
@@ -38,14 +51,23 @@ class SolutionRun(RevisionObject):
                                        verbose_name=_("testcases"), )
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
+    task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
 
-    def run(self):
+    def _run(self):
         self.results.all().delete()
+        self.validate(no_cache=True)
+        testcases = [t.pk for t in self.testcases.all()]
         for solution in self.solutions.all():
-            for testcase in self.testcases.all():
-                result = SolutionRunResult(solution_run=self, solution_id=solution.pk, testcase_id=testcase.pk)
+            for testcase in testcases:
+                result = SolutionRunResult(solution_run=self, solution_id=solution.pk, testcase_id=testcase)
                 result.save()
                 result.run()
+
+    def run(self):
+        if self.task_id is None:
+            self.task_id = SolutionRunStartTask().delay(self).id
+            self.save()
+
 
     @staticmethod
     def get_matching_fields():
@@ -58,24 +80,36 @@ class SolutionRun(RevisionObject):
         }
         return data
 
-
-    def validate(self):
+    def validate(self, no_cache=False):
+        cache_key = "{}_validate".format(self.pk)
+        if not no_cache:
+            val = cache.get(cache_key)
+            if val is not None:
+                return val
         is_valid = True
         for solution in self.solutions.all():
-            if not self.validate_solution(solution):
+            if not self.validate_solution(solution, no_cache):
                 is_valid = False
+        cache.set(cache_key, is_valid)
         return is_valid
 
-    def validate_solution(self, solution):
+    def validate_solution(self, solution, no_cache=False):
+        cache_key = "{}_validate_{}".format(self.pk, solution.pk)
+        if not no_cache:
+            val = cache.get(cache_key)
+            if val is not None:
+                return val
         results = self.results.filter(solution=solution)
         verdict_happend = False
         only_dont_care_happend = True
         for result in results:
-            if result.validate(strict=True):
+            if result.validate(strict=True, no_cache=True):
                 verdict_happend = True
-            if not result.validate(strict=False):
+            if not result.validate(strict=False, no_cache=True):
                 only_dont_care_happend = False
-        return verdict_happend and only_dont_care_happend
+        is_valid = verdict_happend and only_dont_care_happend
+        cache.set(cache_key, is_valid)
+        return is_valid
 
     def started(self):
         return self.results.all().count() == self.solutions.all().count() * self.testcases.all().count()
@@ -94,6 +128,7 @@ class SolutionRun(RevisionObject):
         solution_run.testcases = testcases
         solution_run.save()
         return solution_run
+
 
 # TODO: This should be removed. exceptions should be handled explicitly
 def report_failed_on_exception(func):
@@ -170,6 +205,9 @@ class SolutionRunResult(models.Model):
     testcase = DBToGitForeignKey(TestCase, commit_id_field_name="commit_id",
                                  problem_field_name="base_problem",
                                  verbose_name=_("testcase"), editable=False)
+
+    class Meta:
+        unique_together = ("solution_run", "solution", "testcase")
 
     @property
     def commit_id(self):
@@ -288,17 +326,22 @@ class SolutionRunResult(models.Model):
             self.score = 0
 
         self.save()
+        self.solution_run.validate(no_cache=True)
 
     def run(self):
         if self.task_id is None:
             self.task_id = SolutionRunExecutionTask().delay(self).id
             self.save()
 
-    def validate(self, subtasks=None, strict=False):
+    def validate(self, subtasks=None, strict=False, no_cache=False):
         if self.verdict == SolutionRunVerdict.judging:
             return True
         if not strict and self.score == 1:
             return True
+        cache_key = "{}_validate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
+        val = cache.get(cache_key)
+        if val is not None:
+            return val
         solution_verdict = self.solution.verdict
         flag = True
 
@@ -315,7 +358,7 @@ class SolutionRunResult(models.Model):
                 )
             except KeyError:
                 flag &= self.validate_for_verdict(solution_verdict)
-
+        cache.set(cache_key, flag)
         return flag
 
     def validate_for_verdict(self, verdict):

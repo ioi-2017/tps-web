@@ -119,6 +119,7 @@ class Validator(SourceFile):
     #    verbose_name=_("all subtasks"),
     #    help_text=_("if marked, it validates all subtasks")
     #)
+    global_validator = False
 
     class Meta:
         storage_name = "validator"
@@ -129,20 +130,13 @@ class Validator(SourceFile):
         return d
 
     @property
-    def subtasks(self):
-        if self.global_validator:
-            return self.problem.subtasks.all()
-        else:
-            return self._subtasks.all()
-
-    @property
     def testcases(self):
         testcases = []
         if self.global_validator:
             testcases = self.problem.testcase_set.all()
         else:
             mark = set([])
-            for subtask in self._subtasks.all():
+            for subtask in self.subtasks.all():
                 for testcase in subtask.testcases.all():
                     if not testcase.pk in mark:
                         testcases.append(testcase)

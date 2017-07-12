@@ -70,23 +70,24 @@ class InvocationDetailsView(RevisionObjectView):
 
         invocation_results = obj.results.all()
         dic = {}
-        testcases = obj.testcases.all()
+        testcases = list(obj.testcases.all())
         for testcase in testcases:
             dic[testcase.pk] = {}
         for invocation_result in invocation_results:
             dic[invocation_result.testcase_id][invocation_result.solution_id] = invocation_result
-        solutions = obj.solutions.all()
+        solutions = list(obj.solutions.all())
         results = []
 
         for testcase in testcases:
             current_results = []
             failed_subtasks = []
+            subtasks = list(testcase.subtasks.all())
             for solution in solutions:
                 testcase_subtasks = []
                 current_results.append(dic[testcase.pk][solution.pk])
                 if not dic[testcase.pk][solution.pk].validate():
                     testcase_subtasks.append((None, solution.verdict.short_name))
-                for subtask in testcase.subtasks.all():
+                for subtask in subtasks:
                     if not dic[testcase.pk][solution.pk].validate(subtasks=[subtask]):
                         try:
                             subtask_verdict = solution.subtask_verdicts[subtask.name]
@@ -97,16 +98,18 @@ class InvocationDetailsView(RevisionObjectView):
                 failed_subtasks.append(testcase_subtasks)
             results.append((testcase, zip(current_results, failed_subtasks)))
 
+
         solution_max_time = []
         solution_max_memory = []
+        testcases_pk = [t.pk for t in testcases]
         for solution in solutions:
             max_time = 0
             max_memory = 0
-            for testcase in testcases:
-                if not dic[testcase.pk][solution.pk].solution_execution_time is None:
-                    max_time = max(dic[testcase.pk][solution.pk].solution_execution_time, max_time)
-                if not dic[testcase.pk][solution.pk].solution_memory_usage is None:
-                    max_memory = max(dic[testcase.pk][solution.pk].solution_memory_usage, max_memory)
+            for testcase_pk in testcases_pk:
+                if dic[testcase_pk][solution.pk].solution_execution_time is not None:
+                    max_time = max(dic[testcase_pk][solution.pk].solution_execution_time, max_time)
+                if dic[testcase_pk][solution.pk].solution_memory_usage is not None:
+                    max_memory = max(dic[testcase_pk][solution.pk].solution_memory_usage, max_memory)
             solution_max_time.append(max_time)
             solution_max_memory.append(max_memory)
 
@@ -114,20 +117,20 @@ class InvocationDetailsView(RevisionObjectView):
         for solution in solutions:
             validations.append((solution, obj.validate_solution(solution)))
 
-        subtasks = self.revision.subtasks.all()
+        subtasks = list(self.revision.subtasks.all())
 
         subtasks_results = []
-        testcases_pk = [t.pk for t in testcases]
 
         for subtask in subtasks:
             subtask_results = []
+            testcases = [t.pk for t in subtask.testcases.all()]
             for solution in solutions:
                 subtask_solution_result = []
                 validation = True
-                for testcase in subtask.testcases.all():
-                    if testcase.pk in testcases_pk:
-                        subtask_solution_result.append(dic[testcase.pk][solution.pk].get_short_name_for_verdict())
-                        validation &= dic[testcase.pk][solution.pk].validate(subtasks=[subtask])
+                for testcase in testcases:
+                    if testcase in testcases_pk:
+                        subtask_solution_result.append(dic[testcase][solution.pk].get_short_name_for_verdict())
+                        validation &= dic[testcase][solution.pk].validate(subtasks=[subtask])
                 current_set = set(subtask_solution_result)
                 subtask_solution_result = list(current_set)
                 subtask_results.append((subtask_solution_result, validation))
