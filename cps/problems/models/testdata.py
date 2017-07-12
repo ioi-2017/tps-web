@@ -749,7 +749,7 @@ class Subtask(JSONModel):
     index = models.IntegerField(verbose_name=_("index"))
 
     class Meta:
-        ordering = ("name",)
+        ordering = ("index",)
         unique_together = ("problem", "name",)
         index_together = ("problem", "name",)
         json_db_name = "subtasks.json"
