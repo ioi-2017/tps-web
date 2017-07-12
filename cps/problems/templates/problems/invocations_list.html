@@ -37,9 +37,13 @@
                             {% endfor %}
                         </td>
                         <td>
-                            <a data-method="post" href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
-                            {% if invocation.started %}
-                                <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% if invocation.task_id == None %}
+                                <a data-method="post" href="{% problem_url "problems:run_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Run' %}</a>
+                                {% if invocation.started %}
+                                    <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                                {% endif %}
+                            {% else %}
+                                {% trans 'Initializing' %}
                             {% endif %}
                         </td>
                     </tr>
