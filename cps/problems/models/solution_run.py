@@ -339,9 +339,10 @@ class SolutionRunResult(models.Model):
         if not strict and self.score == 1:
             return True
         cache_key = "{}_validate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
-        val = cache.get(cache_key)
-        if val is not None:
-            return val
+        if not no_cache:
+            val = cache.get(cache_key)
+            if val is not None:
+                return val
         solution_verdict = self.solution.verdict
         flag = True
 
