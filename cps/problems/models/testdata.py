@@ -246,19 +246,11 @@ class TestCaseOutputGeneration(CeleryTask):
 class TestCaseJudgeInitialization(CeleryTask):
     def validate_dependencies(self, testcase):
 
-        if testcase.problem.judge_initialization_completed():
-            if not testcase.problem.judge_initialization_successful:
-                testcase.judge_initialization_message = \
-                    "Problem couldn't be initialized in the judge. Message: {}".format(
-                        testcase.problem.judge_initialization_message
-                    )
-                testcase.judge_initialization_successful = False
-                testcase.save()
-                return False
-        else:
-            logger.info("Waiting until problem {} is initialized in judge".format(str(testcase.problem)))
-            testcase.problem.initialize_in_judge()
-            return None
+        if not testcase.problem.judge_initialization_completed() or \
+                not testcase.problem.judge_initialization_successful:
+                    logger.info("Waiting until problem {} is initialized in judge".format(str(testcase.problem)))
+                    testcase.problem.initialize_in_judge()
+                    return None
 
         if testcase.input_generation_completed():
             if not testcase.input_file_generated():
