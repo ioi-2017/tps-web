@@ -45,7 +45,11 @@
                         <td> {{ forloop.counter }} </td>
                         <td> <a href="{% problem_url "problems:solution_source" solution.pk %}"> {{ solution }} </a> </td>
                         <td> {{ solution.get_language_representation }} </td>
-                        <td> {{ solution.verdict }} </td>
+                        <td> {{ solution.verdict }}
+                            {% for subtask, verdict in solution.subtask_verdicts.items %}
+                                 <br /><small>{{ subtask }}: {{ verdict }}</small>
+                            {% endfor %}
+                        </td>
                         {% if revision_editable %}
                             <td>
 
