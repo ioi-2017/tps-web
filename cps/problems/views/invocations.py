@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
@@ -125,15 +127,13 @@ class InvocationDetailsView(RevisionObjectView):
             subtask_results = []
             testcases = [t.pk for t in subtask.testcases.all()]
             for solution in solutions:
-                subtask_solution_result = []
+                subtask_solution_result = Counter()
                 validation = True
                 for testcase in testcases:
                     if testcase in testcases_pk:
-                        subtask_solution_result.append(dic[testcase][solution.pk].get_short_name_for_verdict())
+                        subtask_solution_result[dic[testcase][solution.pk].get_short_name_for_verdict()] += 1
                         validation &= dic[testcase][solution.pk].validate(subtasks=[subtask])
-                current_set = set(subtask_solution_result)
-                subtask_solution_result = list(current_set)
-                subtask_results.append((subtask_solution_result, validation))
+                subtask_results.append((subtask_solution_result.items(), validation))
             subtasks_results.append((subtask, subtask_results))
         max_time_and_memory = zip(solution_max_time, solution_max_memory)
 

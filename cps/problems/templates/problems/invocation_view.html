@@ -81,8 +81,8 @@
                             {% else %}
                                 <td class="alert alert-danger force-bgcolor">
                             {% endif %}
-                            {% for result in subtask_solution_result %}
-                                {{ result }}
+                            {% for result, cnt in subtask_solution_result %}
+                                {{ result }}({{ cnt }}) <br />
                             {% endfor %}
                             </td>
                         {% endfor %}
