@@ -146,7 +146,7 @@ class JSONExporter(BaseExporter):
         self.create_directory(self.SOLUTION_DIR_NAME)
         for solution in self.revision.solution_set.all():
             if solution.verdict:
-                solution_dir = os.path.join(self.SOLUTION_DIR_NAME, generate_clean_name(str(solution.verdict)))
+                solution_dir = os.path.join(self.SOLUTION_DIR_NAME, generate_clean_name(solution.verdict.name))
             else:
                 solution_dir = os.path.join(self.SOLUTION_DIR_NAME, "unknown_verdict")
             self.create_directory(solution_dir)
@@ -169,10 +169,9 @@ class JSONExporter(BaseExporter):
         # Exporting validators
         self.create_directory(self.VALIDATOR_DIR_NAME)
         for validator in self.revision.validator_set.all():
-            # TODO: Handle subtasks here
             dirs = []
-            if validator.global_validator:
-                dirs.append("global")
+            for subtask in validator.subtasks:
+                dirs.append(subtask.name)
             for dir in dirs:
                 full_dir = os.path.join(self.VALIDATOR_DIR_NAME, dir)
                 self.create_directory(full_dir)
