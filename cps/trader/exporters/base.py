@@ -56,7 +56,12 @@ class BaseExporter(object):
         return os.path.join(self.path, path)
 
     def extract_from_storage_to_path(self, file_model, relative_path):
-        shutil.copyfile(file_model.file.path, self.get_absolute_path(relative_path))
+        if isinstance(file_model, FileModel):
+            shutil.copyfile(file_model.file.path, self.get_absolute_path(relative_path))
+        else:
+            file_ = file_model.file
+            file_.open()
+            self.write_to_file(self.get_absolute_path(relative_path), file_.read())
 
     def extract_archive_to_storage(self, name, format="zip"):
         if not self.exported:
@@ -80,7 +85,10 @@ class BaseExporter(object):
 
     def write_to_file(self, path, content):
         absolute_path = self.get_absolute_path(path)
-        file_ = open(absolute_path, "w")
+        if isinstance(content, str):
+            file_ = open(absolute_path, "w")
+        else:
+            file_ = open(absolute_path, "wb")
         file_.write(content)
         file_.close()
 

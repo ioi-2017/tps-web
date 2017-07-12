@@ -65,7 +65,7 @@ class JSONExporter(BaseExporter):
 
         self.write_to_file(
             "statement.md",
-            problem_data.statement
+            self.revision.statement_set.get().content
         )
 
         # Exporting problem files
