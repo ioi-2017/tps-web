@@ -84,10 +84,11 @@
         }).on("keydown", function() {
             clearTimeout(typingTimer);
         });
-        $(document).ready(function() {
+        function update_height() {
             $("#id_statement").height($("#preview").height());
-        });
-
+        }
+        $(document).ready(update_height);
+        $("#preview").on('load', update_height);
         sync_editor();
     </script>
 
