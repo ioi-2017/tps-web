@@ -1,4 +1,5 @@
 # coding=utf-8
+import os
 import re
 
 from judge.tasktype import TaskType
@@ -217,7 +218,7 @@ class CMSTaskType(TaskType):
         testcase_code = problem_code + '_' + testcase_code.replace(' ', '_')
 
         files = dict()
-        files['solution.%l'] = FileModel_to_base64(solution_file[1])
+        files['{}.%l'.format(os.path.splitext(solution_file[0])[0])] = FileModel_to_base64(solution_file[1])
         files_json = json.dumps(files)
 
         payload = {'files': files_json,
