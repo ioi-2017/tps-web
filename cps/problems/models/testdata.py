@@ -247,8 +247,8 @@ class TestCaseOutputGeneration(CeleryTask):
 class TestCaseJudgeInitialization(CeleryTask):
     def validate_dependencies(self, testcase):
 
-        if not testcase.problem.judge_initialization_completed() or \
-                not testcase.problem.judge_initialization_successful:
+        if (not testcase.problem.judge_initialization_completed()) or \
+                (not testcase.problem.judge_initialization_successful):
                     logger.info("Waiting until problem {} is initialized in judge".format(str(testcase.problem)))
                     testcase.problem.initialize_in_judge()
                     return None

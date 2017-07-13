@@ -140,6 +140,8 @@ def report_failed_on_exception(func):
             self.execution_message = str(e)
             self.save()
             logger.error(e, exc_info=True)
+        finally:
+            self.solution_run.validate(no_cache=True)
     return wrapper
 
 
@@ -157,14 +159,14 @@ class SolutionRunExecutionTask(CeleryTask):
             run.testcase.generate()
             result = None
 
-        if not run.testcase.problem.judge_initialization_completed() or \
-                not run.testcase.problem.judge_initialization_successful:
+        if (not run.testcase.problem.judge_initialization_completed()) or \
+                (not run.testcase.problem.judge_initialization_successful):
             logger.info("Waiting until problem {} is initialized in judge".format(str(run.testcase.problem)))
             run.testcase.problem.initialize_in_judge()
             result = None
 
-        if not run.testcase.judge_initialization_completed() or \
-                not run.testcase.judge_initialization_successful:
+        if (not run.testcase.judge_initialization_completed()) or \
+                (not run.testcase.judge_initialization_successful):
             logger.info("Waiting until testcase {} is initialized in judge".format(str(run.testcase)))
             run.testcase.initialize_in_judge()
             result = None
@@ -324,7 +326,6 @@ class SolutionRunResult(models.Model):
             self.score = 0
 
         self.save()
-        self.solution_run.validate(no_cache=True)
 
     def run(self):
         if self.task_id is None:
