@@ -157,11 +157,17 @@ class SolutionRunExecutionTask(CeleryTask):
             run.testcase.generate()
             result = None
 
+        if not run.testcase.problem.judge_initialization_completed() or \
+                not run.testcase.problem.judge_initialization_successful:
+            logger.info("Waiting until problem {} is initialized in judge".format(str(run.testcase.problem)))
+            run.testcase.problem.initialize_in_judge()
+            result = None
+
         if not run.testcase.judge_initialization_completed() or \
                 not run.testcase.judge_initialization_successful:
-                    logger.info("Waiting until testcase {} is initialized in judge".format(str(run.testcase)))
-                    run.testcase.initialize_in_judge()
-                    result = None
+            logger.info("Waiting until testcase {} is initialized in judge".format(str(run.testcase)))
+            run.testcase.initialize_in_judge()
+            result = None
 
         checker = run.testcase.problem.problem_data.checker
         if checker is None:
