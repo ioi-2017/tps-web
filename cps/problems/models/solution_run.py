@@ -176,6 +176,7 @@ class SolutionRunExecutionTask(CeleryTask):
             run.verdict = SolutionRunVerdict.checker_failed
             run.execution_message = "Checker not found"
             run.save()
+            return False
         else:
             if checker.compilation_finished:
                 if not checker.compilation_successful():

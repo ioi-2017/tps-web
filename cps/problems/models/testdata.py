@@ -402,12 +402,6 @@ class TestCase(FileSystemPopulatedModel):
             self.problem.problem.pk, self.problem.pk, self.pk), timeout=60)
         if lock.acquire(blocking=False):
             try:
-                if self.judge_initialization_task_id:
-                    if not self.judge_initialization_successful:
-                        result = AsyncResult(self.judge_initialization_task_id)
-                        if result.failed() or result.successful():
-                            self.judge_initialization_task_id = None
-                            self.save()
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
                     self.save()
@@ -421,6 +415,7 @@ class TestCase(FileSystemPopulatedModel):
                 testcase_code=self.name,
                 input_file=self.input_file,
             )
+        self.judge_initialization_task_id = None
         self.save()
 
     def judge_initialization_completed(self):

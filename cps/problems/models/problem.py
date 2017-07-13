@@ -496,6 +496,7 @@ class ProblemCommit(FileSystemPopulatedModel):
                     (grader.name, grader.code) for grader in self.grader_set.all()
                 ],
             )
+        self.judge_initialization_task_id = None
         self.save()
 
     def initialize_in_judge(self):
@@ -503,12 +504,6 @@ class ProblemCommit(FileSystemPopulatedModel):
             self.problem.pk, self.pk), timeout=60)
         if lock.acquire(blocking=False):
             try:
-                if self.judge_initialization_task_id:
-                    if not self.judge_initialization_successful:
-                        result = AsyncResult(self.judge_initialization_task_id)
-                        if result.failed() or result.successful():
-                            self.judge_initialization_task_id = None
-                            self.save()
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
                     self.save()
