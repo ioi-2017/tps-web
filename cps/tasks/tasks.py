@@ -121,7 +121,10 @@ class CeleryTask(celery.Task, metaclass=TaskType):
             else:
                 logger.error("Dependencies failed to meet. Not executing")
         except Retry as e:
-            raise e
+            if e.when is None:
+                self.retry(countdown=self.retry_countdown())
+            else:
+                raise e
         except Exception as e:
             logger.error(e, exc_info=True)
             self.retry(countdown=self.retry_countdown())
