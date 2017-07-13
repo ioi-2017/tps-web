@@ -402,6 +402,20 @@ class TestCase(FileSystemPopulatedModel):
             self.problem.problem.pk, self.problem.pk, self.pk), timeout=60)
         if lock.acquire(blocking=False):
             try:
+                refreshed_obj = type(self).objects.with_transaction(self._transaction).get(pk=self.pk)
+                if refreshed_obj.judge_initialization_successful:
+                    return
+                if self.judge_initialization_task_id:
+                    result = AsyncResult(self.judge_initialization_task_id)
+                    if result.failed() or result.successful():
+                        self.judge_initialization_task_id = None
+                        self.judge_initialization_successful = None
+                        self.save()
+                    elif result.state == "PENDING":
+                        result.revoke()
+                        self.judge_initialization_task_id = None
+                        self.judge_initialization_successful = None
+                        self.save()
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
                     self.save()

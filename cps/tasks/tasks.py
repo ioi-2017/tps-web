@@ -5,6 +5,7 @@ from celery import current_app
 from celery.app.task import _reprtask
 from celery.exceptions import Retry
 from celery.local import Proxy
+from celery.signals import after_task_publish
 from celery.task.base import _CompatShared
 from celery.utils import gen_task_name
 
@@ -127,3 +128,17 @@ class CeleryTask(celery.Task, metaclass=TaskType):
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError
+
+
+@after_task_publish.connect
+def set_state_to_sent(sender=None, headers=None, body=None, **kwargs):
+    # the task may not exist if sent using `send_task` which
+    # sends tasks by name, so fall back to the default result backend
+    # if that is the case.
+    task = current_app.tasks.get(sender)
+    backend = task.backend if task else current_app.backend
+
+    # information about task are located in headers for task messages
+    # using the task protocol version 2.
+    info = headers if 'task' in headers else body
+    backend.store_result(info['id'], None, "SENT")
