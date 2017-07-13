@@ -19,7 +19,7 @@ def generate_password_and_send_mail(modeladmin, request, queryset):
     for user in queryset.all():
 
         email_text = render_to_string("accounts/user_info_email.txt", context={
-            "first_name": user.get_full_name(),
+            "full_name": user.get_full_name(),
             "username": user.username,
             "password": user.generate_password()
         })
