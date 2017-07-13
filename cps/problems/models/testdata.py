@@ -4,6 +4,7 @@ import logging
 import os
 import shlex
 import django
+from celery.exceptions import Retry
 
 from celery.result import AsyncResult
 from django.conf import settings
@@ -409,12 +410,10 @@ class TestCase(FileSystemPopulatedModel):
                     result = AsyncResult(self.judge_initialization_task_id)
                     if result.failed() or result.successful():
                         self.judge_initialization_task_id = None
-                        self.judge_initialization_successful = None
                         self.save()
                     elif result.state == "PENDING":
                         result.revoke()
                         self.judge_initialization_task_id = None
-                        self.judge_initialization_successful = None
                         self.save()
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
@@ -423,14 +422,27 @@ class TestCase(FileSystemPopulatedModel):
                 lock.release()
 
     def _initialize_in_judge(self):
-        self.judge_initialization_successful, self.judge_initialization_message = \
-            self.problem.get_task_type().add_testcase(
-                problem_code=self.problem.get_judge_code(),
-                testcase_code=self.name,
-                input_file=self.input_file,
-            )
-        self.judge_initialization_task_id = None
-        self.save()
+        if self.judge_initialization_successful:  # Optimization
+            return
+        lock = cache.lock("testcase_{}_{}_{}_actual_initialize_in_judge".format(
+            self.problem.problem.pk, self.problem.pk, self.pk), timeout=60)
+        if lock.acquire(blocking=False):
+            try:
+                refreshed_obj = type(self).objects.with_transaction(self._transaction).get(pk=self.pk)
+                if refreshed_obj.judge_initialization_successful:
+                    return
+                self.judge_initialization_successful, self.judge_initialization_message = \
+                    self.problem.get_task_type().add_testcase(
+                        problem_code=self.problem.get_judge_code(),
+                        testcase_code=self.name,
+                        input_file=self.input_file,
+                    )
+                self.judge_initialization_task_id = None
+                self.save()
+            finally:
+                lock.release()
+        else:
+            raise Retry()
 
     def judge_initialization_completed(self):
         return self.judge_initialization_successful is not None

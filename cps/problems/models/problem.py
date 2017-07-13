@@ -9,6 +9,8 @@ import tempfile
 from enum import Enum
 
 import subprocess
+
+from celery.exceptions import Retry
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -485,19 +487,32 @@ class ProblemCommit(FileSystemPopulatedModel):
         return "%s_%s" % (self.problem.pk, self.commit_id)
 
     def _initialize_in_judge(self):
-        self.judge_initialization_successful, self.judge_initialization_message = \
-            self.get_task_type().initialize_problem(
-                problem_code=self._get_judge_code(),
-                code_name=self.problem_data.name,
-                time_limit=self.problem_data.time_limit,
-                memory_limit=self.problem_data.memory_limit,
-                task_type_parameters=self.problem_data.task_type_parameters,
-                helpers=[
-                    (grader.name, grader.code) for grader in self.grader_set.all()
-                ],
-            )
-        self.judge_initialization_task_id = None
-        self.save()
+        if self.judge_initialization_successful:  # Optimization
+            return
+        lock = cache.lock("problem_{}_{}_initialize_in_judge".format(
+            self.problem.pk, self.pk), timeout=60)
+        if lock.acquire(blocking=False):
+            try:
+                refreshed_obj = type(self).objects.with_transaction(self._transaction).get(pk=self.pk)
+                if refreshed_obj.judge_initialization_successful:
+                    return
+                self.judge_initialization_successful, self.judge_initialization_message = \
+                    self.get_task_type().initialize_problem(
+                        problem_code=self._get_judge_code(),
+                        code_name=self.problem_data.name,
+                        time_limit=self.problem_data.time_limit,
+                        memory_limit=self.problem_data.memory_limit,
+                        task_type_parameters=self.problem_data.task_type_parameters,
+                        helpers=[
+                            (grader.name, grader.code) for grader in self.grader_set.all()
+                        ],
+                    )
+                self.judge_initialization_task_id = None
+                self.save()
+            finally:
+                lock.release()
+        else:
+            raise Retry()
 
     def initialize_in_judge(self):
         lock = cache.lock("problem_{}_{}_initialize_in_judge".format(
@@ -511,12 +526,10 @@ class ProblemCommit(FileSystemPopulatedModel):
                     result = AsyncResult(self.judge_initialization_task_id)
                     if result.failed() or result.successful():
                         self.judge_initialization_task_id = None
-                        self.judge_initialization_successful = None
                         self.save()
                     elif result.state == "PENDING":
                         result.revoke()
                         self.judge_initialization_task_id = None
-                        self.judge_initialization_successful = None
                         self.save()
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
