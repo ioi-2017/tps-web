@@ -12,6 +12,7 @@ import subprocess
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
@@ -487,6 +488,7 @@ class ProblemCommit(FileSystemPopulatedModel):
         self.judge_initialization_successful, self.judge_initialization_message = \
             self.get_task_type().initialize_problem(
                 problem_code=self._get_judge_code(),
+                code_name=self.problem_data.name,
                 time_limit=self.problem_data.time_limit,
                 memory_limit=self.problem_data.memory_limit,
                 task_type_parameters=self.problem_data.task_type_parameters,
@@ -497,15 +499,21 @@ class ProblemCommit(FileSystemPopulatedModel):
         self.save()
 
     def initialize_in_judge(self):
-        if self.judge_initialization_task_id:
-            if not self.judge_initialization_successful:
-                result = AsyncResult(self.judge_initialization_task_id)
-                if result.failed() or result.successful():
-                    self.judge_initialization_task_id = None
+        lock = cache.lock("problem_{}_{}_initialize_in_judge".format(
+            self.problem.pk, self.pk), timeout=60)
+        if lock.acquire(blocking=False):
+            try:
+                if self.judge_initialization_task_id:
+                    if not self.judge_initialization_successful:
+                        result = AsyncResult(self.judge_initialization_task_id)
+                        if result.failed() or result.successful():
+                            self.judge_initialization_task_id = None
+                            self.save()
+                if not self.judge_initialization_task_id:
+                    self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
                     self.save()
-        if not self.judge_initialization_task_id:
-            self.judge_initialization_task_id = ProblemJudgeInitialization().delay(self).id
-            self.save()
+            finally:
+                lock.release()
 
     def generate_testcases(self):
         self.generation_task_id = CommitTestcaseGenerate().delay(

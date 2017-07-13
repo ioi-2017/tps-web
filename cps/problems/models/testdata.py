@@ -7,6 +7,7 @@ import django
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max, Q
@@ -397,15 +398,21 @@ class TestCase(FileSystemPopulatedModel):
             self.generator = cloned_instances[self.generator]
 
     def initialize_in_judge(self):
-        if self.judge_initialization_task_id:
-            if not self.judge_initialization_successful:
-                result = AsyncResult(self.judge_initialization_task_id)
-                if result.failed() or result.successful():
-                    self.judge_initialization_task_id = None
+        lock = cache.lock("testcase_{}_{}_{}_initialize_in_judge".format(
+            self.problem.problem.pk, self.problem.pk, self.pk), timeout=60)
+        if lock.acquire(blocking=False):
+            try:
+                if self.judge_initialization_task_id:
+                    if not self.judge_initialization_successful:
+                        result = AsyncResult(self.judge_initialization_task_id)
+                        if result.failed() or result.successful():
+                            self.judge_initialization_task_id = None
+                            self.save()
+                if not self.judge_initialization_task_id:
+                    self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
                     self.save()
-        if not self.judge_initialization_task_id:
-            self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
-            self.save()
+            finally:
+                lock.release()
 
     def _initialize_in_judge(self):
         self.judge_initialization_successful, self.judge_initialization_message = \
