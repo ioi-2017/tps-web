@@ -90,6 +90,7 @@ class CMSTaskType(TaskType):
     def init_problem(
             self,
             problem_code,
+            code_name,
             task_type_parameters,
             helpers,
             time_limit,
@@ -124,7 +125,7 @@ class CMSTaskType(TaskType):
                    'score_type': 'Sum',
                    'score_type_parameters': 100,
                    'managers': managers_json,
-                   'submission_format': '["solution.%l"]'}
+                   'submission_format': '["{}.%l"]'.format(code_name)}
         payload.update(tt_params)
 
         response = requests.post(self.judge.api_address + 'tasks/add',

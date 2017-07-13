@@ -6,6 +6,7 @@ class TaskType(object):
     def initialize_problem(
             self,
             problem_code,
+            code_name,
             task_type_parameters,
             helpers,
             time_limit,
@@ -16,6 +17,7 @@ class TaskType(object):
         problem_code (str): A string to reference this problem in the judge. This should be a unique string.
         In case a problem with the same name have already been initialized,
         ths judge will have to update (or simply delete and recreate) that problem.
+        code_name (str): The name for submitted solution files.
         task_type_parameters(str): A json encoded dictionary containing task type parameters
         helpers ([(str, FileModel)]): a list of files that are required when judging submissions
         provided by the judges. Each element is a tuple of the form (name, file)

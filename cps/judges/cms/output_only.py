@@ -10,12 +10,13 @@ class OutputOnly(CMSTaskType):
     def initialize_problem(
             self,
             problem_code,
+            code_name,
             task_type_parameters,
             helpers,
             time_limit,
             memory_limit,
     ):
-        return self.init_problem(problem_code, task_type_parameters, helpers,
+        return self.init_problem(problem_code, code_name, task_type_parameters, helpers,
                                  time_limit, memory_limit, 'Batch')
 
     def get_parameters_form(self):
