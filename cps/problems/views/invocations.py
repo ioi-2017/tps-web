@@ -189,9 +189,11 @@ class InvocationOutputDownloadView(RevisionObjectView):
             "solution_run__base_problem_id": self.problem.id,
             "solution_run__commit_id": self.revision.commit_id,
         })
-        if obj.verdict in [SolutionRunVerdict.ok, SolutionRunVerdict.checker_failed]:
-            raise Http404()
-        response = HttpResponse(obj.solution_output.file, content_type='application/file')
+        if obj.solution_output is None:
+            raise Http404
+        file_ = obj.solution_output.file
+        file_.open()
+        response = HttpResponse(file_, content_type='application/file')
         name = "attachment; filename=solution.out"
         response['Content-Disposition'] = name
         return response
@@ -209,7 +211,9 @@ class InvocationInputDownloadView(RevisionObjectView):
         })
         if not obj.testcase.input_file_generated():
             raise Http404()
-        response = HttpResponse(obj.testcase.input_file.file, content_type='application/file')
+        file_ = obj.testcase.input_file.file
+        file_.open()
+        response = HttpResponse(file_, content_type='application/file')
         name = "attachment; filename={}.in".format(str(obj.testcase))
         response['Content-Disposition'] = name
         return response
@@ -227,7 +231,9 @@ class InvocationAnswerDownloadView(RevisionObjectView):
         })
         if not obj.testcase.output_file_generated():
             raise Http404()
-        response = HttpResponse(obj.testcase.output_file.file, content_type='application/file')
+        file_ = obj.testcase.output_file.file
+        file_.open()
+        response = HttpResponse(file_, content_type='application/file')
         name = "attachment; filename={}.ans".format(str(obj.testcase))
         response['Content-Disposition'] = name
         return response
