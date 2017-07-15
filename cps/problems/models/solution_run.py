@@ -375,6 +375,8 @@ class SolutionRunResult(models.Model):
             return self.score == 1
         elif verdict == SolutionVerdict.incorrect:
             return self.score == 0
+        elif verdict == SolutionVerdict.partial_score:
+            return 0 < self.score <= 1
         elif verdict == SolutionVerdict.runtime_error:
             return judge_verdict == SolutionRunVerdict.runtime_error
         elif verdict == SolutionVerdict.memory_limit:

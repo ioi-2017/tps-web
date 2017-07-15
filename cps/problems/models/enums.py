@@ -11,6 +11,7 @@ class SolutionVerdict(Enum):
     runtime_error = (_noop("Runtime error"), "RE")
     failed = (_noop("Failed"), "FL")
     time_limit_and_runtime_error = (_noop("Time limit / Runtime error"), "TL/RE")
+    partial_score = (_noop("Partial Score"), "PS")
 
     def __init__(self, full_name, short_name):
         self.full_name = full_name
