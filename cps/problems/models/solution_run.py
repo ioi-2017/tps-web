@@ -80,32 +80,33 @@ class SolutionRun(RevisionObject):
         }
         return data
 
-    def validate(self, no_cache=False):
+    def invalidate_cache(self):
+        cache.delete_pattern("{}_validate*".format(self.pk))
+
+    def validate(self):
         cache_key = "{}_validate".format(self.pk)
-        if not no_cache:
-            val = cache.get(cache_key)
-            if val is not None:
-                return val
+        val = cache.get(cache_key)
+        if val is not None:
+            return val
         is_valid = True
         for solution in self.solutions.all():
-            if not self.validate_solution(solution, no_cache):
+            if not self.validate_solution(solution):
                 is_valid = False
         cache.set(cache_key, is_valid)
         return is_valid
 
-    def validate_solution(self, solution, no_cache=False):
+    def validate_solution(self, solution):
         cache_key = "{}_validate_{}".format(self.pk, solution.pk)
-        if not no_cache:
-            val = cache.get(cache_key)
-            if val is not None:
-                return val
+        val = cache.get(cache_key)
+        if val is not None:
+            return val
         results = self.results.filter(solution=solution)
         verdict_happend = False
         only_dont_care_happend = True
         for result in results:
-            if result.validate(strict=True, no_cache=True):
+            if result.validate(strict=True):
                 verdict_happend = True
-            if not result.validate(strict=False, no_cache=True):
+            if not result.validate(strict=False):
                 only_dont_care_happend = False
         is_valid = verdict_happend and only_dont_care_happend
         cache.set(cache_key, is_valid)
@@ -141,7 +142,8 @@ def report_failed_on_exception(func):
             self.save()
             logger.error(e, exc_info=True)
         finally:
-            self.solution_run.validate(no_cache=True)
+            self.solution_run.invalidate_cache()
+            self.invalidate_cache()
     return wrapper
 
 
@@ -333,12 +335,15 @@ class SolutionRunResult(models.Model):
             self.task_id = SolutionRunExecutionTask().delay(self).id
             self.save()
 
+    def invalidate_cache(self):
+        cache.delete_pattern("{}_runvalidate*".format(self.pk))
+
     def validate(self, subtasks=None, strict=False, no_cache=False):
         if self.verdict == SolutionRunVerdict.judging:
             return True
         if not strict and self.score == 1:
             return True
-        cache_key = "{}_validate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
+        cache_key = "{}_runvalidate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
         if not no_cache:
             val = cache.get(cache_key)
             if val is not None:
