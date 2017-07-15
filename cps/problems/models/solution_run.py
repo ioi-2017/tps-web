@@ -145,6 +145,8 @@ def report_failed_on_exception(func):
         finally:
             self.solution_run.invalidate_cache()
             self.invalidate_cache()
+            if self.pk % 10 == 0:
+                self.solution_run.validate()
     return wrapper
 
 
