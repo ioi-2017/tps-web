@@ -199,8 +199,17 @@ class JSONExporter(BaseExporter):
         subprocess.call(['tps', 'make-public'], cwd=self.get_absolute_path("repo"))
 
         self.create_directory("attachments")
-
-        shutil.move(os.path.join(self.get_absolute_path("repo"), "public", "{}.zip".format(problem_data.code_name)),
-                    os.path.join(self.get_absolute_path("attachments")))
+        try:
+            shutil.move(os.path.join(self.get_absolute_path("repo"),
+                                     "public",
+                                     "{}.zip".format(problem_data.code_name)),
+                        os.path.join(self.get_absolute_path("attachments")))
+        except OSError:
+            try:
+                shutil.move(os.path.join(self.get_absolute_path("repo"),
+                                         "{}.zip".format(problem_data.code_name)),
+                            os.path.join(self.get_absolute_path("attachments")))
+            except OSError:
+                pass
 
         shutil.rmtree(self.get_absolute_path("repo"))
