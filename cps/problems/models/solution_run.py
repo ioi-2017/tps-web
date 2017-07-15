@@ -55,7 +55,8 @@ class SolutionRun(RevisionObject):
 
     def _run(self):
         self.results.all().delete()
-        self.validate(no_cache=True)
+        self.invalidate_cache()
+        self.validate()
         testcases = [t.pk for t in self.testcases.all()]
         for solution in self.solutions.all():
             for testcase in testcases:
@@ -338,16 +339,15 @@ class SolutionRunResult(models.Model):
     def invalidate_cache(self):
         cache.delete_pattern("{}_runvalidate*".format(self.pk))
 
-    def validate(self, subtasks=None, strict=False, no_cache=False):
+    def validate(self, subtasks=None, strict=False):
         if self.verdict == SolutionRunVerdict.judging:
             return True
         if not strict and self.score == 1:
             return True
         cache_key = "{}_runvalidate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
-        if not no_cache:
-            val = cache.get(cache_key)
-            if val is not None:
-                return val
+        val = cache.get(cache_key)
+        if val is not None:
+            return val
         solution_verdict = self.solution.verdict
         flag = True
 
