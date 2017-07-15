@@ -128,8 +128,9 @@ class JSONExporter(BaseExporter):
             self.write_to_file(
                 os.path.join(
                     self.SUBTASKS_DIR_NAME,
-                    "{subtask_name}.json"
+                    "{:02subtask_index}-{subtask_name}.json"
                 ).format(
+                    subtask_index=subtask.index,
                     subtask_name=subtask.name,
                 ),
                 json.dumps(
@@ -159,6 +160,11 @@ class JSONExporter(BaseExporter):
 
         # Exporting checker( We only extract main checker)
         self.create_directory(self.CHECKER_DIR_NAME)
+        for resource in self.revision.checker_set.all():
+            self.extract_from_storage_to_path(
+                resource.file,
+                os.path.join(self.CHECKER_DIR_NAME, resource.name)
+            )
         checker = problem_data.checker
         if checker is not None:
             self.extract_from_storage_to_path(
