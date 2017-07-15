@@ -32,7 +32,11 @@ import tempfile
 from functools import wraps, partial
 
 import subprocess
+
+import time
 from django.core.files import File
+from djcelery.backends.cache import cache
+
 from .cms.GeventUtils import copyfileobj, rmtree
 from .cmscommon.commands import pretty_print_cmdline
 from django.conf import settings
@@ -449,8 +453,18 @@ class IsolateSandbox(SandboxBase):
         # TODO: Make sure documentation notes that this prevents more than 30 workers
         # on the same computer
         # FIXME: current_process is internal
+        self.box_lock = None
+        while True:
+            for i in range(90):
+                box_lock = cache.lock("box_{}".format(i), timeout=(10 * 60))
+                if box_lock.acquire(blocking=False):
+                    self.box_lock = box_lock
+                    box_id = i
+                    break
+            if self.box_lock:
+                break
+            time.sleep(5)
 
-        box_id = (settings.SANDBOX_BOX_ID_OFFSET + current_process().index * 3 + IsolateSandbox.next_id % 3) % 100
         IsolateSandbox.next_id += 1
 
         # We create a directory "tmp" inside the outer temporary directory,
@@ -1014,6 +1028,7 @@ class IsolateSandbox(SandboxBase):
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
                   + ["--box-id=%d" % self.box_id]
         subprocess.call(box_cmd + ["--cleanup"])
+        self.box_lock.release()
 
     def delete(self):
         # Delete the working directory.
