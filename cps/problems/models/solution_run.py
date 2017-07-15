@@ -21,7 +21,7 @@ from problems.utils.run_checker import run_checker
 from .fields import DBToGitForeignKey, DBToGitManyToManyField, DBToGitReadOnlyForeignKey
 from django.core.cache import cache
 
-__all__ = ["SolutionRun", "SolutionRunResult"]
+__all__ = ["SolutionRun", "SolutionRunResult", "SolutionRunExecutionTask", "SolutionRunStartTask"]
 
 logger = logging.getLogger(__name__)
 

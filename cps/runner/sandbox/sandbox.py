@@ -34,8 +34,9 @@ from functools import wraps, partial
 import subprocess
 
 import time
+
+from django.core.cache import cache
 from django.core.files import File
-from djcelery.backends.cache import cache
 
 from .cms.GeventUtils import copyfileobj, rmtree
 from .cmscommon.commands import pretty_print_cmdline
