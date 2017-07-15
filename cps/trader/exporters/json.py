@@ -2,6 +2,9 @@ import logging
 
 import json
 import os
+import shutil
+
+import subprocess
 
 from .base import BaseExporter
 
@@ -183,3 +186,21 @@ class JSONExporter(BaseExporter):
                     )
                 )
         export_resources_to_path("validators")
+
+        # Exporting public
+        self.create_directory("repo")
+
+        os.system('git --git-dir="{repo_dir}" worktree add {work_dir} {commit_id}'.format(
+            repo_dir=self.revision.repository_path,
+            work_dir=self.get_absolute_path("repo"),
+            commit_id=self.revision.commit_id
+        ))
+
+        subprocess.call(['tps', 'make-public'], cwd=self.get_absolute_path("repo"))
+
+        self.create_directory("attachments")
+
+        shutil.move(os.path.join(self.get_absolute_path("repo"), "public", "{}.zip".format(problem_data.code_name)),
+                    os.path.join(self.get_absolute_path("attachments")))
+
+        shutil.rmtree(self.get_absolute_path("repo"))
