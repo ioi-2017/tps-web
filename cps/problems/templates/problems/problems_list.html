@@ -17,7 +17,6 @@
         <tr>
             <th class="col-md-8">{% trans 'Name' %}</th>
             <th class="col-md-2">{% trans 'Creator' %}</th>
-            <th class="col-md-2">{% trans 'Revision' %}</th>
         </tr>
     </thead>
     <tbody>
@@ -29,11 +28,10 @@
                 {% else %}
                     <a href="{% url "problems:overview" problem.code "master" %}">
                 {% endif %}
-                    {{ problem.get_master_branch.head.problem.code }}
+                    {{ problem.code }}
                 </a>
             </td>
             <td> {{ problem.creator }} </td>
-            <td>{{ problem.get_master_branch.head.depth }}</td>
 
         </tr>
         {% endfor %}
