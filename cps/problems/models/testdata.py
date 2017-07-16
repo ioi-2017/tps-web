@@ -826,19 +826,25 @@ class Subtask(JSONModel):
             raise cls.InvalidObject(e)
         if "global_validators" in full_data:
             content["validators"] += full_data["global_validators"]
-        mapping_file = os.path.join(obj.problem.get_storage_path(), "tests", "mapping")
-        if os.path.exists(mapping_file):
-            testcases = []
-            with open(mapping_file, "r") as file_:
-                for line in file_.readlines():
-                    try:
-                        data = line.strip().split(' ')
-                        subtask_name, testcase_name = data[0], data[1]
-                        if subtask_name == obj.name:
-                            testcases.append(testcase_name)
-                    except Exception:
-                        pass
-            content["testcases"] = testcases
+        cache_key = "{}_{}_subtask_{}_tests".format(obj.problem.problem.id, obj.problem.commit_id, obj.pk)
+        val = cache.get(cache_key)
+        if val is not None:
+            content["testcases"] = val
+        else:
+            mapping_file = os.path.join(obj.problem.get_storage_path(), "tests", "mapping")
+            if os.path.exists(mapping_file):
+                testcases = []
+                with open(mapping_file, "r") as file_:
+                    for line in file_.readlines():
+                        try:
+                            data = line.strip().split(' ')
+                            subtask_name, testcase_name = data[0], data[1]
+                            if subtask_name == obj.name:
+                                testcases.append(testcase_name)
+                        except Exception:
+                            pass
+                content["testcases"] = testcases
+                cache.set(cache_key, testcases)
         obj.load(content)
         return obj
 
