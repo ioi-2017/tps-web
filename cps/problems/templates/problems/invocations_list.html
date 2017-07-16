@@ -74,11 +74,10 @@
             </thead>
             <tbody>
         {% for invocation in old_invocations %}
-                {% if invocation.validate %}
-                    <tr>
-                {% else %}
-                    <tr class="alert alert-danger force-bgcolor">
-                {% endif %}
+                {% comment %}
+                For performance we do not validate here. TODO: if valdiate is improved add it here.
+                {% endcomment %}
+                <tr>
                     <td> {{ forloop.counter }} </td>
                     <td> {{ invocation.commit_id }} </td>
                     <td>
