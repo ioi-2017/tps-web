@@ -5,7 +5,7 @@
 
 {% block problem_content %}
     <div class="row">
-        <h2> {% trans 'Invocations' %} </h2>
+        <h2> {% trans 'Invocations on this commit' %} </h2>
     </div>
     <div class="row">
         <a href="{% problem_url "problems:add_invocation" %}" class="btn btn-success">
@@ -14,7 +14,7 @@
     </div>
     <br />
     <div class="row">
-        {% if invocations %}
+        {% if commit_invocations %}
             <table class="table table-bordered table-responsive table-striped">
                 <thead>
                     <tr>
@@ -24,7 +24,7 @@
                     </tr>
                 </thead>
                 <tbody>
-            {% for invocation in invocations %}
+            {% for invocation in commit_invocations %}
                     {% if invocation.validate %}
                         <tr>
                     {% else %}
@@ -42,6 +42,7 @@
                                 {% if invocation.started %}
                                     <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
                                 {% endif %}
+                                <a data-method="post" href="{% problem_url "problems:clone_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Clone' %}</a>
                             {% else %}
                                 {% trans 'Initializing' %}
                             {% endif %}
@@ -56,4 +57,49 @@
             </h4>
         {% endif %}
     </div>
+    {% if old_invocations %}
+        <div class="row">
+            <h2> {% trans 'Invocations on previous commits' %} </h2>
+        </div>
+        <br />
+        <div class="row">
+            <table class="table table-bordered table-responsive table-striped">
+            <thead>
+                <tr>
+                    <td class="col-md-1">#</td>
+                    <td class="col-md-2">{% trans 'Revision' %}</td>
+                    <td class="col-md-6">{% trans 'Solutions' %}</td>
+                    <td class="col-md-4"></td>
+                </tr>
+            </thead>
+            <tbody>
+        {% for invocation in old_invocations %}
+                {% if invocation.validate %}
+                    <tr>
+                {% else %}
+                    <tr class="alert alert-danger force-bgcolor">
+                {% endif %}
+                    <td> {{ forloop.counter }} </td>
+                    <td> {{ invocation.commit_id }} </td>
+                    <td>
+                        {% for solution in invocation.solutions.all %}
+                            <p>{{ solution }}</p>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if invocation.task_id == None %}
+                            {% if invocation.started %}
+                                <a href="{% problem_url "problems:view_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'View' %}</a>
+                            {% endif %}
+                        {% else %}
+                            {% trans 'Initializing' %}
+                        {% endif %}
+                        <a data-method="post" href="{% problem_url "problems:clone_invocation" invocation.id %}" class="btn btn-primary"> {% trans 'Clone' %}</a>
+                    </td>
+                </tr>
+        {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}

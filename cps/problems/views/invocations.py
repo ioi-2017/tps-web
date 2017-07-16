@@ -1,5 +1,6 @@
 from collections import Counter
 
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
@@ -13,6 +14,7 @@ from problems.forms.solution import SolutionAddForm
 from problems.models import Solution, SolutionRun, SolutionRunResult, SolutionSubtaskExpectedVerdict
 from problems.models.enums import SolutionVerdict, SolutionRunVerdict
 from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObjectView
+from django.utils.translation import ugettext as _
 
 __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView",
            "InvocationAnswerDownloadView", "InvocationInputDownloadView", "InvocationOutputDownloadView",
@@ -244,8 +246,45 @@ class InvocationCloneView(RevisionObjectView):
             "base_problem_id": self.problem.id,
             "id": invocation_id
         })
-        new_obj = obj.clone_for_commit(self.revision.commit_id, creator=request.user)
+        commit_solutions = {s.name: s for s in self.revision.solution_set.all()}
+        commit_testcases = {t.name: t for t in self.revision.testcase_set.all()}
+        new_solutions = []
+        discarded_solutions = []
+        for s in obj.solutions.all():
+            if s.name in commit_solutions:
+                new_solutions.append(commit_solutions[s.name])
+            else:
+                discarded_solutions.append(s.name)
+        new_testcases = []
+        discarded_testcases = []
+        for t in obj.testcases.all():
+            if t.name in commit_testcases:
+                new_testcases.append(commit_testcases[t.name])
+            else:
+                discarded_testcases.append(t.name)
+        new_solutions = [s for s in obj.solutions if s.name in commit_solutions]
+        new_testcases = [t for t in obj.testcases if t.name in commit_testcases]
+        new_obj = SolutionRun.objects.create(
+            base_problem=obj.base_problem,
+            commit_id=self.revision.commit_id,
+            solutions=new_solutions,
+            testcases=new_testcases,
+            creator=request.user
+        )
         new_obj.run()
+        message = "Cloned successfully."
+        if discarded_solutions:
+            message += _("The following solutions are not in this commit "
+                         "and have been discarded:{discarded_solutions}.").format(
+                discarded_solutions=", ".join(discarded_solutions))
+        if discarded_testcases:
+            message += _("The following testcases are not in this commit "
+                         "and have been discarded:{discarded_testcases}.").format(
+                discarded_testcases=", ".join(discarded_testcases))
+        if discarded_solutions or discarded_testcases:
+            messages.warning(request, message)
+        else:
+            messages.success(request, message)
         return HttpResponseRedirect(reverse("problems:invocations", kwargs={
             "problem_code": problem_code,
             "revision_slug": revision_slug
