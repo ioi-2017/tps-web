@@ -127,7 +127,7 @@ class InvocationDetailsView(RevisionObjectView):
         for solution in solutions:
             validations.append((solution, obj.validate_solution(solution)))
 
-        subtasks = list(self.revision.subtasks.all())
+        subtasks = list(obj.problem.subtasks.all())
 
         subtasks_results = []
 
