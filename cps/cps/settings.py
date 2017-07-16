@@ -19,6 +19,9 @@ import os
 import logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from kombu import Exchange
+from kombu import Queue
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -231,6 +234,11 @@ JUDGE_HANDLERS = {
 CELERY_MAX_RETRIES = None
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+
+CELERY_TASK_QUEUES = (
+    Queue('celery', Exchange('celery'), routing_key='default'),
+    Queue('invoke', Exchange('invoke'), routing_key='invoke'),
+)
 
 CACHES = {
     "default": {

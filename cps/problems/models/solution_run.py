@@ -36,8 +36,6 @@ class SolutionRunStartTask(CeleryTask):
             run.task_id = None
             run.save()
 
-
-
 class SolutionRun(RevisionObject):
     base_problem = models.ForeignKey("problems.Problem", verbose_name=_("problem"))
     commit_id = models.CharField(verbose_name=_("commit id"), max_length=256)
@@ -168,6 +166,9 @@ def report_failed_on_exception(func):
 
 
 class SolutionRunExecutionTask(CeleryTask):
+
+    queue = 'invoke'
+
     def validate_dependencies(self, run):
         result = True
         if run.testcase.testcase_generation_completed():
