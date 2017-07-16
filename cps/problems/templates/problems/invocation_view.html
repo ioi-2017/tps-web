@@ -81,7 +81,7 @@
                     <tr>
                         <td>{{ subtask }}</td>
 
-                        {% for subtask_solution_result,validation in subtask_results %}
+                        {% for subtask_solution_result,validation,min_score in subtask_results %}
                             {% if validation %}
                                 <td>
                             {% else %}
@@ -90,6 +90,9 @@
                             {% for result, cnt in subtask_solution_result %}
                                 {{ result }}({{ cnt }}) <br />
                             {% endfor %}
+                            {% if min_score %}
+                                {% trans 'Min score' %}: {{ min_score }}
+                            {% endif %}
                             </td>
                         {% endfor %}
                     </tr>
