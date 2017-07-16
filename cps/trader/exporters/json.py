@@ -208,13 +208,14 @@ class JSONExporter(BaseExporter):
             shutil.move(os.path.join(self.get_absolute_path("repo"),
                                      "public",
                                      "{}.zip".format(problem_data.code_name)),
-                        os.path.join(self.get_absolute_path("attachments")))
+                        self.get_absolute_path("attachments"))
         except OSError:
             try:
                 shutil.move(os.path.join(self.get_absolute_path("repo"),
                                          "{}.zip".format(problem_data.code_name)),
-                            os.path.join(self.get_absolute_path("attachments")))
-            except OSError:
-                pass
+                            self.get_absolute_path("attachments"))
+            except OSError as e:
+                logger.error("Public archive not found")
+                raise e
 
         shutil.rmtree(self.get_absolute_path("repo"))
