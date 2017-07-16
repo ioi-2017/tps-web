@@ -42,6 +42,7 @@ problem_urls = ([
         url(r'^invocations/$', InvocationsListView.as_view(), name="invocations"),
         url(r'^invocation/add/$', InvocationAddView.as_view(), name="add_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/run/$', InvocationRunView.as_view(), name="run_invocation"),
+        url(r'^invocation/(?P<invocation_id>\d+)/clone/$', InvocationCloneView.as_view(), name="clone_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/view/$', InvocationDetailsView.as_view(), name="view_invocation"),
         url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/$', InvocationResultView.as_view(), name="view_invocation_result"),
         url(r'^invocation/(?P<invocation_id>\d+)/invocation_result/(?P<result_id>\d+)/view/download/output/$', InvocationOutputDownloadView.as_view(), name="download_output"),

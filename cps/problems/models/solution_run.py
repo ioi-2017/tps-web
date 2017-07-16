@@ -5,6 +5,7 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.db import transaction
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
@@ -53,6 +54,9 @@ class SolutionRun(RevisionObject):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
 
+    class Meta:
+        ordering = ("-creation_date", )
+
     def _run(self):
         self.results.all().delete()
         self.invalidate_cache()
@@ -69,6 +73,15 @@ class SolutionRun(RevisionObject):
             self.task_id = SolutionRunStartTask().delay(self).id
             self.save()
 
+    def clone_for_commit(self, commit_id, creator=None):
+        return type(self).objects.create(
+            base_problem=self.base_problem,
+            commit_id=commit_id,
+            solutions=self.solutions,
+            testcases=self.testcases,
+            creator=creator or self.creator
+        )
+
 
     @staticmethod
     def get_matching_fields():
@@ -81,8 +94,12 @@ class SolutionRun(RevisionObject):
         }
         return data
 
-    def invalidate_cache(self):
-        cache.delete_pattern("{}_validate*".format(self.pk))
+    def invalidate_cache(self, solution=None):
+        if solution is None:
+            cache.delete_pattern("{}_validate*".format(self.pk))
+        else:
+            cache.expire("{}_validate".format(self.pk), timeout=0)
+            cache.expire("{}_validate_{}".format(self.pk, solution.pk), timeout=0)
 
     def validate(self):
         cache_key = "{}_validate".format(self.pk)

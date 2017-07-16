@@ -16,14 +16,16 @@ from .generics import ProblemObjectDeleteView, ProblemObjectAddView, RevisionObj
 
 __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "InvocationDetailsView",
            "InvocationAnswerDownloadView", "InvocationInputDownloadView", "InvocationOutputDownloadView",
-           "InvocationResultView",]
+           "InvocationResultView", "InvocationCloneView"]
 
 
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_code, revision_slug):
-        invocations  = self.revision.solutionrun_set.all()
+        commit_invocations = self.revision.solutionrun_set.all()
+        old_invocations = self.problem.solutionrun_set.exclude(commit_id=self.revision.commit_id).all()
         return render(request, "problems/invocations_list.html", context={
-            "invocations": invocations
+            "commit_invocations": commit_invocations,
+            "old_invocations": old_invocations
         })
 
 
@@ -61,7 +63,6 @@ class InvocationDetailsView(RevisionObjectView):
     def get(self, request, problem_code, revision_slug, invocation_id):
         obj = get_object_or_404(SolutionRun, **{
             "base_problem_id": self.problem.id,
-            "commit_id": self.revision.commit_id,
             "id": invocation_id
         })
         if not obj.started():
@@ -151,7 +152,6 @@ class InvocationResultView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
-            "solution_run__commit_id": self.revision.commit_id,
         })
 
         if obj.testcase.output_file_generated():
@@ -187,7 +187,6 @@ class InvocationOutputDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
-            "solution_run__commit_id": self.revision.commit_id,
         })
         if obj.solution_output is None:
             raise Http404
@@ -227,7 +226,6 @@ class InvocationAnswerDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
-            "solution_run__commit_id": self.revision.commit_id,
         })
         if not obj.testcase.output_file_generated():
             raise Http404()
@@ -237,3 +235,18 @@ class InvocationAnswerDownloadView(RevisionObjectView):
         name = "attachment; filename={}.ans".format(str(obj.testcase))
         response['Content-Disposition'] = name
         return response
+
+
+class InvocationCloneView(RevisionObjectView):
+    http_method_names_requiring_edit_access = []
+    def post(self, request, problem_code, revision_slug, invocation_id):
+        obj = get_object_or_404(SolutionRun, **{
+            "base_problem_id": self.problem.id,
+            "id": invocation_id
+        })
+        new_obj = obj.clone_for_commit(self.revision.commit_id, creator=request.user)
+        new_obj.run()
+        return HttpResponseRedirect(reverse("problems:invocations", kwargs={
+            "problem_code": problem_code,
+            "revision_slug": revision_slug
+        }))
