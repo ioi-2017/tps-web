@@ -24,7 +24,7 @@ __all__ = ["InvocationsListView", "InvocationAddView", "InvocationRunView", "Inv
 class InvocationsListView(RevisionObjectView):
     def get(self, request, problem_code, revision_slug):
         commit_invocations = self.revision.solutionrun_set.all()
-        old_invocations = self.problem.solutionrun_set.exclude(commit_id=self.revision.commit_id).all()
+        old_invocations = self.problem.solutionrun_set.exclude(commit_id=self.revision.commit_id).all()[:5]
         return render(request, "problems/invocations_list.html", context={
             "commit_invocations": commit_invocations,
             "old_invocations": old_invocations
