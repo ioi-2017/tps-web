@@ -362,7 +362,7 @@ class SolutionRunResult(models.Model):
     def validate(self, subtasks=None, strict=False):
         if self.verdict == SolutionRunVerdict.judging:
             return True
-        if not strict and self.score == 1:
+        if not strict and self.score > 0:
             return True
         cache_key = "{}_runvalidate{}".format(self.pk, "_".join([str(s) for s in subtasks]) if subtasks is not None else "")
         val = cache.get(cache_key)
