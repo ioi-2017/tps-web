@@ -90,7 +90,7 @@
                             {% for result, cnt in subtask_solution_result %}
                                 {{ result }}({{ cnt }}) <br />
                             {% endfor %}
-                            {% if min_score %}
+                            {% if min_score != None %}
                                 {% trans 'Min score' %}: {{ min_score }}
                             {% endif %}
                             </td>
