@@ -5,9 +5,15 @@
 
 {% block problem_content %}
     <div class="row">
-        <h2> Invocation details </h2>
+        <h2> {% trans 'Invocation details' %} </h2>
     </div>
     <br />
+    <div class="progress">
+        <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ percent_results }}"
+        aria-valuemin="0" aria-valuemax="100" style="width:{{ percent_results }}%">
+        {{ done_results }} / {{ total_results }}
+        </div>
+    </div>
     <div class="row">
         <table class="table table-bordered table-responsive table-striped">
             <thead>

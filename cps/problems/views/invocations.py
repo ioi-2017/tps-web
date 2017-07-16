@@ -78,8 +78,13 @@ class InvocationDetailsView(RevisionObjectView):
         testcases = list(obj.testcases.all())
         for testcase in testcases:
             dic[testcase.pk] = {}
+        done_results = 0
+        total_results = len(invocation_results)
         for invocation_result in invocation_results:
             dic[invocation_result.testcase_id][invocation_result.solution_id] = invocation_result
+            if invocation_result.verdict is not None and invocation_result.verdict != SolutionRunVerdict.judging:
+                done_results += 1
+        done_percent = (done_results * 100) // total_results
         solutions = list(obj.solutions.all())
         results = []
 
@@ -145,7 +150,10 @@ class InvocationDetailsView(RevisionObjectView):
             "results": results,
             "validations": validations,
             "subtasks": subtasks_results,
-            "max_time_and_memory": max_time_and_memory
+            "max_time_and_memory": max_time_and_memory,
+            "done_results": done_results,
+            "total_results": total_results,
+            "percent_results": done_percent
         })
 
 
