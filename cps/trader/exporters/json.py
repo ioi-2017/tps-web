@@ -128,11 +128,10 @@ class JSONExporter(BaseExporter):
             self.write_to_file(
                 os.path.join(
                     self.SUBTASKS_DIR_NAME,
-                    "{:02subtask_index}-{subtask_name}.json"
-                ).format(
+                    "{subtask_index:02}-{subtask_name}.json".format(
                     subtask_index=subtask.index,
                     subtask_name=subtask.name,
-                ),
+                )),
                 json.dumps(
                     {
                         "score": subtask.score,
