@@ -158,7 +158,7 @@ def report_failed_on_exception(func):
             self.save()
             logger.error(e, exc_info=True)
         finally:
-            self.solution_run.invalidate_cache()
+            self.solution_run.invalidate_cache(solution=self.solution)
             self.invalidate_cache()
             if self.pk % 10 == 0:
                 self.solution_run.validate()
