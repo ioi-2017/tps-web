@@ -25,11 +25,11 @@ def FileModel_to_base64(filemodel):
 
 
 def get_judge_verdict_from_cms(status, compiled, output):
-    if compiled[0] != "Compilation succeeded":
+    if compiled != "Compilation succeeded":
         return False, JudgeVerdict.compilation_failed
 
-    if status[0] == "Execution timed out" or \
-            status[0] == "Execution timed out (wall clock limit exceeded)":
+    if status == "Execution timed out" or \
+            status == "Execution timed out (wall clock limit exceeded)":
         return False, JudgeVerdict.time_limit_exceeded
 
     if output is None:
@@ -68,14 +68,14 @@ def create_evaluation_result(failed=False, evalres=None, message=''):
         execution_time=evalres['time'],
         execution_memory=execution_memory,
         verdict=verdict,
-        message=evalres['evalres'],
+        message=evalres['message'],
     )
 
 
 def _should_continue(evalres):
     return evalres['result'] is False or \
            not evalres['compiled'] or \
-           (evalres['compiled'][0] == "Compilation succeeded" and evalres['evalres'] is None)
+           (evalres['compiled'] == "Compilation succeeded" and evalres['evalres'] is None)
 
 
 def test_connection(api_address):
