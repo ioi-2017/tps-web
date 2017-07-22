@@ -65,7 +65,7 @@
                                 {{ max_time }}s/{{ max_memory}}MB
                             {% if invocation.repeat_executions > 1 %}
                                 <br />
-                                Max timing difference: {{ max_time_diff }}s
+                                Max timing difference: {{ max_time_diff|floatformat:3 }}s
                             {% endif %}
                             </small>
                         </td>
