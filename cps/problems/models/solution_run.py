@@ -358,7 +358,8 @@ class SolutionRunResult(models.Model):
                     else:
                         self.verdict = SolutionRunVerdict.checker_failed
                         self.execution_message = checker_execution_message
-
+                if self.execution_message is None:
+                    self.execution_message = ''
                 additional_messages = []
                 for __ in range(0, self.solution_run.repeat_executions - 1):
                     repeated_er = task_type.generate_output(
@@ -376,6 +377,7 @@ class SolutionRunResult(models.Model):
                     if time is not None:
                         self.solution_min_execution_time = min(self.solution_min_execution_time, time)
                         self.solution_max_execution_time = max(self.solution_max_execution_time, time)
+                        additional_messages.append("Run %d time: %s" % (__, str(time)))
                     else:
                         additional_messages.append("Run %d returned None as time" % __)
                     if repeated_er.execution_memory is None:
@@ -386,8 +388,8 @@ class SolutionRunResult(models.Model):
                     if repeated_er.message != evaluation_result.message:
                         additional_messages.append(
                             "Run %d returned different message %s" % (__, repeated_er.message))
-                    if additional_messages:
-                        self.execution_message += '\n'.join([''] + additional_messages)
+                if additional_messages:
+                    self.execution_message += '\n'.join([''] + additional_messages)
         else:
             self.verdict = SolutionRunVerdict.get_from_judge_verdict(solution_verdict)
             self.execution_message = solution_execution_message
