@@ -164,6 +164,7 @@ def report_failed_on_exception(func):
         except Exception as e:
             self.verdict = SolutionRunVerdict.judge_failed
             self.execution_message = str(e)
+
             self.save()
             logger.error(e, exc_info=True)
         finally:
@@ -439,11 +440,11 @@ class SolutionRunResult(models.Model):
     def validate_for_verdict(self, verdict):
         judge_verdict = self.verdict
         if verdict in [SolutionVerdict.correct, SolutionVerdict.model_solution]:
-            return self.score == 1
+            return judge_verdict == SolutionRunVerdict.ok and self.score == 1
         elif verdict == SolutionVerdict.incorrect:
-            return self.score == 0
+            return judge_verdict == SolutionRunVerdict.ok and self.score == 0
         elif verdict == SolutionVerdict.partially_correct:
-            return 0 < self.score <= 1
+            return judge_verdict == SolutionRunVerdict.ok and 0 < self.score <= 1
         elif verdict == SolutionVerdict.runtime_error:
             return judge_verdict == SolutionRunVerdict.runtime_error
         elif verdict == SolutionVerdict.memory_limit:
