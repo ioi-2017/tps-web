@@ -9,7 +9,7 @@ class InvocationAddForm(DBProblemObjectModelForm):
 
     class Meta:
         model = SolutionRun
-        fields = ["base_problem", "commit_id", "solutions", "testcases"]
+        fields = ["base_problem", "commit_id", "solutions", "testcases", "repeat_executions"]
 
     def save(self, commit=True):
         super(InvocationAddForm, self).save(commit=False)

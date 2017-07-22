@@ -43,7 +43,15 @@
                                 {{ result.get_short_name_for_verdict }}
                             </a>
                             {% if result.solution_execution_time != None and result.solution_memory_usage != None %}
-                            <small class="text-muted"> {{ result.solution_execution_time }}s/{{ result.solution_memory_usage }}MB </small>
+                            <small class="text-muted">
+                                {{ result.solution_max_execution_time }}s/{{ result.solution_memory_usage }}MB
+                            {% comment %}
+                            {% if invocation.repeat_executions > 1 %}
+                                <br />
+                                Timing difference: {{ result.timing_error }}s
+                            {% endif %}
+                            {% endcomment %}
+                            </small>
                             {% endif %}
                             </td>
                         {% endfor %}
@@ -51,9 +59,15 @@
                 {% endfor %}
                 <tr>
                     <td>Max</td>
-                    {% for max_time,max_memory in max_time_and_memory %}
+                    {% for max_time,max_memory, max_time_diff in max_time_and_memory %}
                         <td>
-                            <small class="text-muted"> {{ max_time }}s/{{ max_memory}}MB </small>
+                            <small class="text-muted">
+                                {{ max_time }}s/{{ max_memory}}MB
+                            {% if invocation.repeat_executions > 1 %}
+                                <br />
+                                Max timing difference: {{ max_time_diff }}s
+                            {% endif %}
+                            </small>
                         </td>
                     {% endfor %}
                 </tr>

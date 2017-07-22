@@ -4,6 +4,7 @@ import json
 import os
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db import transaction
 from django.utils.timezone import now
@@ -25,6 +26,13 @@ from django.core.cache import cache
 __all__ = ["SolutionRun", "SolutionRunResult", "SolutionRunExecutionTask", "SolutionRunStartTask"]
 
 logger = logging.getLogger(__name__)
+
+def validate_nonzero_executions(value):
+    if value == 0:
+        raise ValidationError(
+            _('%(value)s is not allowed for number of executions'),
+            params={'value': value},
+        )
 
 
 class SolutionRunStartTask(CeleryTask):
@@ -51,6 +59,7 @@ class SolutionRun(RevisionObject):
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name=_("creation date"))
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("creator"))
     task_id = models.CharField(verbose_name=_("task id"), max_length=128, null=True)
+    repeat_executions = models.PositiveIntegerField(verbose_name=("number of executions"), default=1, validators=[validate_nonzero_executions])
 
     class Meta:
         ordering = ("-creation_date", )
@@ -253,6 +262,8 @@ class SolutionRunResult(models.Model):
 
     solution_output = models.ForeignKey(FileModel, verbose_name=_("solution output file"), null=True, related_name='+')
     solution_execution_time = models.FloatField(verbose_name=_("solution execution time"), null=True)
+    solution_min_execution_time = models.FloatField(verbose_name=_("solution min execution time"), null=True)
+    solution_max_execution_time = models.FloatField(verbose_name=_("solution max execution time"), null=True)
     solution_memory_usage = models.IntegerField(verbose_name=_("solution memory usage"), null=True)
 
     checker_standard_output = models.ForeignKey(
@@ -297,7 +308,6 @@ class SolutionRunResult(models.Model):
 
         task_type = problem.get_task_type()
 
-
         evaluation_result = task_type.generate_output(
             problem_code,
             testcase_code,
@@ -318,6 +328,9 @@ class SolutionRunResult(models.Model):
             evaluation_result.execution_memory, \
             evaluation_result.verdict, \
             evaluation_result.message
+
+        self.solution_min_execution_time = self.solution_execution_time
+        self.solution_max_execution_time = self.solution_execution_time
 
         if solution_verdict == JudgeVerdict.ok:
             if self.solution_output is None:
@@ -344,12 +357,48 @@ class SolutionRunResult(models.Model):
                     else:
                         self.verdict = SolutionRunVerdict.checker_failed
                         self.execution_message = checker_execution_message
+
+                additional_messages = []
+                for __ in range(0, self.solution_run.repeat_executions - 1):
+                    repeated_er = task_type.generate_output(
+                        problem_code,
+                        testcase_code,
+                        self.solution.language,
+                        (
+                            problem.problem_data.code_name +
+                            os.path.splitext(self.solution.name)[1],
+                            self.solution.code
+                        )
+                        ,
+                    )
+                    time = repeated_er.execution_time
+                    if time is not None:
+                        self.solution_min_execution_time = min(self.solution_min_execution_time, time)
+                        self.solution_max_execution_time = max(self.solution_max_execution_time, time)
+                    else:
+                        additional_messages.append("Run %d returned None as time" % __)
+                    if repeated_er.execution_memory is None:
+                        additional_messages.append("Run %d returned None as memory" % __)
+                    if repeated_er.verdict != evaluation_result.verdict:
+                        additional_messages.append(
+                            "Run %d returned different verdict %s" % (__, str(repeated_er.verdict)))
+                    if repeated_er.message != evaluation_result.message:
+                        additional_messages.append(
+                            "Run %d returned different message %s" % (__, repeated_er.message))
+                    if additional_messages:
+                        self.execution_message += '\n'.join([''] + additional_messages)
         else:
             self.verdict = SolutionRunVerdict.get_from_judge_verdict(solution_verdict)
             self.execution_message = solution_execution_message
             self.score = 0
 
         self.save()
+
+    def timing_error(self):
+        if self.solution_max_execution_time and self.solution_min_execution_time:
+            return self.solution_max_execution_time - self.solution_min_execution_time
+        else:
+            return None
 
     def run(self):
         if self.task_id is None:

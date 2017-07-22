@@ -84,7 +84,10 @@ class InvocationDetailsView(RevisionObjectView):
             dic[invocation_result.testcase_id][invocation_result.solution_id] = invocation_result
             if invocation_result.verdict is not None and invocation_result.verdict != SolutionRunVerdict.judging:
                 done_results += 1
-        done_percent = (done_results * 100) // total_results
+        if total_results > 0:
+            done_percent = (done_results * 100) // total_results
+        else:
+            done_percent = 100
         solutions = list(obj.solutions.all())
         results = []
 
@@ -111,17 +114,22 @@ class InvocationDetailsView(RevisionObjectView):
 
         solution_max_time = []
         solution_max_memory = []
+        solution_max_diff = []
         testcases_pk = [t.pk for t in testcases]
         for solution in solutions:
             max_time = 0
             max_memory = 0
+            max_diff = 0
             for testcase_pk in testcases_pk:
                 if dic[testcase_pk][solution.pk].solution_execution_time is not None:
                     max_time = max(dic[testcase_pk][solution.pk].solution_execution_time, max_time)
                 if dic[testcase_pk][solution.pk].solution_memory_usage is not None:
                     max_memory = max(dic[testcase_pk][solution.pk].solution_memory_usage, max_memory)
+                if dic[testcase_pk][solution.pk].timing_error() is not None:
+                    max_diff = max(max_diff, dic[testcase_pk][solution.pk].timing_error())
             solution_max_time.append(max_time)
             solution_max_memory.append(max_memory)
+            solution_max_diff.append(max_diff)
 
         validations = []
         for solution in solutions:
@@ -149,7 +157,7 @@ class InvocationDetailsView(RevisionObjectView):
                         validation &= dic[testcase][solution.pk].validate(subtasks=[subtask])
                 subtask_results.append((subtask_solution_result.items(), validation, min_score))
             subtasks_results.append((subtask, subtask_results))
-        max_time_and_memory = zip(solution_max_time, solution_max_memory)
+        max_time_and_memory = zip(solution_max_time, solution_max_memory, solution_max_diff)
 
         return render(request, "problems/invocation_view.html", context={
             "invocation": obj,

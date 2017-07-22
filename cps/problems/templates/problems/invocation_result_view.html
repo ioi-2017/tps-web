@@ -33,7 +33,15 @@
                 </tr>
                 <tr>
                     <td>{% trans 'Time' %}</td>
-                    <td>{{ result.solution_execution_time }} seconds</td>
+                    <td>
+                        {% if result.solution_run.repeat_executions > 1 %}
+                            Min: {{ result.solution_min_execution_time }} seconds<br />
+                            Max: {{ result.solution_max_execution_time }} seconds<br />
+                            Difference: {{ result.timing_error }} seconds
+                        {% else %}
+                            {{ result.solution_execution_time }} seconds
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>{% trans 'Memory' %}</td>

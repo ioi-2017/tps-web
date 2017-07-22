@@ -34,7 +34,6 @@ class Batch(TaskType):
         return status, msg
 
     def add_testcase(self, problem_code, testcase_code, *args, **kwargs):
-        problem_id, commit_id = problem_code.split(':')
         commit = self.parse_code(problem_code)
         status = commit.testcase_set.filter(name=testcase_code).exists()
         msg = "testcase_code should be the name of a testcase in this revision" if not status else ""

@@ -19,7 +19,8 @@
                 <thead>
                     <tr>
                         <td class="col-md-1">#</td>
-                        <td class="col-md-8">{% trans 'Solutions' %}</td>
+                        <td class="col-md-7">{% trans 'Solutions' %}</td>
+                        <td class="col-md-1">{% trans 'Number of executions' %}</td>
                         <td class="col-md-4"></td>
                     </tr>
                 </thead>
@@ -35,6 +36,9 @@
                             {% for solution in invocation.solutions.all %}
                                 <p>{{ solution }}</p>
                             {% endfor %}
+                        </td>
+                        <td>
+                            {{ invocation.repeat_executions }}
                         </td>
                         <td>
                             {% if invocation.task_id == None %}
