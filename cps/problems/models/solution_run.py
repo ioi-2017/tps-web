@@ -345,6 +345,7 @@ class SolutionRunResult(models.Model):
                     )
                     if checker_execution_success:
                         self.verdict = SolutionRunVerdict.ok
+                        self.execution_message = solution_execution_message
                     else:
                         self.verdict = SolutionRunVerdict.checker_failed
                         self.execution_message = checker_execution_message
