@@ -1029,7 +1029,9 @@ class IsolateSandbox(SandboxBase):
         box_cmd = [self.box_exec] + (["--cg"] if self.cgroup else []) \
                   + ["--box-id=%d" % self.box_id]
         subprocess.call(box_cmd + ["--cleanup"])
+        logger.debug("Cleaned up. Releasing lock")
         self.box_lock.release()
+        logger.debug("Done")
 
     def delete(self):
         # Delete the working directory.

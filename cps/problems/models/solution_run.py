@@ -80,16 +80,6 @@ class SolutionRun(RevisionObject):
             self.task_id = SolutionRunStartTask().delay(self).id
             self.save()
 
-    def clone_for_commit(self, commit_id, creator=None):
-        return type(self).objects.create(
-            base_problem=self.base_problem,
-            commit_id=commit_id,
-            solutions=self.solutions,
-            testcases=self.testcases,
-            creator=creator or self.creator
-        )
-
-
     @staticmethod
     def get_matching_fields():
         return ["pk"]

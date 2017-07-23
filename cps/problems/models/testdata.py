@@ -415,6 +415,10 @@ class TestCase(FileSystemPopulatedModel):
                         result.revoke()
                         self.judge_initialization_task_id = None
                         self.save()
+                    else:
+                        logger.debug("Waiting for task {} in state {}".format(
+                            self.judge_initialization_task_id, result.state
+                        ))
                 if not self.judge_initialization_task_id:
                     self.judge_initialization_task_id = TestCaseJudgeInitialization().delay(self).id
                     self.save()

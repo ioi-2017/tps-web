@@ -291,7 +291,8 @@ class InvocationCloneView(RevisionObjectView):
             commit_id=self.revision.commit_id,
             solutions=new_solutions,
             testcases=new_testcases,
-            creator=request.user
+            creator=request.user,
+            repeat_executions=obj.repeat_executions
         )
         new_obj.run()
         message = "Cloned successfully."
