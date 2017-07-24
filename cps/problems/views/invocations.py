@@ -123,7 +123,7 @@ class InvocationDetailsView(RevisionObjectView):
             for testcase_pk in testcases_pk:
                 if dic[testcase_pk][solution.pk].solution_max_execution_time is not None:
                     max_time = max(dic[testcase_pk][solution.pk].solution_max_execution_time, max_time)
-                elif dic[testcases_pk][solution.pk].solution_execution_time is not None:
+                elif dic[testcase_pk][solution.pk].solution_execution_time is not None:
                     max_time = max(dic[testcase_pk][solution.pk].solution_execution_time, max_time)
                 if dic[testcase_pk][solution.pk].solution_memory_usage is not None:
                     max_memory = max(dic[testcase_pk][solution.pk].solution_memory_usage, max_memory)
