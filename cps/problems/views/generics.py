@@ -90,7 +90,8 @@ class ProblemObjectView(View):
             extra={
                 'request': request,
                 'exception': exception,
-            }
+            },
+            exc_info=exception,
         )
         return render(request, "problems/exception.html", context={
             "exception": str(exception)
