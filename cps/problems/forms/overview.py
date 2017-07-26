@@ -7,7 +7,7 @@ from problems.models.problem_data import ProblemData
 class OverviewForm(ProblemObjectModelForm):
     class Meta:
         model = ProblemData
-        fields = ['code', 'name', 'title', 'time_limit', 'memory_limit', 'task_type', 'description']
+        fields = ['code', 'name', 'title', 'time_limit', 'memory_limit', 'score_precision', 'description', 'task_type',]
 
     def __init__(self, *args, **kwargs):
         super(OverviewForm, self).__init__(*args, **kwargs)

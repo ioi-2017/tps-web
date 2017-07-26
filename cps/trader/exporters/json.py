@@ -54,6 +54,7 @@ class JSONExporter(BaseExporter):
             "name": problem_data.title,
             "time_limit": problem_data.time_limit,
             "memory_limit": problem_data.memory_limit,
+            "score_precision": problem_data.score_precision,
         }
         if problem_data.task_type:
             problem_data_dict.update({

@@ -25,6 +25,8 @@ class ProblemData(git_models.Model):
     score_type = models.CharField(verbose_name=_("score type"), max_length=150, null=True)
     score_type_parameters = models.TextField(verbose_name=_("score type parameters"), null=True)
 
+    score_precision = models.IntegerField(verbose_name=_("score precision"), default=2)
+
     checker = ReadOnlyGitToGitForeignKey("Checker", verbose_name=_("checker"), null=True)
 
     time_limit = models.FloatField(verbose_name=_("time limt"), help_text=_("in seconds"), default=2)
