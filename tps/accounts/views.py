@@ -11,7 +11,7 @@ from django.utils.http import is_safe_url
 from django.utils.translation import ugettext as _
 
 from accounts.models import User
-from cps import settings
+from django.conf import settings
 
 
 @login_required
