@@ -1,32 +1,40 @@
-# Contest Preparation System
+Task Preparation System (TPS) - Web Interface
+=============================================
 
-Download
---------
-isolate is included using submodule  
-For cloning use:
+The Task Preparation System (TPS) is used to prepare tasks (problems) in programming contests. It has been developed and first used in the IOI 2017 in Tehran, Iran.
+
+TPS consists of a web interface and a command line interface called tps-cli. This is the git repository of the web interface. You may find git repository of tps-cli here.
+
+tps-web visualization of problems prepared using tps-cli. It also provides additional tools including:
+* Discussion forums for each problem
+* Secure file transfer
+* Executing the solution on the judging system (used for exact timing)
+* Provide export packages
+
+Cloning the repository
+----------------------
+TPS includes `isolate` as a submodule. For cloning use:
 ```bash
 git clone --recursive
 ```
-If you have already cloned CPS use:
+If you have already cloned TPS use:
 ```bash
 git submodule update --init
 ```
 
-Installation
-------------
-```bash
-sudo apt-get install python3.5 python3.5-dev
-```
-- ### isolate installation
-    create isolate user:
-    ```bash
-useradd isolate-user -c 'Isolate default user' -M -r -s /bin/false -U
-usermod -a -G isolate-user YOUR_USER # replace YOUR_USER
-```
-    build isolate:
-    ```bash
-cd isolate
-make isolate
-chown root:isolate-user isolate
-chmod 4750 isolate
-```
+Documentation
+-------------
+You may find the documentation under the docs directory.
+
+(Note: The documentation is currently incomplete)
+
+License
+-------
+
+This software is distributed under the MIT license (see LICENSE.txt),
+and uses third party libraries that are distributed under their own terms
+(see LICENSE-3RD-PARTY.txt).
+
+Copyright
+---------
+Copyright (c) 2017, IOI 2017 Host Technical Committee
