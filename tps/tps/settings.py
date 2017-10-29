@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_extensions',
 
-    # CPS Apps
+    # TPS Apps
     'core',
     'accounts',
     'problems',
