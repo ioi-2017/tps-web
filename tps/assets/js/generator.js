@@ -1,6 +1,3 @@
-/**
- * Created by keyvan on 2/2/17.
- */
 
 function set_click(show_button, hide_button, script_data) {
             hide_button.click(function () {

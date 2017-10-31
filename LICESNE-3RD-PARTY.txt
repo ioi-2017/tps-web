@@ -1,0 +1,35 @@
+Files: isolate/*
+Copyright: 2012-2013 Martin Mares <mj@ucw.cz>
+           2012-2013 Bernard Blackham <b-pkg@largestprime.net>
+License: GPL-2
+
+Files: tps/assets/bootstrap/*
+License: MIT
+
+Files: tps/assets/font-awesome/*
+License: SIL OFL 1.1
+URL: http://scripts.sil.org/OFL
+
+Files: tps/assets/highlightjs/*
+License: BSD 3-clause "New" or "Revised" License
+Path: tps/assets/highlightjs/LICENSE
+
+Files: tps/assets/jquery/*
+License: MIT
+
+Files: tps/assets/js/jquery.are-you-sure.js
+License: MIT
+
+Files: tps/assets/js/js.cookie.js
+License: MIT
+
+Files: tps/assets/js/showdown.min.js
+License: BSD 3-clause "New" or "Revised" License
+path: tps/assets/js/showdown.LICENSE.txt
+
+Files: tps/assets/js/katex/*
+License: MIT
+
+Files: tps/assets/js/monaco-editor/*
+License: MIT
+
