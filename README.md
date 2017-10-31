@@ -1,15 +1,26 @@
 Task Preparation System (TPS) - Web Interface
 =============================================
 
-The Task Preparation System (TPS) is used to prepare tasks (problems) in programming contests. It has been developed and first used in the IOI 2017 in Tehran, Iran.
+The Task Preparation System (TPS) is used to prepare tasks (problems) in programming contests. 
+It has been developed and first used in the [IOI 2017](http://ioi2017.org/) in Tehran, Iran.
 
-TPS consists of a web interface and a command line interface called tps-cli. This is the git repository of the web interface. You may find git repository of tps-cli here.
+TPS consists of a web interface and a command-line interface, called TPS-Web and TPS-CLI, respectively.
+The web interface is provided here. You may find the command-line interface at
+https://github.com/ioi-2017/tps-cli.
 
-tps-web visualization of problems prepared using tps-cli. It also provides additional tools including:
+The TPS-CLI provides a set of scripts for preparing the tasks, while
+The TPS-Web provides a web interface to visualize the tasks,
+and prepare them for final release.
+
+Features
+--------
+* Visualize task components and structure
+* Execute the solutions on real judging environments (e.g. CMS) for exact timing
+* Generate verification report
+* Export final packages in custom formats 
 * Discussion forums for each problem
 * Secure file transfer
-* Executing the solution on the judging system (used for exact timing)
-* Provide export packages
+
 
 Cloning the repository
 ----------------------
