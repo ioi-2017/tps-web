@@ -39,9 +39,13 @@ You may find the documentation under the docs directory.
 
 (Note: The documentation is currently incomplete)
 
+Screenshots
+-----------
+![Editing panel](https://raw.githubusercontent.com/ioi-2017/tps-web/master/docs/screenshots/invocation.png)
+See more screenshots [here](https://github.com/ioi-2017/tps-web/tree/master/docs/screenshots).
+
 License
 -------
-
 This software is distributed under the MIT license (see LICENSE.txt),
 and uses third party libraries that are distributed under their own terms
 (see LICENSE-3RD-PARTY.txt).
