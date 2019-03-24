@@ -7,11 +7,11 @@ django-multiselectfield==0.1.4
 mock==2.0.0
 model-mommy==1.3.0
 django-import-export
-gnupg
+pretty-bad-protocol
 django-debug-toolbar
-redis
+redis==2.10.6
 python-magic
 pygit2
 django-extensions
 ansi2html==1.2.0
-django-redis
+django-redis<=4.7.0

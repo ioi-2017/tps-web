@@ -39,7 +39,7 @@ class DjangoPKJSONDecoder(JSONDecoder):
     def __init__(self, object_hook=None, *args, **kwargs):
         if not object_hook:
             object_hook = self.pk_object_hook
-        super(DjangoPKJSONDecoder, self).__init__(object_hook, *args, **kwargs)
+        super(DjangoPKJSONDecoder, self).__init__(object_hook=object_hook, *args, **kwargs)
 
     @staticmethod
     def pk_object_hook(json_dict):

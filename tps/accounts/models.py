@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from django.conf import settings
 from tempfile import TemporaryDirectory
-from gnupg import GPG
+from pretty_bad_protocol.gnupg import GPG
 from django.core.mail import send_mail
 
 
