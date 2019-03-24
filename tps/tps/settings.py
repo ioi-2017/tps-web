@@ -66,11 +66,6 @@ INSTALLED_APPS = [
     'tasks',
     'trader',
 
-    # Allauth Apps (must be after accounts)
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -117,8 +112,6 @@ DATABASES = {
     }
 }
 
-# Accounts and Auth
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -128,8 +121,6 @@ ACCOUNT_EMAIL_REQUIRED = True
 AUTHENTICATION_BACKENDS = (
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
-    # `allauth` specific authentication methods, such as login by e-mail
-    'allauth.account.auth_backends.AuthenticationBackend',
 
     # Problem role permission backend
     'problems.backends.ProblemRoleBackend',
