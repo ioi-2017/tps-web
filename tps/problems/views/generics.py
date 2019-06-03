@@ -22,6 +22,7 @@ from django.db.models import ObjectDoesNotExist
 
 from git_orm import transaction as git_transaction, GitError
 from pygit2 import Signature
+from runner import detect_language
 
 __all__ = ["ProblemObjectView", "ProblemObjectDeleteView", "RevisionObjectView",
            "ProblemObjectAddView", "ProblemObjectEditView",
@@ -332,7 +333,7 @@ class ProblemObjectShowSourceView(RevisionObjectView):
         file_ = code_file.file
         file_.open()
         code = file_.read()
-        lang = getattr(instance, self.language_field_name)
+        lang = getattr(instance, self.language_field_name) or detect_language(instance_pk)
         title = str(instance)
         return render(request, self.template_name, context={
             "code": code,
