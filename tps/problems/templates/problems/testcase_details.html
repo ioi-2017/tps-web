@@ -191,6 +191,7 @@
                 <a href="{% problem_url 'problems:testcases' %}" class="btn btn-primary col-xs-3">
                     {% trans 'Back' %}
                 </a>
+		{% comment %}
                 <a href="{% problem_url 'problems:edit_testcase' testcase.pk %}" class="btn  btn-default col-xs-3">
                     <i class="fa fa-pencil"></i>
                     {% trans 'Edit' %}
@@ -215,6 +216,7 @@
                     <i class="fa fa-trash"></i>
                     {% trans 'Delete' %}
                 </a>
+		{% endcomment %}
         </div>
     </div>
 {% endblock %}

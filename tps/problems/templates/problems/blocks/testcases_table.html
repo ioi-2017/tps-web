@@ -8,9 +8,10 @@
                 <tr>
                     <th class="col-md-2"> {% trans 'Name' %} </th>
                     <th class="col-md-4"> {% trans 'Input' %} </th>
-                    <th class="col-md-2"> {% trans 'Generator' %} </th>
-                    <th class="col-md-2"> {% trans 'Subtasks' %}</th>
-                    <th class="col-md-2"> {% trans 'Status' %} </th>
+		    {# <th class="col-md-2"> {% trans 'Generator' %} </th> #}
+                    <th class="col-md-8"> {% trans 'Subtasks' %}</th>
+		    {# <th class="col-md-2"> {% trans 'Subtasks' %}</th> #}
+		    {# <th class="col-md-2"> {% trans 'Status' %} </th> #}
                     <th class="col-md-1"></th>
                 </tr>
             </thead>
@@ -30,6 +31,7 @@
                             <pre>{{ testcase.input_generation_command }}</pre>
                         {% endif %}
                     </td>
+			{% comment %}
                     <td>
                         {% if not testcase.generator %}
                             {% trans 'Manual' %}
@@ -37,6 +39,7 @@
                             {{ testcase.generator }}
                         {% endif %}
                     </td>
+			{% endcomment %}
                     <td>
                         {% for subtask in testcase.subtasks.all %}
                             {% if not forloop.first %}
@@ -45,6 +48,7 @@
                             {{subtask.name}}
                         {% endfor %}
                     </td>
+			{% comment %}
                     <td class="text-center fa-lg">
                         {% if testcase.being_generated %}
                             <span class="fa fa-spinner"></span>
@@ -62,16 +66,19 @@
                             </a>
                         {%  endif %}
                     </td>
+			{% endcomment %}
                     <td>
                         <a href="{% problem_url "problems:testcase_details" testcase.pk %}" class="text-primary" title="{% trans 'Details' %}">
                             <i class="fa fa-search-plus"></i>
                         </a>
+			{% comment %}
                         <a href="{% problem_url "problems:edit_testcase" testcase.pk %}" class="text-warning" title="{% trans 'Edit' %}">
                             <i class="fa fa-pencil"></i>
                         </a>
                         <a href="{% problem_url 'problems:delete_testcase' testcase.pk %}" class="text-danger" title="{% trans 'Delete' %}" data-method="post" data-confirm='{% trans 'Are you sure you want to delete this testcase?' %}'>
                             <i class="fa fa-trash"></i>
                         </a>
+			{% endcomment %}
                     </td>
                 </tr>
             {% endfor %}

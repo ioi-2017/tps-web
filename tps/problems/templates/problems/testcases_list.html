@@ -14,10 +14,12 @@
             <i class="fa fa-plus"></i> {% trans 'Add a testcase' %}
         </a>
     {% endif %}
+    {% comment %}
         <a data-method="post" href="{% problem_url "problems:generate_testcase" %}" class="btn btn-warning">
             <i class="fa fa-gear"></i>
             {% trans 'Generate all testcases' %}
         </a>
+    {% endcomment %}
     </div>
     <br />
     <div class="row">

@@ -63,6 +63,7 @@
         function sync_editor() {
             var converter = new showdown.Converter({
                 'tables': true,
+                'literalMidWordUnderscores': true,
                 'parseImgDimensions': true
             });
             var preview_element = $("#preview")[0];

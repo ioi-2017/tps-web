@@ -29,8 +29,8 @@
                             <th class="col-md-1"></th>
                         {% else %}
                             <th class="col-md-3">{% trans 'Source Code' %}</th>
-                            <th class="col-md-3"> {% trans 'Title' %}</th>
-                            <th class="col-md-4"> {% trans 'Script Data' %}</th>
+			    {# <th class="col-md-3"> {% trans 'Title' %}</th> #}
+			    {# <th class="col-md-4"> {% trans 'Script Data' %}</th> #}
                             <th class="col-md-1">{% trans 'Language' %} </th>
                         {% endif %}
                     </tr>
@@ -42,10 +42,13 @@
                             <a href="{% problem_url "problems:generator_source" generator.pk %}">
                                 {{ generator }}
                             </a>
-                        </td>
+			</td>
+			{% comment %}
                         <td>
                             {{ generator.title }}
                         </td>
+			{% endcomment %}
+			{% comment %}
                         <td>
                             <button class="btn btn-primary hide_button{{ generator.pk|slugify }}" style="display: none">
                                 Hide
@@ -57,6 +60,7 @@
                                 {{ generator.text_data }}
                             </pre>
                         </td>
+			{% endcomment %}
                         {% if revision_editable %}
                             <td class="text-center fa-lg">
                                 {% if generator.is_enabled %}
