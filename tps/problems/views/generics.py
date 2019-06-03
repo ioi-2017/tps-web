@@ -77,6 +77,8 @@ class ProblemObjectView(View):
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(ProblemObjectView, self).dispatch(request, *args, **kwargs)
+        except Http404:
+            raise
         except Exception as e:
             if not settings.DEBUG:
                 return self.exception_occured(request, e, *args, **kwargs)
