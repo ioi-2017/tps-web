@@ -146,7 +146,8 @@ class InvocationDetailsView(RevisionObjectView):
             testcases = [t.pk for t in subtask.testcases.all()]
             for solution in solutions:
                 subtask_solution_result = Counter()
-                validation = True
+                only_dont_care_happend = True
+                verdict_happened = False
                 min_score = None
                 for testcase in testcases:
                     if testcase in testcases_pk:
@@ -156,7 +157,11 @@ class InvocationDetailsView(RevisionObjectView):
                             else:
                                 min_score = dic[testcase][solution.pk].score
                         subtask_solution_result[dic[testcase][solution.pk].get_short_name_for_verdict()] += 1
-                        validation &= dic[testcase][solution.pk].validate(subtasks=[subtask])
+                        if dic[testcase][solution.pk].validate(subtasks=[subtask], strict=True):
+                            verdict_happened = True
+                        elif not dic[testcase][solution.pk].validate(subtasks=[subtask], strict=False):
+                            only_dont_care_happend = False
+                validation = verdict_happened and only_dont_care_happend
                 subtask_results.append((subtask_solution_result.items(), validation, min_score))
             subtasks_results.append((subtask, subtask_results))
         max_time_and_memory = zip(solution_max_time, solution_max_memory, solution_max_diff)
