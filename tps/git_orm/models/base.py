@@ -187,7 +187,10 @@ class Model(metaclass=ModelBase):
             if not hasattr(data, 'items'):
                 data = serializer.loads(data)
             for field_name, value in data.items():
-                field = self._meta.get_field(field_name)
+                try:
+                    field = self._meta.get_field(field_name)
+                except:
+                    continue
                 setattr(self, field.attname, field.to_python(value))
         except (ValueError, KeyError) as e:
             raise self.InvalidObject(e)
