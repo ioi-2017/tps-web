@@ -372,6 +372,16 @@ class CommitTestcaseGenerate(CeleryTask):
                 revision.generation_status = GenerationStatus.GenerationFailed
             else:
                 revision.generation_status = GenerationStatus.GenerationSuccessful
+            try:
+                logs_src = os.path.join(tempdir, 'logs')
+                logs_dst = os.path.join(out_dir, 'tps_gen_logs')
+                if os.path.exists(logs_dst):
+                    shutil.rmtree(logs_dst)
+                shutil.copytree(logs_src, logs_dst)
+            except Exception as e:
+                with open(err_file, "a") as err_desc:
+                    err_desc.write(str(e))
+
 
         revision.save()
         try:
