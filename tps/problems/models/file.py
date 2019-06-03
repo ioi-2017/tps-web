@@ -151,7 +151,7 @@ class SourceFile(ResourceBase):
         pks = []
         for pk in all_pks:
             name, ext = os.path.splitext(pk)
-            if name and ext:
+            if (name and ext) or name == "Makefile" or name:
                 pks.append(pk)
         return pks
 
