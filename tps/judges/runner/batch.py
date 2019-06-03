@@ -87,8 +87,8 @@ class Batch(TaskType):
         success, compilation_success, outputs, stdout, stderr, compilation_sandbox_data = compile_source(action)
         if not success or not compilation_success or outputs[compiled_file_name] is None:
             compilation_message = "Compilation not successful"
-            compilation_message += "Standard output:\n" + stdout
-            compilation_message += "Standard error:\n" + stderr
+            compilation_message += "Standard output:\n" + (stdout or "")
+            compilation_message += "Standard error:\n" + (stderr or "")
             return EvaluationResult(
                 success=False,
                 message=compilation_message,
