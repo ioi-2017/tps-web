@@ -202,12 +202,40 @@ class JSONExporter(BaseExporter):
             commit_id=self.revision.commit_id
         ))
 
-        subprocess.call(['tps', 'make-public'], cwd=self.get_absolute_path("repo"))
+        tests_dir_in_repo = os.path.join('repo', 'tests')
+        self.create_directory(tests_dir_in_repo)
+
+        for testcase in self.revision.testcase_set.all():
+            if not testcase.input_file_generated() or not testcase.output_file_generated():
+                ignored_testcases.append(testcase)
+                logger.warning("Testcase {} couldn't be generated. Skipping".format(testcase.name))
+                continue
+
+            self.extract_from_storage_to_path(
+                testcase.input_file,
+                os.path.join(
+                    tests_dir_in_repo,
+                    "{testcase_name}.in".format(testcase_name=testcase.name)
+                ),
+            )
+            self.extract_from_storage_to_path(
+                testcase.output_file,
+                os.path.join(
+                    tests_dir_in_repo,
+                    "{testcase_name}.out".format(testcase_name=testcase.name)
+                )
+
+            )
+        
+        try:
+            print(subprocess.check_output(['tps', 'make-public'], cwd=self.get_absolute_path("repo"), stderr=subprocess.STDOUT))
+        except subprocess.CalledProcessError as e:
+            print(e.output)
+            raise e
 
         self.create_directory("attachments")
         try:
             shutil.move(os.path.join(self.get_absolute_path("repo"),
-                                     "public",
                                      "{}.zip".format(problem_data.code_name)),
                         self.get_absolute_path("attachments"))
         except OSError:

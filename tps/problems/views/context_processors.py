@@ -52,7 +52,7 @@ def revision_data(request):
         "branch": branch,
         "branches": branches,
         "revision_slug": revision_slug,
-        "commit_editable": branch is not None,
+        "commit_editable": branch is not None and False,
         "revision_editable": revision_editable,
         "branches_disabled": getattr(settings, "DISABLE_BRANCHES", False),
         "errors": errors

@@ -237,7 +237,7 @@ class InvocationInputDownloadView(RevisionObjectView):
         obj = get_object_or_404(SolutionRunResult, **{
             "id": result_id,
             "solution_run__base_problem_id": self.problem.id,
-            "solution_run__commit_id": self.revision.commit_id,
+            # "solution_run__commit_id": self.revision.commit_id,
         })
         if not obj.testcase.input_file_generated():
             raise Http404()
