@@ -40,7 +40,7 @@ class StatementAttachment(GitBinaryFile):
 
     @classmethod
     def _get_existing_primary_keys(cls, transaction):
-        ls = super(StatementAttachment, cls)._get_existing_primary_keys(transaction)
+        ls = transaction.list_blobs([cls._meta.storage_name], recursive=True)
         if "index.md" in ls:
             ls.remove("index.md")
         return ls
