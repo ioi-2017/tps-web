@@ -33,7 +33,7 @@ class Options(DjangoOptions):
             if hasattr(self.meta, 'ordering'):
                 self.ordering = list(self.meta.ordering)
 
-    def add_field(self, field, virtual=False):
+    def add_field(self, field, virtual=False, **kwargs):
         self.fields.append(field)
         if not self.pk and field.primary_key:
             self.pk = field
