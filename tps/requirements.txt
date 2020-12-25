@@ -12,6 +12,6 @@ django-debug-toolbar
 redis==2.10.6
 python-magic
 pygit2
-django-extensions
+django-extensions==1.9.7
 ansi2html==1.2.0
 django-redis<=4.7.0
