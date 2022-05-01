@@ -1,4 +1,6 @@
 from bootstrap3.renderers import FieldRenderer
+from bootstrap3 import renderers
+renderers.DBS3_SET_REQUIRED_SET_DISABLED = True
 
 
 class ReadOnlyFieldRenderer(FieldRenderer):
